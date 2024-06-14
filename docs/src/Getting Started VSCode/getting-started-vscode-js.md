@@ -31,7 +31,7 @@ Install Playwright
 ![install playwright](https://github.com/microsoft/playwright/assets/13063165/14e91050-24ab-4ff1-a37b-57d7c15e5c35)
 
 
-Select **Test: Install Playwright** and Choose the browsers you would like to run your tests on. These can be later configured in the [playwright.config](./test-configuration.md) file. You can also choose if you would like to have a GitHub Actions setup to [run your tests on CI](Getting Started/CI GitHub Actions/ci-intro.md).
+Select **Test: Install Playwright** and Choose the browsers you would like to run your tests on. These can be later configured in the [playwright.config](./test-configuration.md) file. You can also choose if you would like to have a GitHub Actions setup to [run your tests on CI](../Getting%20Started/CI%20GitHub%20Actions/ci-intro.md).
 
 ![choose browsers](https://github.com/microsoft/playwright/assets/13063165/c9e8a25a-e9e8-4419-aeb5-1b8ba58bd71d)
 
@@ -91,7 +91,7 @@ This will open up a full trace of your test where you can step through each acti
 
 ![trace viewer](https://github.com/microsoft/playwright/assets/13063165/ee31a4fe-c786-4d4b-887e-2dcecacfba2c)
 
-To learn more about the trace viewer see our [Trace Viewer guide](./trace-viewer.md).
+To learn more about the trace viewer see our [Trace Viewer guide](../trace-viewer.md).
 
 
 
@@ -142,7 +142,7 @@ This will open up a full trace of your test where you can step through each acti
 
 ![trace viewer](https://github.com/microsoft/playwright/assets/13063165/ee31a4fe-c786-4d4b-887e-2dcecacfba2c)
 
-To learn more about the trace viewer see our [Trace Viewer guide](./trace-viewer.md).
+To learn more about the trace viewer see our [Trace Viewer guide](../trace-viewer.md).
 
 ## Generating tests
 
@@ -173,12 +173,12 @@ To record from a specific point in your test file click the **Record at cursor**
 
 ### Picking a locator
 
-Pick a [locator](./locators.md) and copy it into your test file by clicking the **Pick locator** button form the testing sidebar. Then in the browser click the element you require and it will now show up in the **Pick locator** box in VS Code. Press 'enter' on your keyboard to copy the locator into the clipboard and then paste anywhere in your code. Or press 'escape' if you want to cancel.
+Pick a [locator](../locators.md) and copy it into your test file by clicking the **Pick locator** button form the testing sidebar. Then in the browser click the element you require and it will now show up in the **Pick locator** box in VS Code. Press 'enter' on your keyboard to copy the locator into the clipboard and then paste anywhere in your code. Or press 'escape' if you want to cancel.
 
 
 ![pick locators](https://github.com/microsoft/playwright/assets/13063165/9a1b2da9-9ac7-4def-a9e0-f94770364fc2)
 
-Playwright will look at your page and figure out the best locator, prioritizing [role, text and test id locators](./locators.md). If the generator finds multiple elements matching the locator, it will improve the locator to make it resilient and uniquely identify the target element, so you don't have to worry about failing tests due to locators.
+Playwright will look at your page and figure out the best locator, prioritizing [role, text and test id locators](../locators.md). If the generator finds multiple elements matching the locator, it will improve the locator to make it resilient and uniquely identify the target element, so you don't have to worry about failing tests due to locators.
 
 ## Project Dependencies
 
@@ -231,5 +231,5 @@ You can easily toggle back and forth between configurations by clicking on the c
 ## What's next
 
 - [Write tests using web first assertions, page fixtures and locators](./writing-tests.md)
-- [Run your tests on CI](Getting Started/CI GitHub Actions/ci-intro.md)
-- [Learn more about the Trace Viewer](./trace-viewer.md)
+- [Run your tests on CI](../Getting%20Started/CI%20GitHub%20Actions/ci-intro.md)
+- [Learn more about the Trace Viewer](../trace-viewer.md)
