@@ -245,7 +245,7 @@ export default defineConfig({
   },
 });
 ```
-Learn more about [geolocation](../emulation.md#color-scheme-and-media).
+Learn more about [geolocation](../Playwright%20Test/emulation.md#color-scheme-and-media).
 
 ## property: TestOptions.hasTouch = %%-context-option-hastouch-%%
 * since: v1.10
