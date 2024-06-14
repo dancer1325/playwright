@@ -5,13 +5,13 @@ title: "Assertions"
 
 ## Introduction
 
-Playwright includes test assertions in the form of `expect` function. To make an assertion, call `expect(value)` and choose a matcher that reflects the expectation. There are many [generic matchers](./api/class-genericassertions.md) like `toEqual`, `toContain`, `toBeTruthy` that can be used to assert any conditions.
+Playwright includes test assertions in the form of `expect` function. To make an assertion, call `expect(value)` and choose a matcher that reflects the expectation. There are many [generic matchers](../api/class-genericassertions.md) like `toEqual`, `toContain`, `toBeTruthy` that can be used to assert any conditions.
 
 ```js
 expect(success).toBeTruthy();
 ```
 
-Playwright also includes web-specific [async matchers](./api/class-locatorassertions.md) that will wait until
+Playwright also includes web-specific [async matchers](../api/class-locatorassertions.md) that will wait until
 the expected condition is met. Consider the following example:
 
 ```js
@@ -29,34 +29,34 @@ Note that retrying assertions are async, so you must `await` them.
 
 | Assertion | Description |
 | :- | :- |
-| [await expect(locator).toBeAttached()](./api/class-locatorassertions.md#locator-assertions-to-be-attached) | Element is attached |
-| [await expect(locator).toBeChecked()](./api/class-locatorassertions.md#locator-assertions-to-be-checked) | Checkbox is checked |
-| [await expect(locator).toBeDisabled()](./api/class-locatorassertions.md#locator-assertions-to-be-disabled) | Element is disabled |
-| [await expect(locator).toBeEditable()](./api/class-locatorassertions.md#locator-assertions-to-be-editable) | Element is editable |
-| [await expect(locator).toBeEmpty()](./api/class-locatorassertions.md#locator-assertions-to-be-empty) | Container is empty |
-| [await expect(locator).toBeEnabled()](./api/class-locatorassertions.md#locator-assertions-to-be-enabled) | Element is enabled |
-| [await expect(locator).toBeFocused()](./api/class-locatorassertions.md#locator-assertions-to-be-focused) | Element is focused |
-| [await expect(locator).toBeHidden()](./api/class-locatorassertions.md#locator-assertions-to-be-hidden) | Element is not visible |
-| [await expect(locator).toBeInViewport()](./api/class-locatorassertions.md#locator-assertions-to-be-in-viewport) | Element intersects viewport |
-| [await expect(locator).toBeVisible()](./api/class-locatorassertions.md#locator-assertions-to-be-visible) | Element is visible |
-| [await expect(locator).toContainText()](./api/class-locatorassertions.md#locator-assertions-to-contain-text) | Element contains text |
-| [await expect(locator).toHaveAccessibleDescription()](./api/class-locatorassertions.md#locator-assertions-to-have-accessible-description) | Element has a matching [accessible description](https://w3c.github.io/accname/#dfn-accessible-description) |
-| [await expect(locator).toHaveAccessibleName()](./api/class-locatorassertions.md#locator-assertions-to-have-accessible-name) | Element has a matching [accessible name](https://w3c.github.io/accname/#dfn-accessible-name) |
-| [await expect(locator).toHaveAttribute()](./api/class-locatorassertions.md#locator-assertions-to-have-attribute) | Element has a DOM attribute |
-| [await expect(locator).toHaveClass()](./api/class-locatorassertions.md#locator-assertions-to-have-class) | Element has a class property |
-| [await expect(locator).toHaveCount()](./api/class-locatorassertions.md#locator-assertions-to-have-count) | List has exact number of children |
-| [await expect(locator).toHaveCSS()](./api/class-locatorassertions.md#locator-assertions-to-have-css) | Element has CSS property |
-| [await expect(locator).toHaveId()](./api/class-locatorassertions.md#locator-assertions-to-have-id) | Element has an ID |
-| [await expect(locator).toHaveJSProperty()](./api/class-locatorassertions.md#locator-assertions-to-have-js-property) | Element has a JavaScript property |
-| [await expect(locator).toHaveRole()](./api/class-locatorassertions.md#locator-assertions-to-have-role) | Element has a specific [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles) |
-| [await expect(locator).toHaveScreenshot()](./api/class-locatorassertions.md#locator-assertions-to-have-screenshot-1) | Element has a screenshot |
-| [await expect(locator).toHaveText()](./api/class-locatorassertions.md#locator-assertions-to-have-text) | Element matches text |
-| [await expect(locator).toHaveValue()](./api/class-locatorassertions.md#locator-assertions-to-have-value) | Input has a value |
-| [await expect(locator).toHaveValues()](./api/class-locatorassertions.md#locator-assertions-to-have-values) | Select has options selected |
-| [await expect(page).toHaveScreenshot()](./api/class-pageassertions.md#page-assertions-to-have-screenshot-1) | Page has a screenshot |
-| [await expect(page).toHaveTitle()](./api/class-pageassertions.md#page-assertions-to-have-title) | Page has a title |
-| [await expect(page).toHaveURL()](./api/class-pageassertions.md#page-assertions-to-have-url) | Page has a URL |
-| [await expect(response).toBeOK()](./api/class-apiresponseassertions.md#api-response-assertions-to-be-ok) | Response has an OK status |
+| [await expect(locator).toBeAttached()](../api/class-locatorassertions.md#locator-assertions-to-be-attached) | Element is attached |
+| [await expect(locator).toBeChecked()](../api/class-locatorassertions.md#locator-assertions-to-be-checked) | Checkbox is checked |
+| [await expect(locator).toBeDisabled()](../api/class-locatorassertions.md#locator-assertions-to-be-disabled) | Element is disabled |
+| [await expect(locator).toBeEditable()](../api/class-locatorassertions.md#locator-assertions-to-be-editable) | Element is editable |
+| [await expect(locator).toBeEmpty()](../api/class-locatorassertions.md#locator-assertions-to-be-empty) | Container is empty |
+| [await expect(locator).toBeEnabled()](../api/class-locatorassertions.md#locator-assertions-to-be-enabled) | Element is enabled |
+| [await expect(locator).toBeFocused()](../api/class-locatorassertions.md#locator-assertions-to-be-focused) | Element is focused |
+| [await expect(locator).toBeHidden()](../api/class-locatorassertions.md#locator-assertions-to-be-hidden) | Element is not visible |
+| [await expect(locator).toBeInViewport()](../api/class-locatorassertions.md#locator-assertions-to-be-in-viewport) | Element intersects viewport |
+| [await expect(locator).toBeVisible()](../api/class-locatorassertions.md#locator-assertions-to-be-visible) | Element is visible |
+| [await expect(locator).toContainText()](../api/class-locatorassertions.md#locator-assertions-to-contain-text) | Element contains text |
+| [await expect(locator).toHaveAccessibleDescription()](../api/class-locatorassertions.md#locator-assertions-to-have-accessible-description) | Element has a matching [accessible description](https://w3c.github.io/accname/#dfn-accessible-description) |
+| [await expect(locator).toHaveAccessibleName()](../api/class-locatorassertions.md#locator-assertions-to-have-accessible-name) | Element has a matching [accessible name](https://w3c.github.io/accname/#dfn-accessible-name) |
+| [await expect(locator).toHaveAttribute()](../api/class-locatorassertions.md#locator-assertions-to-have-attribute) | Element has a DOM attribute |
+| [await expect(locator).toHaveClass()](../api/class-locatorassertions.md#locator-assertions-to-have-class) | Element has a class property |
+| [await expect(locator).toHaveCount()](../api/class-locatorassertions.md#locator-assertions-to-have-count) | List has exact number of children |
+| [await expect(locator).toHaveCSS()](../api/class-locatorassertions.md#locator-assertions-to-have-css) | Element has CSS property |
+| [await expect(locator).toHaveId()](../api/class-locatorassertions.md#locator-assertions-to-have-id) | Element has an ID |
+| [await expect(locator).toHaveJSProperty()](../api/class-locatorassertions.md#locator-assertions-to-have-js-property) | Element has a JavaScript property |
+| [await expect(locator).toHaveRole()](../api/class-locatorassertions.md#locator-assertions-to-have-role) | Element has a specific [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles) |
+| [await expect(locator).toHaveScreenshot()](../api/class-locatorassertions.md#locator-assertions-to-have-screenshot-1) | Element has a screenshot |
+| [await expect(locator).toHaveText()](../api/class-locatorassertions.md#locator-assertions-to-have-text) | Element matches text |
+| [await expect(locator).toHaveValue()](../api/class-locatorassertions.md#locator-assertions-to-have-value) | Input has a value |
+| [await expect(locator).toHaveValues()](../api/class-locatorassertions.md#locator-assertions-to-have-values) | Select has options selected |
+| [await expect(page).toHaveScreenshot()](../api/class-pageassertions.md#page-assertions-to-have-screenshot-1) | Page has a screenshot |
+| [await expect(page).toHaveTitle()](../api/class-pageassertions.md#page-assertions-to-have-title) | Page has a title |
+| [await expect(page).toHaveURL()](../api/class-pageassertions.md#page-assertions-to-have-url) | Page has a URL |
+| [await expect(response).toBeOK()](../api/class-apiresponseassertions.md#api-response-assertions-to-be-ok) | Response has an OK status |
 
 ## Non-retrying assertions
 
