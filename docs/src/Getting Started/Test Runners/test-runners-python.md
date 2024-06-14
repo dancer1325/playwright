@@ -33,7 +33,7 @@ If you create a browser, a context or a page with the API call like [`method: Br
 - `--browser`: Run tests in a different browser `chromium`, `firefox`, or `webkit`. It can be specified multiple times (default: `chromium`).
 - `--browser-channel` [Browser channel](../../browsers.md) to be used.
 - `--slowmo` Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on (default: 0).
-- `--device` [Device](../../emulation.md) to be emulated.
+- `--device` [Device](../../Playwright%20Test/emulation.md) to be emulated.
 - `--output` Directory for artifacts produced by tests (default: `test-results`).
 - `--tracing` Whether to record a [trace](../../trace-viewer.md) for each test. `on`, `off`, or `retain-on-failure` (default: `off`).
 - `--video` Whether to record video for each test. `on`, `off`, or `retain-on-failure` (default: `off`).
