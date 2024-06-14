@@ -116,7 +116,7 @@ pnpm exec playwright test
 
 </Tabs>
 
-![tests running in command line](https://github.com/microsoft/playwright/assets/13063165/981c1b2b-dc7e-4b85-b241-272b44da6628) 
+![tests running in command line](https://github.com/microsoft/playwright/assets/13063165/981c1b2b-dc7e-4b85-b241-272b44da6628)
 See our doc on [Running Tests](./running-tests.md) to learn more about running tests in headed mode, running multiple tests, running specific tests etc.
 
 ## HTML Test Reports
@@ -295,5 +295,5 @@ pnpm exec playwright --version
 
 - [Write tests using web first assertions, page fixtures and locators](./writing-tests.md)
 - [Run single test, multiple tests, headed mode](./running-tests.md)
-- [Generate tests with Codegen](./codegen-intro.md)
+- [Generate tests with Codegen](../codegen-intro.md)
 - [See a trace of your tests](./trace-viewer-intro.md)

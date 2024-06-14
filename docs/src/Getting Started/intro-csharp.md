@@ -123,7 +123,7 @@ public class ExampleTest : PageTest
 
         // Expects page to have a heading with the name of Installation.
         await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Installation" })).ToBeVisibleAsync();
-    } 
+    }
 }
 ```
 
@@ -159,7 +159,7 @@ public class ExampleTest : PageTest
 
         // Expects page to have a heading with the name of Installation.
         await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Installation" })).ToBeVisibleAsync();
-    } 
+    }
 }
 ```
 
@@ -187,7 +187,7 @@ See our doc on [Running and Debugging Tests](./running-tests.md) to learn more a
 
 - [Write tests using web first assertions, page fixtures and locators](./writing-tests.md)
 - [Run single test, multiple tests, headed mode](./running-tests.md)
-- [Generate tests with Codegen](./codegen-intro.md)
+- [Generate tests with Codegen](../codegen-intro.md)
 - [See a trace of your tests](./trace-viewer-intro.md)
-- [Run tests on CI](./ci-intro.md)
+- [Run tests on CI](../ci-intro.md)
 - [Learn more about the MSTest and NUnit base classes](./test-runners.md)
