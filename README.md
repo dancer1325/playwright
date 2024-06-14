@@ -6,7 +6,7 @@
 
 Playwright is a framework for Web Testing and Automation
 * allows
-  * testing [Chromium](https://www.chromium.org/Home), [Firefox](https://www.mozilla.org/en-US/firefox/new/) and [WebKit](https://webkit.org/)
+  * E2E testing in [Chromium](https://www.chromium.org/Home), [Firefox](https://www.mozilla.org/en-US/firefox/new/) and [WebKit](https://webkit.org/)
     * -- via -- 1! API
   * web automation cross-browser
     * **ever-green**
