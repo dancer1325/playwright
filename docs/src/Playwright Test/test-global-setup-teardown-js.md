@@ -118,7 +118,7 @@ teardown('delete database', async ({ }) => {
 ### More examples
 
 For more detailed examples check out:
-- our [authentication](./auth.md) guide
+- our [authentication](../auth.md) guide
 - our blog post [A better global setup in Playwright reusing login with project dependencies](https://dev.to/playwright/a-better-global-setup-in-playwright-reusing-login-with-project-dependencies-14)
 - [v1.31 release video](https://youtu.be/PI50YAPTAs4) to see the demo
 
@@ -220,7 +220,7 @@ test('test', async ({ page }) => {
 
 ### Capturing trace of failures during global setup
 
-In some instances, it may be useful to capture a trace of failures encountered during the global setup. In order to do this, you must [start tracing](./api/class-tracing.md#tracing-start) in your setup, and you must ensure that you [stop tracing](./api/class-tracing.md#tracing-stop) if an error occurs before that error is thrown. This can be achieved by wrapping your setup in a `try...catch` block.  Here is an example that expands the global setup example to capture a trace.
+In some instances, it may be useful to capture a trace of failures encountered during the global setup. In order to do this, you must [start tracing](../api/class-tracing.md#tracing-start) in your setup, and you must ensure that you [stop tracing](../api/class-tracing.md#tracing-stop) if an error occurs before that error is thrown. This can be achieved by wrapping your setup in a `try...catch` block.  Here is an example that expands the global setup example to capture a trace.
 
 ```js title="global-setup.ts"
 import { chromium, type FullConfig } from '@playwright/test';

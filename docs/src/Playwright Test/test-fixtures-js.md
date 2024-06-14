@@ -31,13 +31,13 @@ Here is a list of the pre-defined fixtures that you are likely to use most of th
 |context    |[BrowserContext]   |Isolated context for this test run. The `page` fixture belongs to this context as well. Learn how to [configure context](./test-configuration.md). |
 |browser    |[Browser]          |Browsers are shared across tests to optimize resources. Learn how to [configure browser](./test-configuration.md). |
 |browserName|[string]           |The name of the browser currently running the test. Either `chromium`, `firefox` or `webkit`.|
-|request    |[APIRequestContext]|Isolated [APIRequestContext](./api/class-apirequestcontext.md) instance for this test run.|
+|request    |[APIRequestContext]|Isolated [APIRequestContext](../api/class-apirequestcontext.md) instance for this test run.|
 
 ### Without fixtures
 
 Here is how typical test environment setup differs between traditional test style and the fixture-based one.
 
-`TodoPage` is a class that helps interacting with a "todo list" page of the web app, following the [Page Object Model](./pom.md) pattern. It uses Playwright's `page` internally.
+`TodoPage` is a class that helps interacting with a "todo list" page of the web app, following the [Page Object Model](../pom.md) pattern. It uses Playwright's `page` internally.
 
 <details>
   <summary>Click to expand the code for the <code>TodoPage</code></summary>
@@ -304,7 +304,7 @@ test('should remove an item', async ({ todoPage }) => {
 
 To create your own fixture, use [`method: Test.extend`] to create a new `test` object that will include it.
 
-Below we create two fixtures `todoPage` and `settingsPage` that follow the [Page Object Model](./pom.md) pattern.
+Below we create two fixtures `todoPage` and `settingsPage` that follow the [Page Object Model](../pom.md) pattern.
 
 <details>
   <summary>Click to expand the code for the <code>TodoPage</code> and <code>SettingsPage</code></summary>
@@ -653,27 +653,27 @@ Automatic fixtures are set up for each test/worker, even when the test does not 
 Here is an example fixture that automatically attaches debug logs when the test fails, so we can later review the logs in the reporter. Note how it uses [TestInfo] object that is available in each test/fixture to retrieve metadata about the test being run.
 
 ```js tab=js-js title="my-test.js"
-const debug = require('debug');
+const debug = require('docs/src/debug');
 const fs = require('fs');
 const base = require('@playwright/test');
 
 exports.test = base.test.extend({
-  saveLogs: [async ({}, use, testInfo) => {
-    // Collecting logs during the test.
-    const logs = [];
-    debug.log = (...args) => logs.push(args.map(String).join(''));
-    debug.enable('myserver');
+    saveLogs: [async ({}, use, testInfo) => {
+        // Collecting logs during the test.
+        const logs = [];
+        debug.log = (...args) => logs.push(args.map(String).join(''));
+        debug.enable('myserver');
 
-    await use();
+        await use();
 
-    // After the test we can check whether the test passed or failed.
-    if (testInfo.status !== testInfo.expectedStatus) {
-      // outputPath() API guarantees a unique file name.
-      const logFile = testInfo.outputPath('logs.txt');
-      await fs.promises.writeFile(logFile, logs.join('\n'), 'utf8');
-      testInfo.attachments.push({ name: 'logs', contentType: 'text/plain', path: logFile });
-    }
-  }, { auto: true }],
+        // After the test we can check whether the test passed or failed.
+        if (testInfo.status !== testInfo.expectedStatus) {
+            // outputPath() API guarantees a unique file name.
+            const logFile = testInfo.outputPath('logs.txt');
+            await fs.promises.writeFile(logFile, logs.join('\n'), 'utf8');
+            testInfo.attachments.push({name: 'logs', contentType: 'text/plain', path: logFile});
+        }
+    }, {auto: true}],
 });
 ```
 
