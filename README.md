@@ -35,14 +35,15 @@ Playwright is a framework for Web Testing and Automation
   * := own test runner for end-to-end tests
 
 ### Via init command
-* Check '/examples/initFromProjectRoot'
-* Check '/examples/initNewProject'
 * it creates
   * configuration file -- 'playwright.config.ts' --
   * optionally
     * examples -- 'tests/' --
     * GitHub Action workflow
     * first test example.spec.ts -- 'tests/' --
+* Check '/examples/initFromProjectRoot'
+* Check '/examples/initNewProject'
+
 
 ### Manually
 
