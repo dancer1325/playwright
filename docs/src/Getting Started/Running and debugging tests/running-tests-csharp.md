@@ -133,7 +133,7 @@ dotnet test -- MSTest.Parallelize.Workers=5
 
 ## Debugging Tests
 
-Since Playwright runs in .NET, you can debug it with your debugger of choice in e.g. Visual Studio Code or Visual Studio. Playwright comes with the Playwright Inspector which allows you to step through Playwright API calls, see their debug logs and explore [locators](./locators.md).
+Since Playwright runs in .NET, you can debug it with your debugger of choice in e.g. Visual Studio Code or Visual Studio. Playwright comes with the Playwright Inspector which allows you to step through Playwright API calls, see their debug logs and explore [locators](../../locators.md).
 
 ```bash tab=bash-bash lang=csharp
 PWDEBUG=1 dotnet test
@@ -151,12 +151,12 @@ dotnet test
 
 ![debugging tests with playwright inspector](https://github.com/microsoft/playwright/assets/13063165/a1e758d3-d379-414f-be0b-7339f12bb635)
 
-Check out our [debugging guide](./debug.md) to learn more about the [Playwright Inspector](./debug.md#playwright-inspector) as well as debugging with [Browser Developer tools](./debug.md#browser-developer-tools).
+Check out our [debugging guide](../../debug.md) to learn more about the [Playwright Inspector](../../debug.md#playwright-inspector) as well as debugging with [Browser Developer tools](../../debug.md#browser-developer-tools).
 
 
 ## What's Next
 
-- [Generate tests with Codegen](./codegen-intro.md)
+- [Generate tests with Codegen](../Generating%20tests/codegen-intro.md)
 - [See a trace of your tests](./trace-viewer-intro.md)
-- [Run tests on CI](./ci-intro.md)
+- [Run tests on CI](../CI%20GitHub%20Actions/ci-intro.md)
 - [Learn more about the MSTest and NUnit base classes](./test-runners.md)

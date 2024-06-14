@@ -10,7 +10,7 @@ Playwright tests are simple, they
 - **assert the state** against expectations.
 
 There is no need to wait for anything prior to performing an action: Playwright
-automatically waits for the wide range of [actionability](./actionability.md)
+automatically waits for the wide range of [actionability](../../actionability.md)
 checks to pass prior to performing each action.
 
 There is also no need to deal with the race conditions when performing the checks -
@@ -72,7 +72,7 @@ Learn more about the [`method: Page.goto`] options.
 
 ### Interactions
 
-Performing actions starts with locating the elements. Playwright uses [Locators API](./locators.md) for that. Locators represent a way to find element(s) on the page at any moment, learn more about the [different types](./locators.md) of locators available. Playwright will wait for the element to be [actionable](./actionability.md) prior to performing the action, so there is no need to wait for it to become available.
+Performing actions starts with locating the elements. Playwright uses [Locators API](../../locators.md) for that. Locators represent a way to find element(s) on the page at any moment, learn more about the [different types](../../locators.md) of locators available. Playwright will wait for the element to be [actionable](../../actionability.md) prior to performing the action, so there is no need to wait for it to become available.
 
 
 ```python
@@ -91,7 +91,7 @@ page.get_by_role("link", name="Get started").click()
 
 ### Basic actions
 
-This is the list of the most popular Playwright actions. Note that there are many more, so make sure to check the [Locator API](./api/class-locator.md) section to
+This is the list of the most popular Playwright actions. Note that there are many more, so make sure to check the [Locator API](../../api/class-locator.md) section to
 learn more about them.
 
 | Action | Description |
@@ -160,13 +160,13 @@ from playwright.sync_api import Page, expect
 
 @pytest.fixture(scope="function", autouse=True)
 def before_each_after_each(page: Page):
-    
+
     print("before the test runs")
 
     # Go to the starting url before each test.
     page.goto("https://playwright.dev/")
     yield
-    
+
     print("after the test runs")
 
 def test_main_navigation(page: Page):
@@ -177,6 +177,6 @@ def test_main_navigation(page: Page):
 ## What's next
 
 - [Run single test, multiple tests, headed mode](./running-tests.md)
-- [Generate tests with Codegen](./codegen-intro.md)
+- [Generate tests with Codegen](../Generating%20tests/codegen-intro.md)
 - [See a trace of your tests](./trace-viewer-intro.md)
-- [Run tests on CI with GitHub Actions](./ci-intro.md)
+- [Run tests on CI with GitHub Actions](../CI%20GitHub%20Actions/ci-intro.md)

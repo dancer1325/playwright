@@ -11,7 +11,7 @@ Playwright tests are simple, they
 - **assert the state** against expectations.
 
 There is no need to wait for anything prior to performing an action: Playwright
-automatically waits for the wide range of [actionability](./actionability.md)
+automatically waits for the wide range of [actionability](../../actionability.md)
 checks to pass prior to performing each action.
 
 There is also no need to deal with the race conditions when performing the checks -
@@ -28,7 +28,7 @@ timeouts and racy checks in their tests altogether.
 - [How to use assertions](/writing-tests.md#assertions)
 - [How tests run in isolation](/writing-tests.md#test-isolation)
 - [How to use test hooks](/writing-tests.md#using-test-hooks)
-  
+
 ## First test
 
 Take a look at the following example to see how to write a test.
@@ -75,7 +75,7 @@ public class ExampleTest : PageTest
 
         // Expects page to have a heading with the name of Installation.
         await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Installation" })).ToBeVisibleAsync();
-    } 
+    }
 }
 ```
 
@@ -113,7 +113,7 @@ public class ExampleTest : PageTest
 
         // Expects page to have a heading with the name of Installation.
         await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Installation" })).ToBeVisibleAsync();
-    } 
+    }
 }
 ```
 
@@ -136,7 +136,7 @@ Learn more about the [`method: Page.goto`] options.
 
 ### Interactions
 
-Performing actions starts with locating the elements. Playwright uses [Locators API](./locators.md) for that. Locators represent a way to find element(s) on the page at any moment, learn more about the [different types](./locators.md) of locators available. Playwright will wait for the element to be [actionable](./actionability.md) prior to performing the action, so there is no need to wait for it to become available.
+Performing actions starts with locating the elements. Playwright uses [Locators API](../../locators.md) for that. Locators represent a way to find element(s) on the page at any moment, learn more about the [different types](../../locators.md) of locators available. Playwright will wait for the element to be [actionable](../../actionability.md) prior to performing the action, so there is no need to wait for it to become available.
 
 
 ```csharp
@@ -155,7 +155,7 @@ await Page.GetByRole(AriaRole.Link, new() { Name = "Get started" }).ClickAsync()
 
 ### Basic actions
 
-This is the list of the most popular Playwright actions. Note that there are many more, so make sure to check the [Locator API](./api/class-locator.md) section to
+This is the list of the most popular Playwright actions. Note that there are many more, so make sure to check the [Locator API](../../api/class-locator.md) section to
 learn more about them.
 
 | Action | Description |
@@ -171,13 +171,13 @@ learn more about them.
 | [`method: Locator.selectOption`] | Select option in the drop down |
 
 ## Assertions
-  
+
 Playwright provides an async function called [Expect](./test-assertions) to assert and wait until the expected condition is met.
 
 ```csharp
 await Expect(Page).ToHaveTitleAsync(new Regex("Playwright"));
-``` 
-  
+```
+
 Here is the list of the most popular async assertions. Note that there are [many more](./test-assertions.md) to get familiar with:
 
 | Assertion | Description |
@@ -325,7 +325,7 @@ public class ExampleTest : PageTest
 ## What's Next
 
 - [Run single test, multiple tests, headed mode](./running-tests.md)
-- [Generate tests with Codegen](./codegen-intro.md)
+- [Generate tests with Codegen](../Generating%20tests/codegen-intro.md)
 - [See a trace of your tests](./trace-viewer-intro.md)
-- [Run tests on CI](./ci-intro.md)
+- [Run tests on CI](../CI%20GitHub%20Actions/ci-intro.md)
 - [Learn more about the MSTest and NUnit base classes](./test-runners.md)

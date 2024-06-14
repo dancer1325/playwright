@@ -10,7 +10,7 @@ Playwright tests are simple, they
 - **assert the state** against expectations.
 
 There is no need to wait for anything prior to performing an action: Playwright
-automatically waits for the wide range of [actionability](./actionability.md)
+automatically waits for the wide range of [actionability](../../actionability.md)
 checks to pass prior to performing each action.
 
 There is also no need to deal with the race conditions when performing the checks -
@@ -52,7 +52,7 @@ test('get started link', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Installation' })).toBeVisible();
 });
 ```
-  
+
 :::note
 Add `// @ts-check` at the start of each test file when using JavaScript in VS Code to get automatic type checking.
 :::
@@ -78,7 +78,7 @@ Learn more about the [`method: Page.goto`] options.
 
 ### Interactions
 
-Performing actions starts with locating the elements. Playwright uses [Locators API](./locators.md) for that. Locators represent a way to find element(s) on the page at any moment, learn more about the [different types](./locators.md) of locators available. Playwright will wait for the element to be [actionable](./actionability.md) prior to performing the action, so there is no need to wait for it to become available.
+Performing actions starts with locating the elements. Playwright uses [Locators API](../../locators.md) for that. Locators represent a way to find element(s) on the page at any moment, learn more about the [different types](../../locators.md) of locators available. Playwright will wait for the element to be [actionable](../../actionability.md) prior to performing the action, so there is no need to wait for it to become available.
 
 
 ```js
@@ -97,7 +97,7 @@ await page.getByRole('link', { name: 'Get started' }).click();
 
 ### Basic actions
 
-This is the list of the most popular Playwright actions. Note that there are many more, so make sure to check the [Locator API](./api/class-locator.md) section to
+This is the list of the most popular Playwright actions. Note that there are many more, so make sure to check the [Locator API](../../api/class-locator.md) section to
 learn more about them.
 
 | Action | Description |
@@ -113,7 +113,7 @@ learn more about them.
 | [`method: Locator.selectOption`] | Select option in the drop down |
 
 ## Assertions
-  
+
 Playwright includes [test assertions](./test-assertions.md) in the form of `expect` function. To make an assertion, call `expect(value)` and choose a matcher that reflects the expectation.
 
 There are many generic matchers like `toEqual`, `toContain`, `toBeTruthy` that can be used to assert any conditions.
@@ -127,7 +127,7 @@ Playwright also includes async matchers that will wait until the expected condit
 ```js
 await expect(page).toHaveTitle(/Playwright/);
 ```
-  
+
 Here is the list of the most popular async assertions. Note that there are [many more](./test-assertions.md) to get familiar with:
 
 | Assertion | Description |
@@ -144,7 +144,7 @@ Here is the list of the most popular async assertions. Note that there are [many
 | [`method: PageAssertions.toHaveURL`] | Page has URL |
 
 ### Test Isolation
-  
+
 Playwright Test is based on the concept of [test fixtures](./test-fixtures.md) such as the [built in page fixture](./test-fixtures#built-in-fixtures), which is passed into your test. Pages are [isolated between tests due to the Browser Context](./browser-contexts), which is equivalent to a brand new browser profile, where every test gets a fresh environment, even when multiple tests run in a single Browser.
 
 ```js title="tests/example.spec.ts"
@@ -182,8 +182,8 @@ test.describe('navigation', () => {
 ## What's Next
 
 - [Run single test, multiple tests, headed mode](./running-tests.md)
-- [Generate tests with Codegen](./codegen-intro.md)
+- [Generate tests with Codegen](../Generating%20tests/codegen-intro.md)
 - [See a trace of your tests](./trace-viewer-intro.md)
 - [Explore UI Mode](./test-ui-mode.md)
-- [Run tests on CI with GitHub Actions](./ci-intro.md)
+- [Run tests on CI with GitHub Actions](../CI%20GitHub%20Actions/ci-intro.md)
 

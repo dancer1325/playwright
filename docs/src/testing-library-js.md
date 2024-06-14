@@ -141,7 +141,7 @@ You also get all these ✨ awesome tools ✨ that come bundled with Playwright T
 - [Visual Studio Code integration](./getting-started-vscode.md)
 - [UI mode](./test-ui-mode.md) for debugging tests with a time travel experience complete with watch mode.
 - [Playwright Inspector](./debug.md#playwright-inspector)
-- [Playwright Test Code generation](./codegen-intro.md)
+- [Playwright Test Code generation](Getting Started/Generating tests/codegen-intro.md)
 - [Playwright Tracing](./trace-viewer.md) for post-mortem debugging
 
 ## Further Reading

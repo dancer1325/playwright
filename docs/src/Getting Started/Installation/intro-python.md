@@ -108,5 +108,5 @@ pip install pytest-playwright playwright -U
 
 - [Write tests using web first assertions, page fixtures and locators](./writing-tests.md)
 - [Run single test, multiple tests, headed mode](./running-tests.md)
-- [Generate tests with Codegen](../codegen.md)
+- [Generate tests with Codegen](../../codegen.md)
 - [See a trace of your tests](./trace-viewer-intro.md)

@@ -295,5 +295,5 @@ pnpm exec playwright --version
 
 - [Write tests using web first assertions, page fixtures and locators](./writing-tests.md)
 - [Run single test, multiple tests, headed mode](./running-tests.md)
-- [Generate tests with Codegen](../codegen-intro.md)
+- [Generate tests with Codegen](../Generating%20tests/codegen-intro.md)
 - [See a trace of your tests](./trace-viewer-intro.md)

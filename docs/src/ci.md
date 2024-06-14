@@ -66,7 +66,7 @@ The [Command line tools](./browsers#install-system-dependencies) can be used to 
 
 ### GitHub Actions
 
-Check out our [GitHub Actions](ci-intro.md) guide for more information on how to run your tests on GitHub.
+Check out our [GitHub Actions](Getting Started/CI GitHub Actions/ci-intro.md) guide for more information on how to run your tests on GitHub.
 
 ### Docker
 
@@ -595,7 +595,7 @@ To run Playwright tests on Google Cloud Build, use our public Docker image ([see
 ```yml
 steps:
 - name: mcr.microsoft.com/playwright:v%%VERSION%%-jammy
-  script: 
+  script:
   ...
   env:
   - 'CI=true'

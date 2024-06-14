@@ -6,7 +6,7 @@ title: "CI GitHub Actions"
 ## Introduction
 * langs: js
 
-Playwright tests can be run on any CI provider. In this section we will cover running tests on GitHub using GitHub actions. If you would like to see how to configure other CI providers check out our detailed [doc on Continuous Integration](./ci.md).
+Playwright tests can be run on any CI provider. In this section we will cover running tests on GitHub using GitHub actions. If you would like to see how to configure other CI providers check out our detailed [doc on Continuous Integration](../../ci.md).
 
 When [installing Playwright](./intro.md) using the [VS Code extension](./getting-started-vscode.md) or with `npm init playwright@latest` you are given the option to add a [GitHub Actions](https://docs.github.com/en/actions) workflow. This creates a `playwright.yml` file inside a `.github/workflows` folder containing everything you need so that your tests run on each push and pull request into the main/master branch.
 
@@ -29,7 +29,7 @@ To add a [GitHub Actions](https://docs.github.com/en/actions) file first create 
 
 #### You will learn
 * langs: python, java, csharp
-  
+
 - [How to run tests on push/pull_request](/ci-intro.md#on-pushpull_request)
 - [How to view test logs](/ci-intro.md#viewing-test-logs)
 - [How to view the trace](/ci-intro.md#viewing-the-trace)
@@ -528,8 +528,8 @@ This step will not work for pull requests created from a forked repository becau
 
 ## What's Next
 
-- [Learn how to use Locators](./locators.md)
-- [Learn how to perform Actions](./input.md)
+- [Learn how to use Locators](../../locators.md)
+- [Learn how to perform Actions](../../input.md)
 - [Learn how to write Assertions](./test-assertions.md)
 - [Learn more about the Trace Viewer](/trace-viewer.md)
 - [Learn more about running tests on other CI providers](/ci.md)

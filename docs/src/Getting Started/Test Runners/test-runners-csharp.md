@@ -5,7 +5,7 @@ title: "Test Runners"
 
 ## Introduction
 
-While Playwright for .NET isn't tied to a particular test runner or testing framework, in our experience the easiest way of getting started is by using the base classes we provide for [MSTest](#mstest) and [NUnit](#nunit). These classes support running tests on multiple browser engines, adjusting launch/context options and getting a [Page]/[BrowserContext] instance per test out of the box. 
+While Playwright for .NET isn't tied to a particular test runner or testing framework, in our experience the easiest way of getting started is by using the base classes we provide for [MSTest](#mstest) and [NUnit](#nunit). These classes support running tests on multiple browser engines, adjusting launch/context options and getting a [Page]/[BrowserContext] instance per test out of the box.
 
 Playwright and Browser instances will be reused between tests for better performance. We
 recommend running each test case in a new BrowserContext, this way browser state will be
@@ -89,7 +89,7 @@ dotnet test -- Playwright.BrowserName=chromium Playwright.LaunchOptions.Headless
 
 ### Using Verbose API Logs
 
-When you have enabled the [verbose API log](./debug.md#verbose-api-logs), via the `DEBUG` environment variable, you will see the messages in the standard error stream. In MSTest, within Visual Studio, that will be the `Tests` pane of the `Output` window. It will also be displayed in the `Test Log` for each test.
+When you have enabled the [verbose API log](../../debug.md#verbose-api-logs), via the `DEBUG` environment variable, you will see the messages in the standard error stream. In MSTest, within Visual Studio, that will be the `Tests` pane of the `Output` window. It will also be displayed in the `Test Log` for each test.
 
 ### Using the .runsettings file
 
@@ -99,7 +99,7 @@ For example, to specify the number of workers, you can use `MSTest.Parallelize.W
 
 ```xml
 <RunSettings>
-  <!-- MSTest adapter -->  
+  <!-- MSTest adapter -->
   <MSTest>
     <Parallelize>
       <Workers>4</Workers>
@@ -113,7 +113,7 @@ For example, to specify the number of workers, you can use `MSTest.Parallelize.W
       <DEBUG>pw:api</DEBUG>
     </EnvironmentVariables>
   </RunConfiguration>
-  <!-- Playwright -->  
+  <!-- Playwright -->
   <Playwright>
     <BrowserName>chromium</BrowserName>
     <ExpectTimeout>5000</ExpectTimeout>
@@ -213,7 +213,7 @@ dotnet test -- Playwright.BrowserName=chromium Playwright.LaunchOptions.Headless
 
 ### Using Verbose API Logs
 
-When you have enabled the [verbose API log](./debug.md#verbose-api-logs), via the `DEBUG` environment variable, you will see the messages in the standard error stream. In NUnit, within Visual Studio, that will be the `Tests` pane of the `Output` window. It will also be displayed in the `Test Log` for each test.
+When you have enabled the [verbose API log](../../debug.md#verbose-api-logs), via the `DEBUG` environment variable, you will see the messages in the standard error stream. In NUnit, within Visual Studio, that will be the `Tests` pane of the `Output` window. It will also be displayed in the `Test Log` for each test.
 
 ### Using the .runsettings file
 
@@ -224,7 +224,7 @@ For example, to specify the amount of workers you can use `NUnit.NumberOfTestWor
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <RunSettings>
-  <!-- NUnit adapter -->  
+  <!-- NUnit adapter -->
   <NUnit>
     <NumberOfTestWorkers>24</NumberOfTestWorkers>
   </NUnit>
@@ -235,7 +235,7 @@ For example, to specify the amount of workers you can use `NUnit.NumberOfTestWor
       <DEBUG>pw:api</DEBUG>
     </EnvironmentVariables>
   </RunConfiguration>
-  <!-- Playwright -->  
+  <!-- Playwright -->
   <Playwright>
     <BrowserName>chromium</BrowserName>
     <ExpectTimeout>5000</ExpectTimeout>

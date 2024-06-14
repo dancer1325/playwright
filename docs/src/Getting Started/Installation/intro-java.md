@@ -88,7 +88,7 @@ With the Example.java and pom.xml above, compile and execute your new program as
 mvn compile exec:java -D exec.mainClass="org.example.App"
 ```
 
-Running it downloads the Playwright package and installs browser binaries for Chromium, Firefox and WebKit. To modify this behavior see [installation parameters](../browsers.md#install-browsers).
+Running it downloads the Playwright package and installs browser binaries for Chromium, Firefox and WebKit. To modify this behavior see [installation parameters](../../browsers.md#install-browsers).
 
 ## First script
 
@@ -112,7 +112,7 @@ public class App {
 }
 ```
 
-By default, Playwright runs the browsers in headless mode. To see the browser UI, pass the `setHeadless(false)` flag while launching the browser. You can also use [`option: slowMo`] to slow down execution. Learn more in the debugging tools [section](../debug.md).
+By default, Playwright runs the browsers in headless mode. To see the browser UI, pass the `setHeadless(false)` flag while launching the browser. You can also use [`option: slowMo`] to slow down execution. Learn more in the debugging tools [section](../../debug.md).
 
 ```java
 playwright.firefox().launch(new BrowserType.LaunchOptions().setHeadless(false).setSlowMo(50));
@@ -137,5 +137,5 @@ By default browsers launched with Playwright run headless, meaning no browser UI
 
 - [Write tests using web first assertions, page fixtures and locators](./writing-tests.md)
 - [Run single test, multiple tests, headed mode](./running-tests.md)
-- [Generate tests with Codegen](../codegen.md)
+- [Generate tests with Codegen](../../codegen.md)
 - [See a trace of your tests](./trace-viewer-intro.md)

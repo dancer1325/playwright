@@ -91,6 +91,6 @@ If you prefer, you can run your tests in headed mode by using the `launch(new Br
 
 ## What's Next
 
-- [Debugging tests](./debug.md)
-- [Generate tests with Codegen](./codegen.md)
+- [Debugging tests](../../debug.md)
+- [Generate tests with Codegen](../../codegen.md)
 - [See a trace of your tests](./trace-viewer-intro.md)

@@ -100,7 +100,7 @@ Tests can be run right from VS Code using the [VS Code extension](https://market
 
 ## Debugging tests
 
-Since Playwright runs in Node.js, you can debug it with your debugger of choice e.g. using `console.log` or inside your IDE or directly in VS Code with the [VS Code Extension](./getting-started-vscode.md). Playwright comes with [UI Mode](./test-ui-mode.md), where you can easily walk through each step of the test, see logs, errors, network requests, inspect the DOM snapshot and more. You can also use the [Playwright Inspector](./debug.md#playwright-inspector), which allows you to step through Playwright API calls, see their debug logs and explore [locators](./locators.md).
+Since Playwright runs in Node.js, you can debug it with your debugger of choice e.g. using `console.log` or inside your IDE or directly in VS Code with the [VS Code Extension](./getting-started-vscode.md). Playwright comes with [UI Mode](./test-ui-mode.md), where you can easily walk through each step of the test, see logs, errors, network requests, inspect the DOM snapshot and more. You can also use the [Playwright Inspector](../../debug.md#playwright-inspector), which allows you to step through Playwright API calls, see their debug logs and explore [locators](../../locators.md).
 
 ### Debug tests in UI mode
 
@@ -147,7 +147,7 @@ While debugging you can use the Pick Locator button to select an element on the 
 ![Locator picker in the Playwright Inspector](https://github.com/microsoft/playwright/assets/13063165/013d5edb-583e-423a-bb53-9f57bab7f3e1)
 
 
-Check out our [debugging guide](./debug.md) to learn more about debugging with the [VS Code debugger](./debug.md#vs-code-debugger), UI Mode and the [Playwright Inspector](./debug.md#playwright-inspector) as well as debugging with [Browser Developer tools](./debug.md#browser-developer-tools).
+Check out our [debugging guide](../../debug.md) to learn more about debugging with the [VS Code debugger](../../debug.md#vs-code-debugger), UI Mode and the [Playwright Inspector](../../debug.md#playwright-inspector) as well as debugging with [Browser Developer tools](../../debug.md#browser-developer-tools).
 
 
 ## Test reports
@@ -167,7 +167,7 @@ You can filter and search for tests as well as click on each test to see the tes
 
 ## What's next
 
-- [Generate tests with Codegen](./codegen-intro.md)
+- [Generate tests with Codegen](../Generating%20tests/codegen-intro.md)
 - [See a trace of your tests](./trace-viewer-intro.md)
 - [Explore all the features of UI Mode](./test-ui-mode.md)
-- [Run your tests on CI with GitHub Actions](./ci-intro.md)
+- [Run your tests on CI with GitHub Actions](../CI%20GitHub%20Actions/ci-intro.md)

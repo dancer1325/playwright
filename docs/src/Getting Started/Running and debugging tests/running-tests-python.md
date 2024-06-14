@@ -77,7 +77,7 @@ For more information, see [Playwright Pytest usage](./test-runners.md) or the Py
 
 ## Debugging tests
 
-Since Playwright runs in Python, you can debug it with your debugger of choice, e.g., with the [Python extension](https://code.visualstudio.com/docs/python/python-tutorial) in Visual Studio Code. Playwright comes with the Playwright Inspector which allows you to step through Playwright API calls, see their debug logs and explore [locators](./locators.md).
+Since Playwright runs in Python, you can debug it with your debugger of choice, e.g., with the [Python extension](https://code.visualstudio.com/docs/python/python-tutorial) in Visual Studio Code. Playwright comes with the Playwright Inspector which allows you to step through Playwright API calls, see their debug logs and explore [locators](../../locators.md).
 
 To debug all tests, run the following command.
 
@@ -133,11 +133,11 @@ While debugging you can use the Pick Locator button to select an element on the 
 
 ![Playwright Inspector](https://github.com/microsoft/playwright/assets/13063165/c94c89c8-f945-460c-a653-7809c6ca50ee)
 
-Check out our [debugging guide](./debug.md) to learn more about the [Playwright Inspector](./debug.md#playwright-inspector) as well as debugging with [Browser Developer tools](./debug.md#browser-developer-tools).
+Check out our [debugging guide](../../debug.md) to learn more about the [Playwright Inspector](../../debug.md#playwright-inspector) as well as debugging with [Browser Developer tools](../../debug.md#browser-developer-tools).
 
 
 ## What's next
 
-- [Generate tests with Codegen](./codegen.md)
+- [Generate tests with Codegen](../../codegen.md)
 - [See a trace of your tests](./trace-viewer-intro.md)
-- [Run your tests on CI with GitHub Actions](./ci-intro.md)
+- [Run your tests on CI with GitHub Actions](../CI%20GitHub%20Actions/ci-intro.md)

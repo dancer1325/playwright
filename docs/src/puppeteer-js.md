@@ -159,7 +159,7 @@ Once you're on Playwright Test, you get a lot!
 
 You also get all these ✨ awesome tools ✨ that come bundled with Playwright Test:
 - [Playwright Inspector](./debug.md)
-- [Playwright Test Code generation](./codegen-intro.md)
+- [Playwright Test Code generation](Getting Started/Generating tests/codegen-intro.md)
 - [Playwright Tracing](./trace-viewer.md) for post-mortem debugging
 
 ## Further Reading
