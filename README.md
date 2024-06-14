@@ -33,6 +33,7 @@ Playwright is a framework for Web Testing and Automation
 
 * Playwright Test
   * := own test runner for end-to-end tests
+  * [Installation configuration](https://playwright.dev/docs/installation)
 
 ### Via init command
 * it creates
@@ -45,18 +46,8 @@ Playwright is a framework for Web Testing and Automation
 * Check '/examples/initNewProject'
 
 
-### Manually
-
-```Shell
-# add dependency
-npm i -D @playwright/test
-# install supported browsers
-npx playwright install
-```
-
-You can optionally install only selected browsers, see [install browsers](https://playwright.dev/docs/cli#install-browsers) for more details. Or you can install no browsers at all and use existing [browser channels](https://playwright.dev/docs/browsers).
-
-* [Installation configuration](https://playwright.dev/docs/installation)
+### Via Manually
+* Check '/examples/skeletonNPMProject'
 
 ---
 
