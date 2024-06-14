@@ -4,7 +4,15 @@
 
 ## [Documentation](https://playwright.dev) | [API reference](https://playwright.dev/docs/api/class-playwright)
 
-Playwright is a framework for Web Testing and Automation. It allows testing [Chromium](https://www.chromium.org/Home), [Firefox](https://www.mozilla.org/en-US/firefox/new/) and [WebKit](https://webkit.org/) with a single API. Playwright is built to enable cross-browser web automation that is **ever-green**, **capable**, **reliable** and **fast**.
+Playwright is a framework for Web Testing and Automation
+* allows
+  * testing [Chromium](https://www.chromium.org/Home), [Firefox](https://www.mozilla.org/en-US/firefox/new/) and [WebKit](https://webkit.org/)
+    * -- via -- 1! API
+  * web automation cross-browser
+    * **ever-green**
+    * **capable**
+    * **reliable**
+    * **fast**
 
 |          | Linux | macOS | Windows |
 |   :---   | :---: | :---: | :---:   |
@@ -12,17 +20,21 @@ Playwright is a framework for Web Testing and Automation. It allows testing [Chr
 | WebKit <!-- GEN:webkit-version -->17.4<!-- GEN:stop --> | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | Firefox <!-- GEN:firefox-version -->127.0<!-- GEN:stop --> | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 
-Headless execution is supported for all browsers on all platforms. Check out [system requirements](https://playwright.dev/docs/intro#system-requirements) for details.
+* [system requirements](https://playwright.dev/docs/intro#system-requirements)
+* dedicated documentation / language
+  * [JS/TS](https://playwright.dev/docs/intro) -- default --cf
+  * [Python](https://playwright.dev/python/docs/intro)
+  * [.NET](https://playwright.dev/dotnet/docs/intro)
+  * [Java](https://playwright.dev/java/docs/intro)
 
-Looking for Playwright for [Python](https://playwright.dev/python/docs/intro), [.NET](https://playwright.dev/dotnet/docs/intro), or [Java](https://playwright.dev/java/docs/intro)?
+---
 
 ## Installation
 
-Playwright has its own test runner for end-to-end tests, we call it Playwright Test.
+* Playwright Test
+  * := own test runner for end-to-end tests
 
-### Using init command
-
-The easiest way to get started with Playwright Test is to run the init command.
+### Via init command
 
 ```Shell
 # Run from your project's root directory
@@ -35,9 +47,8 @@ This will create a configuration file, optionally add examples, a GitHub Action 
 
 ### Manually
 
-Add dependency and install browsers.
-
 ```Shell
+# add dependency
 npm i -D @playwright/test
 # install supported browsers
 npx playwright install
@@ -45,121 +56,88 @@ npx playwright install
 
 You can optionally install only selected browsers, see [install browsers](https://playwright.dev/docs/cli#install-browsers) for more details. Or you can install no browsers at all and use existing [browser channels](https://playwright.dev/docs/browsers).
 
-* [Getting started](https://playwright.dev/docs/intro)
 * [Installation configuration](https://playwright.dev/docs/installation)
-* [API reference](https://playwright.dev/docs/api/class-playwright)
+
+---
 
 ## Capabilities
 
+### Any browser • Any platform • One API
+* 1! API
+* cross-
+  * browser
+    * == ALL modern rendering engines
+      * *Example:* Chromium, WebKit, Firefox
+  * platform
+    * == OS
+  * language
+    * == 1! API / ALL languages
+      * *Example:* [TypeScript & Js](https://playwright.dev/docs/intro), [Python](https://playwright.dev/python/docs/intro), [.Net](https://playwright.dev/dotnet/docs/intro) & [Java](https://playwright.dev/java/docs/intro)
+        * **Note:** 👁️Previous links are different / — linked to — different program languages 👁️
+* headless & headed
+  * headless
+    * == running WITHOUT a GUI
+  * headed
+    * == running WITH a GUI
+* mobile emulation
+  * for
+    * Chrome for Android
+    * Mobile Safari
+
 ### Resilient • No flaky tests
-
-**Auto-wait**. Playwright waits for elements to be actionable prior to performing actions. It also has a rich set of introspection events. The combination of the two eliminates the need for artificial timeouts - a primary cause of flaky tests.
-
-**Web-first assertions**. Playwright assertions are created specifically for the dynamic web. Checks are automatically retried until the necessary conditions are met.
-
-**Tracing**. Configure test retry strategy, capture execution trace, videos and screenshots to eliminate flakes.
+* **Auto-wait** == NO artificial timeouts
+  * via
+    * waiting elements / being actionable
+    * introspection events
+* **Web-first assertions**
+  * assertions — created specifically for the — dynamic web (❓)
+  * checks — are retried automatically — until necessary conditions are met
+* **Tracing**
+  * — via configuration of —
+    * test retry strategy
+    * capturing
+      * execution trace
+      * videos
+      * screenshots
 
 ### No trade-offs • No limits
-
-Browsers run web content belonging to different origins in different processes. Playwright is aligned with the architecture of the modern browsers and runs tests out-of-process. This makes Playwright free of the typical in-process test runner limitations.
-
-**Multiple everything**. Test scenarios that span multiple tabs, multiple origins and multiple users. Create scenarios with different contexts for different users and run them against your server, all in one test.
-
-**Trusted events**. Hover elements, interact with dynamic controls and produce trusted events. Playwright uses real browser input pipeline indistinguishable from the real user.
-
-Test frames, pierce Shadow DOM. Playwright selectors pierce shadow DOM and allow entering frames seamlessly.
+* tests are run out-of-process
+  * **Note:** 👁️browsers run web content of different origins | different processes 👁️
+* **Multiple scenarios | 1! test**
+* **Trusted events** are produced
+* Shadow DOM is adjusted
 
 ### Full isolation • Fast execution
+* **1 browser context / test**
+  * ->
+    * full test isolation
+    * take ms
+* **Log in 1!**
+  * == authentication state of the context
+    * can be saved &
+    * reused it in ALL tests
 
-**Browser contexts**. Playwright creates a browser context for each test. Browser context is equivalent to a brand new browser profile. This delivers full test isolation with zero overhead. Creating a new browser context only takes a handful of milliseconds.
+### Tooling
+* **[Codegen](https://playwright.dev/docs/codegen)**
+  * allows
+    * record your actions
+      * on any language
+      * — & then → generate tests
+* **[Playwright inspector](https://playwright.dev/docs/inspector)**
+  * allows
+    * inspecting page
+    * generating selectors
+    * stepping through test execution
+    * seeing click points
+    * exploring execution logs
+* **[Trace Viewer](https://playwright.dev/docs/trace-viewer)**
+  * capture information →
+    * test execution screencast
+    * live DOM snapshots
+    * action explorer
+    * to investigate
 
-**Log in once**. Save the authentication state of the context and reuse it in all the tests. This bypasses repetitive log-in operations in each test, yet delivers full isolation of independent tests.
-
-### Powerful Tooling
-
-**[Codegen](https://playwright.dev/docs/codegen)**. Generate tests by recording your actions. Save them into any language.
-
-**[Playwright inspector](https://playwright.dev/docs/inspector)**. Inspect page, generate selectors, step through the test execution, see click points and explore execution logs.
-
-**[Trace Viewer](https://playwright.dev/docs/trace-viewer)**. Capture all the information to investigate the test failure. Playwright trace contains test execution screencast, live DOM snapshots, action explorer, test source and many more.
-
-Looking for Playwright for [TypeScript](https://playwright.dev/docs/intro), [JavaScript](https://playwright.dev/docs/intro), [Python](https://playwright.dev/python/docs/intro), [.NET](https://playwright.dev/dotnet/docs/intro), or [Java](https://playwright.dev/java/docs/intro)?
-
-## Examples
-
-To learn how to run these Playwright Test examples, check out our [getting started docs](https://playwright.dev/docs/intro).
-
-#### Page screenshot
-
-This code snippet navigates to Playwright homepage and saves a screenshot.
-
-```TypeScript
-import { test } from '@playwright/test';
-
-test('Page Screenshot', async ({ page }) => {
-  await page.goto('https://playwright.dev/');
-  await page.screenshot({ path: `example.png` });
-});
-```
-
-#### Mobile and geolocation
-
-This snippet emulates Mobile Safari on a device at given geolocation, navigates to maps.google.com, performs the action and takes a screenshot.
-
-```TypeScript
-import { test, devices } from '@playwright/test';
-
-test.use({
-  ...devices['iPhone 13 Pro'],
-  locale: 'en-US',
-  geolocation: { longitude: 12.492507, latitude: 41.889938 },
-  permissions: ['geolocation'],
-})
-
-test('Mobile and geolocation', async ({ page }) => {
-  await page.goto('https://maps.google.com');
-  await page.getByText('Your location').click();
-  await page.waitForRequest(/.*preview\/pwa/);
-  await page.screenshot({ path: 'colosseum-iphone.png' });
-});
-```
-
-#### Evaluate in browser context
-
-This code snippet navigates to example.com, and executes a script in the page context.
-
-```TypeScript
-import { test } from '@playwright/test';
-
-test('Evaluate in browser context', async ({ page }) => {
-  await page.goto('https://www.example.com/');
-  const dimensions = await page.evaluate(() => {
-    return {
-      width: document.documentElement.clientWidth,
-      height: document.documentElement.clientHeight,
-      deviceScaleFactor: window.devicePixelRatio
-    }
-  });
-  console.log(dimensions);
-});
-```
-
-#### Intercept network requests
-
-This code snippet sets up request routing for a page to log all network requests.
-
-```TypeScript
-import { test } from '@playwright/test';
-
-test('Intercept network requests', async ({ page }) => {
-  // Log and continue all network requests
-  await page.route('**', route => {
-    console.log(route.request().url());
-    route.continue();
-  });
-  await page.goto('http://todomvc.com');
-});
-```
+---
 
 ## Resources
 
