@@ -77,7 +77,7 @@ For more information, see [Playwright Pytest usage](./test-runners.md) or the Py
 
 ## Debugging tests
 
-Since Playwright runs in Python, you can debug it with your debugger of choice, e.g., with the [Python extension](https://code.visualstudio.com/docs/python/python-tutorial) in Visual Studio Code. Playwright comes with the Playwright Inspector which allows you to step through Playwright API calls, see their debug logs and explore [locators](../../locators.md).
+Since Playwright runs in Python, you can debug it with your debugger of choice, e.g., with the [Python extension](https://code.visualstudio.com/docs/python/python-tutorial) in Visual Studio Code. Playwright comes with the Playwright Inspector which allows you to step through Playwright API calls, see their debug logs and explore [locators](../../Guides/Locators/locators.md).
 
 To debug all tests, run the following command.
 

@@ -133,7 +133,7 @@ dotnet test -- MSTest.Parallelize.Workers=5
 
 ## Debugging Tests
 
-Since Playwright runs in .NET, you can debug it with your debugger of choice in e.g. Visual Studio Code or Visual Studio. Playwright comes with the Playwright Inspector which allows you to step through Playwright API calls, see their debug logs and explore [locators](../../locators.md).
+Since Playwright runs in .NET, you can debug it with your debugger of choice in e.g. Visual Studio Code or Visual Studio. Playwright comes with the Playwright Inspector which allows you to step through Playwright API calls, see their debug logs and explore [locators](../../Guides/Locators/locators.md).
 
 ```bash tab=bash-bash lang=csharp
 PWDEBUG=1 dotnet test

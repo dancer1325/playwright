@@ -528,8 +528,8 @@ This step will not work for pull requests created from a forked repository becau
 
 ## What's Next
 
-- [Learn how to use Locators](../../locators.md)
-- [Learn how to perform Actions](../../input.md)
+- [Learn how to use Locators](../../Guides/Locators/locators.md)
+- [Learn how to perform Actions](../../Guides/Actions/input.md)
 - [Learn how to write Assertions](./test-assertions.md)
 - [Learn more about the Trace Viewer](/trace-viewer.md)
 - [Learn more about running tests on other CI providers](/ci.md)
