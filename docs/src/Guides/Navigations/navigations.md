@@ -55,7 +55,7 @@ it depends on the page, framework, etc. So when can you start interacting with
 it?
 
 In Playwright you can interact with the page at any moment. It will automatically
-wait for the target elements to become [actionable](./actionability.md).
+wait for the target elements to become [actionable](../Auto-waiting/actionability.md).
 
 ```js
 // Navigate and click element
@@ -98,7 +98,7 @@ and will click it.
 
 Playwright operates as a very fast user - the moment it sees the button, it
 clicks it. In the general case, you don't need to worry about whether all the
-resources loaded, etc. 
+resources loaded, etc.
 
 ## Hydration
 
