@@ -7,6 +7,12 @@
     * 1! tab in a [Browser](https://playwright.dev/docs/api/class-browser)
     * [extended background page in Chromium](https://developer.chrome.com/docs/extensions/mv2/background-pages)
 * TODO:
+* `getByRole()`
+  * allows
+    * locating elements by
+      * [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles)
+      * [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes)
+      * [accessible name](https://w3c.github.io/accname/#dfn-accessible-name)
 
 ## Properties
 * TODO:
