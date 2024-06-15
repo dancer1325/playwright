@@ -105,7 +105,7 @@ await page.GetByRole(AriaRole.Button, new() { Name = "Sign in" }).ClickAsync();
 ```
 
 :::note
-Use the [code generator](./codegen.md) to generate a locator, and then edit it as you'd like.
+Use the [code generator](../../codegen.md) to generate a locator, and then edit it as you'd like.
 :::
 
 Every time a locator is used for an action, an up-to-date DOM element is located in the page. In the snippet
@@ -1275,17 +1275,17 @@ await newEmail.ClickAsync();
 ### Matching only visible elements
 
 :::note
-It's usually better to find a [more reliable way](./locators.md#quick-guide) to uniquely identify the element instead of checking the visibility.
+It's usually better to find a [more reliable way](locators.mduick-guide) to uniquely identify the element instead of checking the visibility.
 :::
 
-Consider a page with two buttons, the first invisible and the second [visible](./actionability.md#visible).
+Consider a page with two buttons, the first invisible and the second [visible](../Auto-waiting/actionability.md#visible).
 
 ```html
 <button style='display: none'>Invisible</button>
 <button>Visible</button>
 ```
 
-* This will find both buttons and throw a [strictness](./locators.md#strictness) violation error:
+* This will find both buttons and throw a [strictness](locators.mdtrictness) violation error:
 
   ```js
   await page.locator('button').click();
@@ -1788,4 +1788,4 @@ You can explicitly opt-out from strictness check by telling Playwright which ele
 
 ## More Locators
 
-For less commonly used locators, look at the [other locators](./other-locators.md) guide.
+For less commonly used locators, look at the [other locators](../../other-locators.md) guide.
