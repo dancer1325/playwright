@@ -1,0 +1,15 @@
+{
+  "name": "page",
+  "version": "1.0.0",
+  "description": "* extends [EventEmitter](https://nodejs.org/api/events.html#class-eventemitter) * 1+ Page instances can exist / 1 Browser",
+  "main": "index.js",
+  "scripts": {
+    "main": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "playwright": "^1.44.1"
+  }
+}
