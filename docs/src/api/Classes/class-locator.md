@@ -4,7 +4,7 @@
 Locators are the central piece of Playwright's auto-waiting and retry-ability. In a nutshell, locators represent
 a way to find element(s) on the page at any moment. A locator can be created with the [`method: Page.locator`] method.
 
-[Learn more about locators](../locators.md).
+[Learn more about locators](../../Guides/Locators/locators.md).
 
 ## async method: Locator.all
 * since: v1.29
@@ -228,7 +228,7 @@ Ensure that checkbox or radio element is checked.
 Performs the following steps:
 1. Ensure that element is a checkbox or a radio input. If not, this method throws. If the element is already
    checked, this method returns immediately.
-1. Wait for [actionability](../actionability.md) checks on the element, unless [`option: force`] option is set.
+1. Wait for [actionability](../../Guides/Auto-waiting/actionability.md) checks on the element, unless [`option: force`] option is set.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
@@ -286,7 +286,7 @@ Clear the input field.
 
 **Details**
 
-This method waits for [actionability](../actionability.md) checks, focuses the element, clears it and triggers an `input` event after clearing.
+This method waits for [actionability](../../Guides/Auto-waiting/actionability.md) checks, focuses the element, clears it and triggers an `input` event after clearing.
 
 If the target element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be cleared instead.
 
@@ -334,7 +334,7 @@ Click an element.
 **Details**
 
 This method clicks the element by performing the following steps:
-1. Wait for [actionability](../actionability.md) checks on the element, unless [`option: force`] option is set.
+1. Wait for [actionability](../../Guides/Auto-waiting/actionability.md) checks on the element, unless [`option: force`] option is set.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element, or the specified [`option: position`].
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
@@ -480,7 +480,7 @@ Double-click an element.
 **Details**
 
 This method double clicks the element by performing the following steps:
-1. Wait for [actionability](../actionability.md) checks on the element, unless [`option: force`] option is set.
+1. Wait for [actionability](../../Guides/Auto-waiting/actionability.md) checks on the element, unless [`option: force`] option is set.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to double click in the center of the element, or the specified [`option: position`].
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set. Note that
@@ -971,7 +971,7 @@ await page.GetByRole(AriaRole.Textbox).FillAsync("example value");
 
 **Details**
 
-This method waits for [actionability](../actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling. Note that you can pass an empty string to clear the input field.
+This method waits for [actionability](../../Guides/Auto-waiting/actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling. Note that you can pass an empty string to clear the input field.
 
 If the target element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be filled instead.
 
@@ -1245,7 +1245,7 @@ await page.GetByRole(AriaRole.Link).HoverAsync();
 **Details**
 
 This method hovers over the element by performing the following steps:
-1. Wait for [actionability](../actionability.md) checks on the element, unless [`option: force`] option is set.
+1. Wait for [actionability](../../Guides/Auto-waiting/actionability.md) checks on the element, unless [`option: force`] option is set.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to hover over the center of the element, or the specified [`option: position`].
 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
@@ -1388,7 +1388,7 @@ var isChecked = await page.GetByRole(AriaRole.Checkbox).IsCheckedAsync();
 * since: v1.14
 - returns: <[boolean]>
 
-Returns whether the element is disabled, the opposite of [enabled](../actionability.md#enabled).
+Returns whether the element is disabled, the opposite of [enabled](../../Guides/Auto-waiting/actionability.md#enabled).
 
 :::warning[Asserting disabled state]
 If you need to assert that an element is disabled, prefer [`method: LocatorAssertions.toBeDisabled`] to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
@@ -1426,7 +1426,7 @@ Boolean disabled = await page.GetByRole(AriaRole.Button).IsDisabledAsync();
 * since: v1.14
 - returns: <[boolean]>
 
-Returns whether the element is [editable](../actionability.md#editable).
+Returns whether the element is [editable](../../Guides/Auto-waiting/actionability.md#editable).
 
 :::warning[Asserting editable state]
 If you need to assert that an element is editable, prefer [`method: LocatorAssertions.toBeEditable`] to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
@@ -1464,7 +1464,7 @@ Boolean editable = await page.GetByRole(AriaRole.Textbox).IsEditableAsync();
 * since: v1.14
 - returns: <[boolean]>
 
-Returns whether the element is [enabled](../actionability.md#enabled).
+Returns whether the element is [enabled](../../Guides/Auto-waiting/actionability.md#enabled).
 
 :::warning[Asserting enabled state]
 If you need to assert that an element is enabled, prefer [`method: LocatorAssertions.toBeEnabled`] to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
@@ -1502,7 +1502,7 @@ Boolean enabled = await page.GetByRole(AriaRole.Button).IsEnabledAsync();
 * since: v1.14
 - returns: <[boolean]>
 
-Returns whether the element is hidden, the opposite of [visible](../actionability.md#visible).
+Returns whether the element is hidden, the opposite of [visible](../../Guides/Auto-waiting/actionability.md#visible).
 
 :::warning[Asserting visibility]
 If you need to assert that element is hidden, prefer [`method: LocatorAssertions.toBeHidden`] to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
@@ -1539,7 +1539,7 @@ Boolean hidden = await page.GetByRole(AriaRole.Button).IsHiddenAsync();
 * since: v1.14
 - returns: <[boolean]>
 
-Returns whether the element is [visible](../actionability.md#visible).
+Returns whether the element is [visible](../../Guides/Auto-waiting/actionability.md#visible).
 
 :::warning[Asserting visibility]
 If you need to assert that element is visible, prefer [`method: LocatorAssertions.toBeVisible`] to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
@@ -1945,7 +1945,7 @@ await page.GetByRole(AriaRole.Link).ScreenshotAsync(new() {
 
 This method captures a screenshot of the page, clipped to the size and position of a particular element matching the locator. If the element is covered by other elements, it will not be actually visible on the screenshot. If the element is a scrollable container, only the currently scrolled content will be visible on the screenshot.
 
-This method waits for the [actionability](../actionability.md) checks, then scrolls element into view before taking a
+This method waits for the [actionability](../../Guides/Auto-waiting/actionability.md) checks, then scrolls element into view before taking a
 screenshot. If the element is detached from DOM, the method throws an error.
 
 Returns the buffer with the captured screenshot.
@@ -1968,11 +1968,11 @@ Returns the buffer with the captured screenshot.
 ## async method: Locator.scrollIntoViewIfNeeded
 * since: v1.14
 
-This method waits for [actionability](../actionability.md) checks, then tries to scroll element into view, unless it is
+This method waits for [actionability](../../Guides/Auto-waiting/actionability.md) checks, then tries to scroll element into view, unless it is
 completely visible as defined by
 [IntersectionObserver](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API)'s `ratio`.
 
-See [scrolling](../input.md#scrolling) for alternative ways to scroll.
+See [scrolling](../../Guides/Actions/input.md#scrolling) for alternative ways to scroll.
 
 ### option: Locator.scrollIntoViewIfNeeded.timeout = %%-input-timeout-%%
 * since: v1.14
@@ -1988,7 +1988,7 @@ Selects option or options in `<select>`.
 
 **Details**
 
-This method waits for [actionability](../actionability.md) checks, waits until all specified options are present in the `<select>` element and selects these options.
+This method waits for [actionability](../../Guides/Auto-waiting/actionability.md) checks, waits until all specified options are present in the `<select>` element and selects these options.
 
 If the target element is not a `<select>` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be used instead.
 
@@ -2083,7 +2083,7 @@ await element.SelectOptionAsync(new[] { "red", "green", "blue" });
 ## async method: Locator.selectText
 * since: v1.14
 
-This method waits for [actionability](../actionability.md) checks, then focuses the element and selects all its text
+This method waits for [actionability](../../Guides/Auto-waiting/actionability.md) checks, then focuses the element and selects all its text
 content.
 
 If the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), focuses and selects text in the control instead.
@@ -2129,7 +2129,7 @@ await page.GetByRole(AriaRole.Checkbox).SetCheckedAsync(true);
 This method checks or unchecks an element by performing the following steps:
 1. Ensure that matched element is a checkbox or a radio input. If not, this method throws.
 1. If the element already has the right checked state, this method returns immediately.
-1. Wait for [actionability](../actionability.md) checks on the matched element, unless [`option: force`] option is
+1. Wait for [actionability](../../Guides/Auto-waiting/actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
@@ -2303,7 +2303,7 @@ Perform a tap gesture on the element matching the locator.
 **Details**
 
 This method taps the element by performing the following steps:
-1. Wait for [actionability](../actionability.md) checks on the element, unless [`option: force`] option is set.
+1. Wait for [actionability](../../Guides/Auto-waiting/actionability.md) checks on the element, unless [`option: force`] option is set.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.touchscreen`] to tap the center of the element, or the specified [`option: position`].
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
@@ -2417,7 +2417,7 @@ await page.GetByRole(AriaRole.Checkbox).UncheckAsync();
 This method unchecks the element by performing the following steps:
 1. Ensure that element is a checkbox or a radio input. If not, this method throws. If the element is already
    unchecked, this method returns immediately.
-1. Wait for [actionability](../actionability.md) checks on the element, unless [`option: force`] option is set.
+1. Wait for [actionability](../../Guides/Auto-waiting/actionability.md) checks on the element, unless [`option: force`] option is set.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.

@@ -1,7 +1,7 @@
 # class: Clock
 * since: v1.45
 
-Accurately simulating time-dependent behavior is essential for verifying the correctness of applications. Learn more about [clock emulation](../clock.md).
+Accurately simulating time-dependent behavior is essential for verifying the correctness of applications. Learn more about [clock emulation](../../clock.md).
 
 Note that clock is installed for the entire [BrowserContext], so the time
 in all the pages and iframes is controlled by the same clock.
