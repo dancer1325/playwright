@@ -724,14 +724,14 @@ Brings page to front (activates tab).
 
 ## async method: Page.check
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.check`] instead. Read more about [locators](../locators.md).
+* discouraged: Use locator-based [`method: Locator.check`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
 
 This method checks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
 1. Ensure that matched element is a checkbox or a radio input. If not, this method throws. If the element is already
    checked, this method returns immediately.
-1. Wait for [actionability](../actionability.md) checks on the matched element, unless [`option: force`] option is
+1. Wait for [actionability](../../../Guides/Auto-waiting/actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
@@ -767,12 +767,12 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ## async method: Page.click
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.click`] instead. Read more about [locators](../locators.md).
+* discouraged: Use locator-based [`method: Locator.click`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
 
 This method clicks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
-1. Wait for [actionability](../actionability.md) checks on the matched element, unless [`option: force`] option is
+1. Wait for [actionability](../../../Guides/Auto-waiting/actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element, or the specified [`option: position`].
@@ -864,18 +864,18 @@ Get the browser context that the page belongs to.
 Only available for Chromium atm.
 :::
 
-Browser-specific Coverage implementation. See [Coverage](./class-coverage) for more details.
+Browser-specific Coverage implementation. See [Coverage](../class-coverage.md) for more details.
 
 ## async method: Page.dblclick
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.dblclick`] instead. Read more about [locators](../locators.md).
+* discouraged: Use locator-based [`method: Locator.dblclick`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
 * langs:
   - alias-csharp: DblClickAsync
 
 This method double clicks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
-1. Wait for [actionability](../actionability.md) checks on the matched element, unless [`option: force`] option is
+1. Wait for [actionability](../../../Guides/Auto-waiting/actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to double click in the center of the element, or the specified [`option: position`].
@@ -924,7 +924,7 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ## async method: Page.dispatchEvent
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.dispatchEvent`] instead. Read more about [locators](../locators.md).
+* discouraged: Use locator-based [`method: Locator.dispatchEvent`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
 
 The snippet below dispatches the `click` event on the element. Regardless of the visibility state of the element, `click`
 is dispatched. This is equivalent to calling
@@ -2103,9 +2103,9 @@ Callback function which will be called in Playwright's context.
 
 ## async method: Page.fill
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.fill`] instead. Read more about [locators](../locators.md).
+* discouraged: Use locator-based [`method: Locator.fill`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
 
-This method waits for an element matching [`param: selector`], waits for [actionability](../actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling. Note that you can pass an empty string to clear the input field.
+This method waits for an element matching [`param: selector`], waits for [actionability](../../../Guides/Auto-waiting/actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling. Note that you can pass an empty string to clear the input field.
 
 If the target element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be filled instead.
 
@@ -2137,7 +2137,7 @@ Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
 
 ## async method: Page.focus
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.focus`] instead. Read more about [locators](../locators.md).
+* discouraged: Use locator-based [`method: Locator.focus`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
 
 This method fetches an element with [`param: selector`] and focuses it. If there's no element matching
 [`param: selector`], the method waits until a matching element appears in the DOM.
@@ -2287,7 +2287,7 @@ An array of all frames attached to the page.
 
 ## async method: Page.getAttribute
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.getAttribute`] instead. Read more about [locators](../locators.md).
+* discouraged: Use locator-based [`method: Locator.getAttribute`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
 - returns: <[null]|[string]>
 
 Returns element attribute value.
@@ -2475,12 +2475,12 @@ Referer header value. If provided it will take preference over the referer heade
 
 ## async method: Page.hover
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.hover`] instead. Read more about [locators](../locators.md).
+* discouraged: Use locator-based [`method: Locator.hover`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
 
 This method hovers over an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
-1. Wait for [actionability](../actionability.md) checks on the matched element, unless [`option: force`] option is
+1. Wait for [actionability](../../../Guides/Auto-waiting/actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to hover over the center of the element, or the specified [`option: position`].
@@ -2518,7 +2518,7 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ## async method: Page.innerHTML
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.innerHTML`] instead. Read more about [locators](../locators.md).
+* discouraged: Use locator-based [`method: Locator.innerHTML`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
 - returns: <[string]>
 
 Returns `element.innerHTML`.
@@ -2537,7 +2537,7 @@ Returns `element.innerHTML`.
 
 ## async method: Page.innerText
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.innerText`] instead. Read more about [locators](../locators.md).
+* discouraged: Use locator-based [`method: Locator.innerText`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
 - returns: <[string]>
 
 Returns `element.innerText`.
@@ -2556,7 +2556,7 @@ Returns `element.innerText`.
 
 ## async method: Page.inputValue
 * since: v1.13
-* discouraged: Use locator-based [`method: Locator.inputValue`] instead. Read more about [locators](../locators.md).
+* discouraged: Use locator-based [`method: Locator.inputValue`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
 - returns: <[string]>
 
 Returns `input.value` for the selected `<input>` or `<textarea>` or `<select>` element.
@@ -2577,7 +2577,7 @@ Throws for non-input elements. However, if the element is inside the `<label>` e
 
 ## async method: Page.isChecked
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.isChecked`] instead. Read more about [locators](../locators.md).
+* discouraged: Use locator-based [`method: Locator.isChecked`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
 - returns: <[boolean]>
 
 Returns whether the element is checked. Throws if the element is not a checkbox or radio input.
@@ -2602,10 +2602,10 @@ Indicates that the page has been closed.
 
 ## async method: Page.isDisabled
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.isDisabled`] instead. Read more about [locators](../locators.md).
+* discouraged: Use locator-based [`method: Locator.isDisabled`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
 - returns: <[boolean]>
 
-Returns whether the element is disabled, the opposite of [enabled](../actionability.md#enabled).
+Returns whether the element is disabled, the opposite of [enabled](../../../Guides/Auto-waiting/actionability.md#enabled).
 
 ### param: Page.isDisabled.selector = %%-input-selector-%%
 * since: v1.8
@@ -2621,10 +2621,10 @@ Returns whether the element is disabled, the opposite of [enabled](../actionabil
 
 ## async method: Page.isEditable
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.isEditable`] instead. Read more about [locators](../locators.md).
+* discouraged: Use locator-based [`method: Locator.isEditable`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
 - returns: <[boolean]>
 
-Returns whether the element is [editable](../actionability.md#editable).
+Returns whether the element is [editable](../../../Guides/Auto-waiting/actionability.md#editable).
 
 ### param: Page.isEditable.selector = %%-input-selector-%%
 * since: v1.8
@@ -2640,10 +2640,10 @@ Returns whether the element is [editable](../actionability.md#editable).
 
 ## async method: Page.isEnabled
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.isEnabled`] instead. Read more about [locators](../locators.md).
+* discouraged: Use locator-based [`method: Locator.isEnabled`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
 - returns: <[boolean]>
 
-Returns whether the element is [enabled](../actionability.md#enabled).
+Returns whether the element is [enabled](../../../Guides/Auto-waiting/actionability.md#enabled).
 
 ### param: Page.isEnabled.selector = %%-input-selector-%%
 * since: v1.8
@@ -2659,10 +2659,10 @@ Returns whether the element is [enabled](../actionability.md#enabled).
 
 ## async method: Page.isHidden
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.isHidden`] instead. Read more about [locators](../locators.md).
+* discouraged: Use locator-based [`method: Locator.isHidden`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
 - returns: <[boolean]>
 
-Returns whether the element is hidden, the opposite of [visible](../actionability.md#visible).  [`option: selector`] that does not match any elements is considered hidden.
+Returns whether the element is hidden, the opposite of [visible](../../../Guides/Auto-waiting/actionability.md#visible).  [`option: selector`] that does not match any elements is considered hidden.
 
 ### param: Page.isHidden.selector = %%-input-selector-%%
 * since: v1.8
@@ -2678,10 +2678,10 @@ Returns whether the element is hidden, the opposite of [visible](../actionabilit
 
 ## async method: Page.isVisible
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.isVisible`] instead. Read more about [locators](../locators.md).
+* discouraged: Use locator-based [`method: Locator.isVisible`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
 - returns: <[boolean]>
 
-Returns whether the element is [visible](../actionability.md#visible). [`option: selector`] that does not match any elements is considered not visible.
+Returns whether the element is [visible](../../../Guides/Auto-waiting/actionability.md#visible). [`option: selector`] that does not match any elements is considered not visible.
 
 ### param: Page.isVisible.selector = %%-input-selector-%%
 * since: v1.8
@@ -3007,7 +3007,7 @@ Whether or not to embed the document outline into the PDF. Defaults to `false`.
 
 ## async method: Page.press
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.press`] instead. Read more about [locators](../locators.md).
+* discouraged: Use locator-based [`method: Locator.press`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
 
 Focuses the element, and then uses [`method: Keyboard.down`] and [`method: Keyboard.up`].
 
@@ -3119,7 +3119,7 @@ Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
 
 ## async method: Page.querySelector
 * since: v1.9
-* discouraged: Use locator-based [`method: Page.locator`] instead. Read more about [locators](../locators.md).
+* discouraged: Use locator-based [`method: Page.locator`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
 * langs:
   - alias-python: query_selector
   - alias-js: $
@@ -3136,7 +3136,7 @@ return value resolves to `null`. To wait for an element on the page, use [`metho
 
 ## async method: Page.querySelectorAll
 * since: v1.9
-* discouraged: Use locator-based [`method: Page.locator`] instead. Read more about [locators](../locators.md).
+* discouraged: Use locator-based [`method: Page.locator`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
 * langs:
   - alias-python: query_selector_all
   - alias-js: $$
@@ -3158,7 +3158,7 @@ This method lets you set up a special function, called a handler, that activates
 
 Things to keep in mind:
 * When an overlay is shown predictably, we recommend explicitly waiting for it in your test and dismissing it as a part of your normal test flow, instead of using [`method: Page.addLocatorHandler`].
-* Playwright checks for the overlay every time before executing or retrying an action that requires an [actionability check](../actionability.md), or before performing an auto-waiting assertion check. When overlay is visible, Playwright calls the handler first, and then proceeds with the action/assertion. Note that the handler is only called when you perform an action/assertion - if the overlay becomes visible but you don't perform any actions, the handler will not be triggered.
+* Playwright checks for the overlay every time before executing or retrying an action that requires an [actionability check](../../../Guides/Auto-waiting/actionability.md), or before performing an auto-waiting assertion check. When overlay is visible, Playwright calls the handler first, and then proceeds with the action/assertion. Note that the handler is only called when you perform an action/assertion - if the overlay becomes visible but you don't perform any actions, the handler will not be triggered.
 * After executing the handler, Playwright will ensure that overlay that triggered the handler is not visible anymore. You can opt-out of this behavior with [`option: noWaitAfter`].
 * The execution time of the handler counts towards the timeout of the action/assertion that executed the handler. If your handler takes too long, it might cause timeouts.
 * You can register multiple handlers. However, only a single handler will be running at a time. Make sure the actions within a handler don't depend on another handler.
@@ -3637,7 +3637,7 @@ How often a route should be used. By default it will be used every time.
 ## async method: Page.routeFromHAR
 * since: v1.23
 
-If specified the network requests that are made in the page will be served from the HAR file. Read more about [Replaying from HAR](../mock.md#replaying-from-har).
+If specified the network requests that are made in the page will be served from the HAR file. Read more about [Replaying from HAR](../../../mock.md#replaying-from-har).
 
 Playwright will not serve requests intercepted by Service Worker from the HAR file. See [this](https://github.com/microsoft/playwright/issues/1090) issue. We recommend disabling Service Workers when using request interception by setting [`option: Browser.newContext.serviceWorkers`] to `'block'`.
 
@@ -3708,10 +3708,10 @@ Returns the buffer with the captured screenshot.
 
 ## async method: Page.selectOption
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.selectOption`] instead. Read more about [locators](../locators.md).
+* discouraged: Use locator-based [`method: Locator.selectOption`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
 - returns: <[Array]<[string]>>
 
-This method waits for an element matching [`param: selector`], waits for [actionability](../actionability.md) checks, waits until all specified options are present in the `<select>` element and selects these options.
+This method waits for an element matching [`param: selector`], waits for [actionability](../../../Guides/Auto-waiting/actionability.md) checks, waits until all specified options are present in the `<select>` element and selects these options.
 
 If the target element is not a `<select>` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be used instead.
 
@@ -3804,14 +3804,14 @@ await page.SelectOptionAsync("select#colors", new[] { "red", "green", "blue" });
 
 ## async method: Page.setChecked
 * since: v1.15
-* discouraged: Use locator-based [`method: Locator.setChecked`] instead. Read more about [locators](../locators.md).
+* discouraged: Use locator-based [`method: Locator.setChecked`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
 
 This method checks or unchecks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
 1. Ensure that matched element is a checkbox or a radio input. If not, this method throws.
 1. If the element already has the right checked state, this method returns immediately.
-1. Wait for [actionability](../actionability.md) checks on the matched element, unless [`option: force`] option is
+1. Wait for [actionability](../../../Guides/Auto-waiting/actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
@@ -3923,7 +3923,7 @@ An object containing additional HTTP headers to be sent with every request. All 
 
 ## async method: Page.setInputFiles
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.setInputFiles`] instead. Read more about [locators](../locators.md).
+* discouraged: Use locator-based [`method: Locator.setInputFiles`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
 
 Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they
 are resolved relative to the current working directory. For empty array, clears the selected files.
@@ -4013,12 +4013,12 @@ await page.GotoAsync("https://www.microsoft.com");
 
 ## async method: Page.tap
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.tap`] instead. Read more about [locators](../locators.md).
+* discouraged: Use locator-based [`method: Locator.tap`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
 
 This method taps an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
-1. Wait for [actionability](../actionability.md) checks on the matched element, unless [`option: force`] option is
+1. Wait for [actionability](../../../Guides/Auto-waiting/actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.touchscreen`] to tap the center of the element, or the specified [`option: position`].
@@ -4060,7 +4060,7 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ## async method: Page.textContent
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.textContent`] instead. Read more about [locators](../locators.md).
+* discouraged: Use locator-based [`method: Locator.textContent`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
 - returns: <[null]|[string]>
 
 Returns `element.textContent`.
@@ -4127,14 +4127,14 @@ Time to wait between key presses in milliseconds. Defaults to 0.
 
 ## async method: Page.uncheck
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.uncheck`] instead. Read more about [locators](../locators.md).
+* discouraged: Use locator-based [`method: Locator.uncheck`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
 
 This method unchecks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
 1. Ensure that matched element is a checkbox or a radio input. If not, this method throws. If the element is already
    unchecked, this method returns immediately.
-1. Wait for [actionability](../actionability.md) checks on the matched element, unless [`option: force`] option is
+1. Wait for [actionability](../../../Guides/Auto-waiting/actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
@@ -4527,7 +4527,7 @@ This resolves when the page reaches a required load state, `load` by default. Th
 when this method is called. If current document has already reached the required state, resolves immediately.
 
 :::note
-Most of the time, this method is not needed because Playwright [auto-waits before every action](../actionability.md).
+Most of the time, this method is not needed because Playwright [auto-waits before every action](../../../Guides/Auto-waiting/actionability.md).
 :::
 
 **Usage**
@@ -4735,7 +4735,7 @@ Receives the [Page] object and resolves to truthy value when the waiting should 
   * alias-csharp: RunAndWaitForRequest
 - returns: <[Request]>
 
-Waits for the matching request and returns it. See [waiting for event](../events.md#waiting-for-event) for more details about events.
+Waits for the matching request and returns it. See [waiting for event](../../../events.md#waiting-for-event) for more details about events.
 
 **Usage**
 
@@ -4874,7 +4874,7 @@ Receives the [Request] object and resolves to truthy value when the waiting shou
   * alias-csharp: RunAndWaitForResponse
 - returns: <[Response]>
 
-Returns the matched response. See [waiting for event](../events.md#waiting-for-event) for more details about events.
+Returns the matched response. See [waiting for event](../../../events.md#waiting-for-event) for more details about events.
 
 **Usage**
 
@@ -4985,7 +4985,7 @@ changed by using the [`method: BrowserContext.setDefaultTimeout`] or [`method: P
 ## async method: Page.waitForSelector
 * since: v1.8
 * discouraged: Use web assertions that assert visibility or a locator-based [`method: Locator.waitFor`] instead.
-  Read more about [locators](../locators.md).
+  Read more about [locators](../../../Guides/Locators/locators.md).
 - returns: <[null]|[ElementHandle]>
 
 Returns when element specified by selector satisfies [`option: state`] option. Returns `null` if waiting for `hidden` or
