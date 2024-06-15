@@ -188,7 +188,7 @@ export default defineConfig({
 | [`property: TestOptions.bypassCSP`] |Toggles bypassing Content-Security-Policy. Useful when CSP includes the production origin. Defaults to `false`. |
 | [`property: TestOptions.channel`] | Browser channel to use. [Learn more](../browsers.md) about different browsers and channels. |
 | [`property: TestOptions.headless`] | Whether to run the browser in headless mode meaning no browser is shown when running tests. Defaults to `true`. |
-| [`property: TestOptions.testIdAttribute`] | Changes the default [`data-testid` attribute](../locators.md#locate-by-test-id) used by Playwright locators. |
+| [`property: TestOptions.testIdAttribute`] | Changes the default [`data-testid` attribute](../Guides/Locators/locators.md#locate-by-test-id) used by Playwright locators. |
 
 ### More browser and context options
 
