@@ -28,11 +28,11 @@ You can also edit the locators in VS Code and Playwright will show you the chang
 
 ### Picking a Locator
 
-Pick a [locator](./locators.md) and copy it into your test file by clicking the **Pick locator** button form the testing sidebar. Then in the browser click the element you require and it will now show up in the **Pick locator** box in VS Code. Press 'enter' on your keyboard to copy the locator into the clipboard and then paste anywhere in your code. Or press 'escape' if you want to cancel.
+Pick a [locator](Guides/Locators/locators.md) and copy it into your test file by clicking the **Pick locator** button form the testing sidebar. Then in the browser click the element you require and it will now show up in the **Pick locator** box in VS Code. Press 'enter' on your keyboard to copy the locator into the clipboard and then paste anywhere in your code. Or press 'escape' if you want to cancel.
 
 <img width="1394" alt="Pick locators" src="https://user-images.githubusercontent.com/13063165/212741666-6479a702-2517-44a3-9eca-e719e13b379c.png" />
 
-Playwright will look at your page and figure out the best locator, prioritizing [role, text and test id locators](./locators.md). If Playwright finds multiple elements matching the locator, it will improve the locator to make it resilient and uniquely identify the target element, so you don't have to worry about failing tests due to locators.
+Playwright will look at your page and figure out the best locator, prioritizing [role, text and test id locators](Guides/Locators/locators.md). If Playwright finds multiple elements matching the locator, it will improve the locator to make it resilient and uniquely identify the target element, so you don't have to worry about failing tests due to locators.
 
 ### Run in Debug Mode
 
@@ -201,7 +201,7 @@ Once you add a `page.pause()` call, run your tests in debug mode. Clicking the "
 
 ### Live editing locators
 
-While running in debug mode you can live edit the locators. Next to the 'Pick Locator' button there is a field showing the [locator](./locators.md) that the test is paused on. You can edit this locator directly in the **Pick Locator** field, and matching elements will be highlighted in the browser window.
+While running in debug mode you can live edit the locators. Next to the 'Pick Locator' button there is a field showing the [locator](Guides/Locators/locators.md) that the test is paused on. You can edit this locator directly in the **Pick Locator** field, and matching elements will be highlighted in the browser window.
 
 <img width="1348" alt="live editing locators" src="https://user-images.githubusercontent.com/13063165/212980815-1cf6ef7b-e69a-496c-898a-ec603a3bc562.png" />
 
@@ -211,11 +211,11 @@ While debugging you might need to choose a more resilient locator. You can do th
 
 <img width="1392" alt="Picking locators" src="https://user-images.githubusercontent.com/13063165/212968640-ce82a027-9277-4bdf-b0a9-6282fb2becb7.png" />
 
-Playwright will look at your page and figure out the best locator, prioritizing [role, text and test id locators](./locators.md). If Playwright finds multiple elements matching the locator, it will improve the locator to make it resilient and uniquely identify the target element, so you don't have to worry about failing tests due to locators.
+Playwright will look at your page and figure out the best locator, prioritizing [role, text and test id locators](Guides/Locators/locators.md). If Playwright finds multiple elements matching the locator, it will improve the locator to make it resilient and uniquely identify the target element, so you don't have to worry about failing tests due to locators.
 
 ### Actionability logs
 
-By the time Playwright has paused on a click action, it has already performed [actionability checks](./actionability.md) that can be found in the log. This can help you understand what happened during your test and what Playwright did or tried to do. The log tells you if the element was visible, enabled and stable, if the locator resolved to an element, scrolled into view, and so much more. If actionability can't be reached, it will show the action as pending.
+By the time Playwright has paused on a click action, it has already performed [actionability checks](Guides/Auto-waiting/actionability.md) that can be found in the log. This can help you understand what happened during your test and what Playwright did or tried to do. The log tells you if the element was visible, enabled and stable, if the locator resolved to an element, scrolled into view, and so much more. If actionability can't be reached, it will show the action as pending.
 
 <img width="883" alt="Actionability Logs" src="https://user-images.githubusercontent.com/13063165/212968907-5dede739-e0e3-482a-91cd-726a0f5b0b6d.png" />
 
@@ -235,7 +235,7 @@ To learn more about how to record traces and use the Trace Viewer, check out the
 When running in Debug Mode with `PWDEBUG=console`, a `playwright` object is available in the Developer tools console. Developer tools can help you to:
 
 - Inspect the DOM tree and **find element selectors**
-- **See console logs** during execution (or learn how to [read logs via API](./api/class-page.md#page-event-console))
+- **See console logs** during execution (or learn how to [read logs via API](api/Classes/Page/class-page.md#page-event-console))
 - Check **network activity** and other developer tools features
 
 This will also set the default timeouts of Playwright to 0 (= no timeout).

@@ -15,10 +15,10 @@ If you use DOM Testing Library in the browser (for example, you bundle end-to-en
 
 | Testing Library                                                                 | Playwright                                                             |
 | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| [screen](https://testing-library.com/docs/queries/about#screen)                 | [page](./api/class-page) and [component](./api/class-locator)          |
-| [queries](https://testing-library.com/docs/queries/about)                       | [locators](./locators)                                                 |
+| [screen](https://testing-library.com/docs/queries/about#screen)                 | [page](api/Classes/Page/class-page.md) and [component](api/Classes/class-locator.md)          |
+| [queries](https://testing-library.com/docs/queries/about)                       | [locators](Guides/Locators/locators.md)                                                 |
 | [async helpers](https://testing-library.com/docs/dom-testing-library/api-async) | [assertions](./test-assertions)                                        |
-| [user events](https://testing-library.com/docs/user-event/intro)                | [actions](./api/class-locator)                                         |
+| [user events](https://testing-library.com/docs/user-event/intro)                | [actions](api/Classes/class-locator.md)                                         |
 | `await user.click(screen.getByText('Click me'))`                                | `await component.getByText('Click me').click()`                        |
 | `await user.click(await screen.findByText('Click me'))`                         | `await component.getByText('Click me').click()`                        |
 | `await user.type(screen.getByLabelText('Password'), 'secret')`                  | `await component.getByLabel('Password').fill('secret')`                |
@@ -80,13 +80,13 @@ Migration highlights (see inline comments in the Playwright Test code snippet):
 
 1. Import everything from `@playwright/experimental-ct-react` (or -vue, -svelte) for component tests, or from `@playwright/test` for end-to-end tests.
 1. Test function is given a `page` that is isolated from other tests, and `mount` that renders a component in this page. These are two of the [useful fixtures](./api/class-fixtures) in Playwright Test.
-1. Replace `render` with `mount` that returns a [component locator](./locators).
+1. Replace `render` with `mount` that returns a [component locator](Guides/Locators/locators.md).
 1. Use locators created with [`method: Locator.locator`] or [`method: Page.locator`] to perform most of the actions.
 1. Use [assertions](./test-assertions) to verify the state.
 
 ## Migrating queries
 
-All queries like `getBy...`, `findBy...`, `queryBy...` and their multi-element counterparts are replaced with `component.getBy...` locators. Locators always auto-wait and retry when needed, so you don't have to worry about choosing the right method. When you want to do a [list operation](./locators#lists), e.g. assert a list of texts, Playwright automatically performs multi-element operations.
+All queries like `getBy...`, `findBy...`, `queryBy...` and their multi-element counterparts are replaced with `component.getBy...` locators. Locators always auto-wait and retry when needed, so you don't have to worry about choosing the right method. When you want to do a [list operation](Guides/Locators/locators.md#lists), e.g. assert a list of texts, Playwright automatically performs multi-element operations.
 
 ## Replacing `waitFor`
 
@@ -133,7 +133,7 @@ Once you're on Playwright Test, you get a lot!
 
 - Full zero-configuration TypeScript support
 - Run tests across **all web engines** (Chrome, Firefox, Safari) on **any popular operating system** (Windows, macOS, Ubuntu)
-- Full support for multiple origins, [(i)frames](./api/class-frame), [tabs and contexts](./pages)
+- Full support for multiple origins, [(i)frames](api/Classes/class-frame.md), [tabs and contexts](./pages)
 - Run tests in isolation in parallel across multiple browsers
 - Built-in test [artifact collection](./test-use-options.md#recording-options)
 
@@ -150,6 +150,6 @@ Learn more about Playwright Test runner:
 
 - [Getting Started](./intro)
 - [Experimental Component Testing](./test-components)
-- [Locators](./locators.md)
+- [Locators](Guides/Locators/locators.md)
 - [Assertions](./test-assertions)
-- [Auto-waiting](./actionability)
+- [Auto-waiting](Guides/Auto-waiting/actionability.md)

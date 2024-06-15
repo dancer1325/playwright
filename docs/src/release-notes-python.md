@@ -45,7 +45,7 @@ page.remove_locator_handler(locator)
 
 **Miscellaneous options**
 
-- [`method: PageAssertions.toHaveURL`] now supports `ignore_case` [option](./api/class-pageassertions#page-assertions-to-have-url-option-ignore-case).
+- [`method: PageAssertions.toHaveURL`] now supports `ignore_case` [option](api/Classes/class-pageassertions.md#page-assertions-to-have-url-option-ignore-case).
 
 ### Browser Versions
 
@@ -109,7 +109,7 @@ This version was also tested against the following stable channels:
 ### New Locator Handler
 
 New method [`method: Page.addLocatorHandler`] registers a callback that will be invoked when specified element becomes visible and may block Playwright actions. The callback can get rid of the overlay. Here is an example that closes a cookie dialog when it appears.
-  
+
 ```python
 # Setup the handler.
 page.add_locator_handler(
@@ -412,7 +412,7 @@ This version was also tested against the following stable channels:
 
 - Custom expect message, see [test assertions documentation](./test-assertions.md#custom-expect-message).
 - New options [`option: updateMode`] and [`option: updateContent`] in [`method: Page.routeFromHAR`] and [`method: BrowserContext.routeFromHAR`].
-- Chaining existing locator objects, see [locator docs](./locators.md#matching-inside-a-locator) for details.
+- Chaining existing locator objects, see [locator docs](Guides/Locators/locators.md#matching-inside-a-locator) for details.
 - New option [`option: name`] in method [`method: Tracing.startChunk`].
 
 ### Browser Versions
@@ -840,7 +840,7 @@ Note that the new methods [`method: Page.routeFromHAR`] and [`method: BrowserCon
   page.locator("role=button[name='log in']").click()
   ```
 
-  Read more in [our documentation](./locators.md#locate-by-role).
+  Read more in [our documentation](Guides/Locators/locators.md#locate-by-role).
 
 - New [`method: Locator.filter`] API to filter an existing locator
 
@@ -873,7 +873,7 @@ Note that the new methods [`method: Page.routeFromHAR`] and [`method: BrowserCon
   page.locator("role=button[name='log in']").click()
   ```
 
-  Read more in [our documentation](./locators.md#locate-by-role).
+  Read more in [our documentation](Guides/Locators/locators.md#locate-by-role).
 - New `scale` option in [`method: Page.screenshot`] for smaller sized screenshots.
 - New `caret` option in [`method: Page.screenshot`] to control text caret. Defaults to `"hide"`.
 
@@ -936,7 +936,7 @@ This version was also tested against the following stable channels:
   page.locator("article", has=page.locator(".highlight")).click()
   ```
 
-  Read more in [locator documentation](./api/class-locator#locator-locator)
+  Read more in [locator documentation](api/Classes/class-locator.md#locator-locator)
 
 - New [`method: Locator.page`]
 - [`method: Page.screenshot`] and [`method: Locator.screenshot`] now automatically hide blinking caret
@@ -958,7 +958,7 @@ This version was also tested against the following stable channels:
 
 ### API Testing
 
-Playwright for Python 1.18 introduces new [API Testing](./api/class-apirequestcontext) that lets you send requests to the server directly from Python!
+Playwright for Python 1.18 introduces new [API Testing](api/Classes/class-apirequestcontext.md) that lets you send requests to the server directly from Python!
 Now you can:
 
 - test your server API
@@ -977,7 +977,7 @@ res = await page.request.get("http://example.com/foo.json")
 res = page.request.get("http://example.com/foo.json")
 ```
 
-Read more in [our documentation](./api/class-apirequestcontext).
+Read more in [our documentation](api/Classes/class-apirequestcontext.md).
 
 ### Web-First Assertions
 
@@ -1022,13 +1022,13 @@ Read more in [our documentation](./test-assertions).
     page.locator("li", has_text="my item").locator("button").click()
     ```
 
-    Read more in [locator documentation](./api/class-locator#locator-locator)
+    Read more in [locator documentation](api/Classes/class-locator.md#locator-locator)
 
 
 ### New APIs & changes
 
-- [`accept_downloads`](./api/class-browser#browser-new-context-option-accept-downloads) option now defaults to `True`.
-- [`sources`](./api/class-tracing#tracing-start-option-sources) option to embed sources into traces.
+- [`accept_downloads`](api/Classes/Browser/class-browser.md#browser-new-context-option-accept-downloads) option now defaults to `True`.
+- [`sources`](api/Classes/class-tracing.md#tracing-start-option-sources) option to embed sources into traces.
 
 ### Browser Versions
 
@@ -1047,7 +1047,7 @@ This version was also tested against the following stable channels:
 
 ### Frame Locators
 
-Playwright 1.17 introduces [frame locators](./api/class-framelocator) - a locator to the iframe on the page. Frame locators capture the logic sufficient to retrieve the `iframe` and then locate elements in that iframe. Frame locators are strict by default, will wait for `iframe` to appear and can be used in Web-First assertions.
+Playwright 1.17 introduces [frame locators](api/Classes/class-framelocator.md) - a locator to the iframe on the page. Frame locators capture the logic sufficient to retrieve the `iframe` and then locate elements in that iframe. Frame locators are strict by default, will wait for `iframe` to appear and can be used in Web-First assertions.
 
 ![Graphics](https://user-images.githubusercontent.com/746130/142082759-2170db38-370d-43ec-8d41-5f9941f57d83.png)
 
@@ -1058,7 +1058,7 @@ locator = page.frame_locator("my-frame").locator("text=Submit")
 locator.click()
 ```
 
-Read more at [our documentation](./api/class-framelocator).
+Read more at [our documentation](api/Classes/class-framelocator.md).
 
 ### Trace Viewer Update
 
@@ -1090,8 +1090,8 @@ Playwright Trace Viewer is now **available online** at https://trace.playwright.
 
 ### New APIs
 
-- Tracing now supports a [`'title'`](./api/class-tracing#tracing-start-option-title) option
-- Page navigations support a new [`'commit'`](./api/class-page#page-goto) waiting option
+- Tracing now supports a [`'title'`](api/Classes/class-tracing.md#tracing-start-option-title) option
+- Page navigations support a new [`'commit'`](api/Classes/Page/class-page.md#page-goto) waiting option
 
 
 ## Version 1.16
@@ -1186,11 +1186,11 @@ Pass `strict=true` into your action calls to opt in.
 page.click("button", strict=True)
 ```
 
-#### 📍 New [**Locators API**](./api/class-locator)
+#### 📍 New [**Locators API**](api/Classes/class-locator.md)
 
 Locator represents a view to the element(s) on the page. It captures the logic sufficient to retrieve the element at any given moment.
 
-The difference between the [Locator](./api/class-locator) and [ElementHandle](./api/class-elementhandle) is that the latter points to a particular element, while [Locator](./api/class-locator) captures the logic of how to retrieve that element.
+The difference between the [Locator](api/Classes/class-locator.md) and [ElementHandle](api/Classes/class-elementhandle.md) is that the latter points to a particular element, while [Locator](api/Classes/class-locator.md) captures the logic of how to retrieve that element.
 
 Also, locators are **"strict" by default**!
 
@@ -1199,7 +1199,7 @@ locator = page.locator("button")
 locator.click()
 ```
 
-Learn more in the [documentation](./api/class-locator).
+Learn more in the [documentation](api/Classes/class-locator.md).
 
 #### 🧩 Experimental [**React**](./other-locators.md#react-locator) and [**Vue**](./other-locators.md#vue-locator) selector engines
 
@@ -1373,7 +1373,7 @@ This version of Playwright was also tested against the following stable channels
 
 #### New APIs
 
-- [`browserType.launch()`](./api/class-browsertype#browsertypelaunchoptions) now accepts the new `'channel'` option. Read more in [our documentation](./browsers).
+- [`browserType.launch()`](api/Classes/class-browsertype.md#browsertypelaunchoptions) now accepts the new `'channel'` option. Read more in [our documentation](./browsers).
 
 
 ## Version 1.9
@@ -1410,7 +1410,7 @@ This version of Playwright was also tested against the following stable channels
   playwright --help
   ```
 - [`method: Page.selectOption`] now waits for the options to be present.
-- New methods to [assert element state](./actionability#assertions) like [`method: Page.isEditable`].
+- New methods to [assert element state](Guides/Auto-waiting/actionability.md#assertions) like [`method: Page.isEditable`].
 
 #### New APIs
 

@@ -206,7 +206,7 @@ test('test', async ({ page }) => {
 ## Signing in before each test
 * langs: java, python, csharp
 
-The Playwright API can [automate interaction](./input.md) with a login form.
+The Playwright API can [automate interaction](Guides/Actions/input.md) with a login form.
 
 The following example logs into GitHub. Once these steps are executed,
 the browser context will be authenticated.

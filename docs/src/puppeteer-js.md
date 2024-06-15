@@ -24,8 +24,8 @@ This guide describes migration to [Playwright Library](./library) and [Playwrigh
 | `await page.waitForXPath(XPathSelector)`           | `await page.waitForSelector(XPathSelector)` |
 | `await page.waitForNetworkIdle(...)`               | `await page.waitForLoadState('networkidle')` |
 | `await page.$eval(...)`                            | [Assertions](./test-assertions) can often be used instead to verify text, attribute, class... |
-| `await page.$(...)`                                | Discouraged, use [Locators](./api/class-locator) instead |
-| `await page.$x(xpath_selector)`                    | Discouraged, use [Locators](./api/class-locator) instead |
+| `await page.$(...)`                                | Discouraged, use [Locators](api/Classes/class-locator.md) instead |
+| `await page.$x(xpath_selector)`                    | Discouraged, use [Locators](api/Classes/class-locator.md) instead |
 | No methods dedicated to checkbox or radio input    | `await page.locator(selector).check()`<br/>`await page.locator(selector).uncheck()` |
 | `await page.click(selector)`                       | `await page.locator(selector).click()`      |
 | `await page.focus(selector)`                       | `await page.locator(selector).focus()`      |
@@ -39,7 +39,7 @@ This guide describes migration to [Playwright Library](./library) and [Playwrigh
 | `await page.setCookie(...cookies)`                 | `await browserContext.addCookies(cookies)`  |
 | `page.on(...)`                                     | `page.on(...)`<br/>In order to intercept and mutate requests, see [`method: Page.route`] |
 
-`page.waitForNavigation` and `page.waitForSelector` remain, but in many cases will not be necessary due to [auto-waiting](./actionability).
+`page.waitForNavigation` and `page.waitForSelector` remain, but in many cases will not be necessary due to [auto-waiting](Guides/Auto-waiting/actionability.md).
 
 The use of [ElementHandle] is discouraged, use [Locator] objects and web-first assertions instead.
 
@@ -141,7 +141,7 @@ Playwright Test creates an isolated [Page] object for each test. However, if you
 
 ## Testing
 
-To improve testing, it is advised to use [Locators](./api/class-locator) and web-first [Assertions](./test-assertions). See [Writing Tests](./writing-tests)
+To improve testing, it is advised to use [Locators](api/Classes/class-locator.md) and web-first [Assertions](./test-assertions). See [Writing Tests](./writing-tests)
 
 It is common with Puppeteer to use `page.evaluate()` or `page.$eval()` to inspect an [ElementHandle] and extract the value of text content, attribute, class... Web-first [Assertions](./test-assertions) offers several matchers for this purpose, it is more reliable and readable.
 
@@ -153,7 +153,7 @@ Once you're on Playwright Test, you get a lot!
 
 - Full zero-configuration TypeScript support
 - Run tests across **all web engines** (Chrome, Firefox, Safari) on **any popular operating system** (Windows, macOS, Ubuntu)
-- Full support for multiple origins, [(i)frames](./api/class-frame), [tabs and contexts](./pages)
+- Full support for multiple origins, [(i)frames](api/Classes/class-frame.md), [tabs and contexts](./pages)
 - Run tests in isolation in parallel across multiple browsers
 - Built-in test [artifact collection](./test-use-options.md#recording-options)
 
@@ -168,6 +168,6 @@ Learn more about Playwright Test runner:
 
 - [Getting Started](./intro)
 - [Fixtures](./test-fixtures)
-- [Locators](./locators.md)
+- [Locators](Guides/Locators/locators.md)
 - [Assertions](./test-assertions)
-- [Auto-waiting](./actionability)
+- [Auto-waiting](Guides/Auto-waiting/actionability.md)

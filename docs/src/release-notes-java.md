@@ -47,7 +47,7 @@ page.removeLocatorHandler(locator);
 
 **Miscellaneous options**
 
-- New method [`method: FormData.append`] allows to specify repeating fields with the same name in [`setMultipart`](./api/class-requestoptions#request-options-set-multipart) option in `RequestOptions`:
+- New method [`method: FormData.append`] allows to specify repeating fields with the same name in [`setMultipart`](api/Classes/class-requestoptions.md#request-options-set-multipart) option in `RequestOptions`:
   ```java
   FormData formData = FormData.create();
   formData.append("file", new FilePayload("f1.js", "text/javascript",
@@ -57,7 +57,7 @@ page.removeLocatorHandler(locator);
   APIResponse response = context.request().post("https://example.com/uploadFile", RequestOptions.create().setMultipart(formData));
   ```
 
-- `expect(page).toHaveURL(url)` now supports `setIgnoreCase` [option](./api/class-pageassertions#page-assertions-to-have-url-option-ignore-case).
+- `expect(page).toHaveURL(url)` now supports `setIgnoreCase` [option](api/Classes/class-pageassertions.md#page-assertions-to-have-url-option-ignore-case).
 
 ### Browser Versions
 
@@ -201,7 +201,7 @@ Learn more about the fixtures in our [JUnit guide](./junit.md).
 ### New Locator Handler
 
 New method [`method: Page.addLocatorHandler`] registers a callback that will be invoked when specified element becomes visible and may block Playwright actions. The callback can get rid of the overlay. Here is an example that closes a cookie dialog when it appears.
-  
+
 ```java
 // Setup the handler.
 page.addLocatorHandler(
@@ -515,7 +515,7 @@ This version was also tested against the following stable channels:
 ### New APIs
 
 - New options [`option: updateMode`] and [`option: updateContent`] in [`method: Page.routeFromHAR`] and [`method: BrowserContext.routeFromHAR`].
-- Chaining existing locator objects, see [locator docs](./locators.md#matching-inside-a-locator) for details.
+- Chaining existing locator objects, see [locator docs](Guides/Locators/locators.md#matching-inside-a-locator) for details.
 - New option [`option: name`] in method [`method: Tracing.startChunk`].
 
 ### Browser Versions
@@ -754,7 +754,7 @@ This version was also tested against the following stable channels:
 
 ### New APIs & changes
 
-- Default assertions timeout now can be changed with [`setDefaultAssertionTimeout`](./api/class-playwrightassertions#playwright-assertions-set-default-assertion-timeout).
+- Default assertions timeout now can be changed with [`setDefaultAssertionTimeout`](api/Classes/class-playwrightassertions.md#playwright-assertions-set-default-assertion-timeout).
 
 ### Announcements
 
@@ -889,7 +889,7 @@ Note that the new methods [`method: Page.routeFromHAR`] and [`method: BrowserCon
   page.locator("role=button[name='log in']").click();
   ```
 
-  Read more in [our documentation](./locators.md#locate-by-role).
+  Read more in [our documentation](Guides/Locators/locators.md#locate-by-role).
 
 - New [`method: Locator.filter`] API to filter an existing locator
 
@@ -915,7 +915,7 @@ Note that the new methods [`method: Page.routeFromHAR`] and [`method: BrowserCon
   page.locator("role=button[name='log in']").click();
   ```
 
-  Read more in [our documentation](./locators.md#locate-by-role).
+  Read more in [our documentation](Guides/Locators/locators.md#locate-by-role).
 - New `scale` option in [`method: Page.screenshot`] for smaller sized screenshots.
 - New `caret` option in [`method: Page.screenshot`] to control text caret. Defaults to `"hide"`.
 
@@ -971,7 +971,7 @@ This version was also tested against the following stable channels:
   page.locator("article", new Page.LocatorOptions().setHas(page.locator(".highlight"))).click();
   ```
 
-  Read more in [locator documentation](./api/class-locator#locator-locator)
+  Read more in [locator documentation](api/Classes/class-locator.md#locator-locator)
 
 - New [`method: Locator.page`]
 - [`method: Page.screenshot`] and [`method: Locator.screenshot`] now automatically hide blinking caret
@@ -992,7 +992,7 @@ This version was also tested against the following stable channels:
 
 ### API Testing
 
-Playwright for Java 1.18 introduces new [API Testing](./api/class-apirequestcontext) that lets you send requests to the server directly from Java!
+Playwright for Java 1.18 introduces new [API Testing](api/Classes/class-apirequestcontext.md) that lets you send requests to the server directly from Java!
 Now you can:
 
 - test your server API
@@ -1044,18 +1044,18 @@ Read more in [our documentation](./test-assertions).
     page.locator("li", new Page.LocatorOptions().setHasText("my item"))
         .locator("button").click();
     ```
-    Read more in [locator documentation](./api/class-locator#locator-locator)
+    Read more in [locator documentation](api/Classes/class-locator.md#locator-locator)
 
 ### Tracing Improvements
 
-[Tracing](./api/class-tracing.md) now can embed Java sources to recorded
-traces, using new [`setSources`](./api/class-tracing#tracing-start-option-sources) option.
+[Tracing](api/Classes/class-tracing.md) now can embed Java sources to recorded
+traces, using new [`setSources`](api/Classes/class-tracing.md#tracing-start-option-sources) option.
 
 ![tracing-java-sources](https://user-images.githubusercontent.com/746130/150180856-40a7df71-370c-4597-8665-40c77a5e06ad.png)
 
 ### New APIs & changes
 
-- [`acceptDownloads`](./api/class-browser#browser-new-context-option-accept-downloads) option now defaults to `true`.
+- [`acceptDownloads`](api/Classes/Browser/class-browser.md#browser-new-context-option-accept-downloads) option now defaults to `true`.
 
 
 
@@ -1076,7 +1076,7 @@ This version was also tested against the following stable channels:
 
 ### Frame Locators
 
-Playwright 1.17 introduces [frame locators](./api/class-framelocator) - a locator to the iframe on the page. Frame locators capture the logic sufficient to retrieve the `iframe` and then locate elements in that iframe. Frame locators are strict by default, will wait for `iframe` to appear and can be used in Web-First assertions.
+Playwright 1.17 introduces [frame locators](api/Classes/class-framelocator.md) - a locator to the iframe on the page. Frame locators capture the logic sufficient to retrieve the `iframe` and then locate elements in that iframe. Frame locators are strict by default, will wait for `iframe` to appear and can be used in Web-First assertions.
 
 ![Graphics](https://user-images.githubusercontent.com/746130/142082759-2170db38-370d-43ec-8d41-5f9941f57d83.png)
 
@@ -1087,7 +1087,7 @@ Locator locator = page.frameLocator("#my-frame").locator("text=Submit");
 locator.click();
 ```
 
-Read more at [our documentation](./api/class-framelocator).
+Read more at [our documentation](api/Classes/class-framelocator.md).
 
 ### Trace Viewer Update
 
@@ -1120,8 +1120,8 @@ Playwright Trace Viewer is now **available online** at https://trace.playwright.
 
 ### New APIs
 
-- Tracing now supports a [`'title'`](./api/class-tracing#tracing-start-option-title) option
-- Page navigations support a new [`'commit'`](./api/class-page#page-goto) waiting option
+- Tracing now supports a [`'title'`](api/Classes/class-tracing.md#tracing-start-option-title) option
+- Page navigations support a new [`'commit'`](api/Classes/Page/class-page.md#page-goto) waiting option
 
 ## Version 1.16
 
@@ -1207,11 +1207,11 @@ Set `setStrict(true)` in your action calls to opt in.
 page.click("button", new Page.ClickOptions().setStrict(true));
 ```
 
-#### 📍 New [**Locators API**](./api/class-locator)
+#### 📍 New [**Locators API**](api/Classes/class-locator.md)
 
 Locator represents a view to the element(s) on the page. It captures the logic sufficient to retrieve the element at any given moment.
 
-The difference between the [Locator](./api/class-locator) and [ElementHandle](./api/class-elementhandle) is that the latter points to a particular element, while [Locator](./api/class-locator) captures the logic of how to retrieve that element.
+The difference between the [Locator](api/Classes/class-locator.md) and [ElementHandle](api/Classes/class-elementhandle.md) is that the latter points to a particular element, while [Locator](api/Classes/class-locator.md) captures the logic of how to retrieve that element.
 
 Also, locators are **"strict" by default**!
 
@@ -1220,7 +1220,7 @@ Locator locator = page.locator("button");
 locator.click();
 ```
 
-Learn more in the [documentation](./api/class-locator).
+Learn more in the [documentation](api/Classes/class-locator.md).
 
 #### 🧩 Experimental [**React**](./other-locators.md#react-locator) and [**Vue**](./other-locators.md#vue-locator) selector engines
 
@@ -1396,7 +1396,7 @@ This version of Playwright was also tested against the following stable channels
 
 #### New APIs
 
-- [`browserType.launch()`](./api/class-browsertype#browsertypelaunchoptions) now accepts the new `'channel'` option. Read more in [our documentation](./browsers).
+- [`browserType.launch()`](api/Classes/class-browsertype.md#browsertypelaunchoptions) now accepts the new `'channel'` option. Read more in [our documentation](./browsers).
 
 
 ## Version 1.9
@@ -1433,7 +1433,7 @@ This version of Playwright was also tested against the following stable channels
   mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="--help"
   ```
 - [`method: Page.selectOption`] now waits for the options to be present.
-- New methods to [assert element state](./actionability#assertions) like [`method: Page.isEditable`].
+- New methods to [assert element state](Guides/Auto-waiting/actionability.md#assertions) like [`method: Page.isEditable`].
 
 #### New APIs
 

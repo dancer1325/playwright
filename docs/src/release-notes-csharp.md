@@ -48,7 +48,7 @@ await Page.RemoveLocatorHandlerAsync(locator);
 
 **Miscellaneous options**
 
-- New method [`method: FormData.append`] allows to specify repeating fields with the same name in [`Multipart`](./api/class-apirequestcontext#api-request-context-fetch-option-multipart) option in `APIRequestContext.FetchAsync()`:
+- New method [`method: FormData.append`] allows to specify repeating fields with the same name in [`Multipart`](api/Classes/class-apirequestcontext.md#api-request-context-fetch-option-multipart) option in `APIRequestContext.FetchAsync()`:
 - ```
   ```csharp
   var formData = Context.APIRequest.CreateFormData();
@@ -67,7 +67,7 @@ await Page.RemoveLocatorHandlerAsync(locator);
   var response = await Context.APIRequest.PostAsync("https://example.com/uploadFiles", new() { Multipart = formData });
   ```
 
-- [`method: PageAssertions.toHaveURL`] now supports `IgnoreCase` [option](./api/class-pageassertions#page-assertions-to-have-url-option-ignore-case).
+- [`method: PageAssertions.toHaveURL`] now supports `IgnoreCase` [option](api/Classes/class-pageassertions.md#page-assertions-to-have-url-option-ignore-case).
 
 ### Browser Versions
 
@@ -129,7 +129,7 @@ This version was also tested against the following stable channels:
 ### New Locator Handler
 
 New method [`method: Page.addLocatorHandler`] registers a callback that will be invoked when specified element becomes visible and may block Playwright actions. The callback can get rid of the overlay. Here is an example that closes a cookie dialog when it appears.
-  
+
 ```csharp
 // Setup the handler.
 await Page.AddLocatorHandlerAsync(
@@ -423,7 +423,7 @@ This version was also tested against the following stable channels:
 ### New APIs
 
 - New options [`option: updateMode`] and [`option: updateContent`] in [`method: Page.routeFromHAR`] and [`method: BrowserContext.routeFromHAR`].
-- Chaining existing locator objects, see [locator docs](./locators.md#matching-inside-a-locator) for details.
+- Chaining existing locator objects, see [locator docs](Guides/Locators/locators.md#matching-inside-a-locator) for details.
 - New option [`option: name`] in method [`method: Tracing.startChunk`].
 
 ### Browser Versions
@@ -739,7 +739,7 @@ We rewrote our Getting Started docs to be more end-to-end testing focused. Check
 
 ### API Testing
 
-Playwright for .NET 1.23 introduces new [API Testing](./api/class-apirequestcontext) that lets you send requests to the server directly from .NET!
+Playwright for .NET 1.23 introduces new [API Testing](api/Classes/class-apirequestcontext.md) that lets you send requests to the server directly from .NET!
 Now you can:
 
 - test your server API
@@ -864,7 +864,7 @@ Note that the new methods [`method: Page.routeFromHAR`] and [`method: BrowserCon
   await page.Locator("role=button[name='log in']").ClickAsync();
   ```
 
-  Read more in [our documentation](./locators.md#locate-by-role).
+  Read more in [our documentation](Guides/Locators/locators.md#locate-by-role).
 
 - New [`method: Locator.filter`] API to filter an existing locator
 
@@ -886,7 +886,7 @@ Note that the new methods [`method: Page.routeFromHAR`] and [`method: BrowserCon
   await page.Locator("role=button[name='log in']").ClickAsync();
   ```
 
-  Read more in [our documentation](./locators.md#locate-by-role).
+  Read more in [our documentation](Guides/Locators/locators.md#locate-by-role).
 - New `scale` option in [`method: Page.screenshot`] for smaller sized screenshots.
 - New `caret` option in [`method: Page.screenshot`] to control text caret. Defaults to `"hide"`.
 - We now ship a designated .NET docker image `mcr.microsoft.com/playwright/dotnet`. Read more in [our documentation](./docker).
@@ -972,7 +972,7 @@ This version was also tested against the following stable channels:
   await Page.Locator("article", new() { Has = Page.Locator(".highlight") }).ClickAsync();
   ```
 
-  Read more in [locator documentation](./api/class-locator#locator-locator)
+  Read more in [locator documentation](api/Classes/class-locator.md#locator-locator)
 
 - New [`method: Locator.page`]
 - [`method: Page.screenshot`] and [`method: Locator.screenshot`] now automatically hide blinking caret
@@ -1000,13 +1000,13 @@ This version was also tested against the following stable channels:
     await Page.Locator("li", new() { HasTextString = "My Item" })
               .Locator("button").click();
     ```
-    Read more in [locator documentation](./api/class-locator#locator-locator)
+    Read more in [locator documentation](api/Classes/class-locator.md#locator-locator)
 
 
 ### New APIs & changes
 
-- [`AcceptDownloads`](./api/class-browser#browser-new-context-option-accept-downloads) option now defaults to `true`.
-- [`Sources`](./api/class-tracing#tracing-start-option-sources) option to embed sources into traces.
+- [`AcceptDownloads`](api/Classes/Browser/class-browser.md#browser-new-context-option-accept-downloads) option now defaults to `true`.
+- [`Sources`](api/Classes/class-tracing.md#tracing-start-option-sources) option to embed sources into traces.
 
 ### Browser Versions
 
@@ -1025,7 +1025,7 @@ This version was also tested against the following stable channels:
 
 ### Frame Locators
 
-Playwright 1.17 introduces [frame locators](./api/class-framelocator) - a locator to the iframe on the page. Frame locators capture the logic sufficient to retrieve the `iframe` and then locate elements in that iframe. Frame locators are strict by default, will wait for `iframe` to appear and can be used in Web-First assertions.
+Playwright 1.17 introduces [frame locators](api/Classes/class-framelocator.md) - a locator to the iframe on the page. Frame locators capture the logic sufficient to retrieve the `iframe` and then locate elements in that iframe. Frame locators are strict by default, will wait for `iframe` to appear and can be used in Web-First assertions.
 
 ![Graphics](https://user-images.githubusercontent.com/746130/142082759-2170db38-370d-43ec-8d41-5f9941f57d83.png)
 
@@ -1036,7 +1036,7 @@ var locator = page.FrameLocator("#my-frame").Locator("text=Submit");
 await locator.ClickAsync();
 ```
 
-Read more at [our documentation](./api/class-framelocator).
+Read more at [our documentation](api/Classes/class-framelocator.md).
 
 ### Trace Viewer Update
 
@@ -1069,8 +1069,8 @@ Playwright Trace Viewer is now **available online** at https://trace.playwright.
 
 ### New APIs
 
-- Tracing now supports a [`'title'`](./api/class-tracing#tracing-start-option-title) option
-- Page navigations support a new [`'commit'`](./api/class-page#page-goto) waiting option
+- Tracing now supports a [`'title'`](api/Classes/class-tracing.md#tracing-start-option-title) option
+- Page navigations support a new [`'commit'`](api/Classes/Page/class-page.md#page-goto) waiting option
 
 ## Version 1.16
 
@@ -1160,11 +1160,11 @@ Set `setStrict(true)` in your action calls to opt in.
 await page.Locator("button", new() { Strict = true });
 ```
 
-#### 📍 New [**Locators API**](./api/class-locator)
+#### 📍 New [**Locators API**](api/Classes/class-locator.md)
 
 Locator represents a view to the element(s) on the page. It captures the logic sufficient to retrieve the element at any given moment.
 
-The difference between the [Locator](./api/class-locator) and [ElementHandle](./api/class-elementhandle) is that the latter points to a particular element, while [Locator](./api/class-locator) captures the logic of how to retrieve that element.
+The difference between the [Locator](api/Classes/class-locator.md) and [ElementHandle](api/Classes/class-elementhandle.md) is that the latter points to a particular element, while [Locator](api/Classes/class-locator.md) captures the logic of how to retrieve that element.
 
 Also, locators are **"strict" by default**!
 
@@ -1173,7 +1173,7 @@ var locator = page.Locator("button");
 await locator.ClickAsync();
 ```
 
-Learn more in the [documentation](./api/class-locator).
+Learn more in the [documentation](api/Classes/class-locator.md).
 
 #### 🧩 Experimental [**React**](./other-locators.md#react-locator) and [**Vue**](./other-locators.md#vue-locator) selector engines
 

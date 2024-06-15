@@ -97,5 +97,5 @@ page.Download += (sender, download) => Console.WriteLine(download.Url);
 Note that handling the event forks the control flow and makes the script harder to follow. Your scenario might end while you are downloading a file since your main control flow is not awaiting for this operation to resolve.
 
 :::note
-For uploading files, see the [uploading files](./input.md#upload-files) section.
+For uploading files, see the [uploading files](Guides/Actions/input.md#upload-files) section.
 :::

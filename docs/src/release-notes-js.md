@@ -54,7 +54,7 @@ await page.removeLocatorHandler(locator);
 
 **Miscellaneous options**
 
-- [`multipart`](./api/class-apirequestcontext#api-request-context-fetch-option-multipart) option in `apiRequestContext.fetch()` now accepts [`FormData`](https://developer.mozilla.org/en-US/docs/Web/API/FormData) and supports repeating fields with the same name.
+- [`multipart`](api/Classes/class-apirequestcontext.md#api-request-context-fetch-option-multipart) option in `apiRequestContext.fetch()` now accepts [`FormData`](https://developer.mozilla.org/en-US/docs/Web/API/FormData) and supports repeating fields with the same name.
   ```js
   const formData = new FormData();
   formData.append('file', new File(['let x = 2024;'], 'f1.js', { type: 'text/javascript' }));
@@ -65,7 +65,7 @@ await page.removeLocatorHandler(locator);
   ```
 
 - `expect(callback).toPass({ intervals })` can now be configured by `expect.toPass.intervals` option globally in [`property: TestConfig.expect`] or per project in [`property: TestProject.expect`].
-- `expect(page).toHaveURL(url)` now supports `ignoreCase` [option](./api/class-pageassertions#page-assertions-to-have-url-option-ignore-case).
+- `expect(page).toHaveURL(url)` now supports `ignoreCase` [option](api/Classes/class-pageassertions.md#page-assertions-to-have-url-option-ignore-case).
 - [`property: TestProject.ignoreSnapshots`](./api/class-testproject#test-project-ignore-snapshots) allows to configure  per project whether to skip screenshot expectations.
 
 **Reporter API**
@@ -250,7 +250,7 @@ test('test full report', {
 });
 ```
 
-- [`method: Page.pdf`] accepts two new options [`tagged`](./api/class-page#page-pdf-option-tagged) and [`outline`](./api/class-page#page-pdf-option-outline).
+- [`method: Page.pdf`] accepts two new options [`tagged`](api/Classes/Page/class-page.md#page-pdf-option-tagged) and [`outline`](api/Classes/Page/class-page.md#page-pdf-option-outline).
 
 ### Announcements
 
@@ -853,7 +853,7 @@ npx playwright test --ui
 ### New APIs
 
 - New options [`option: updateMode`] and [`option: updateContent`] in [`method: Page.routeFromHAR`] and [`method: BrowserContext.routeFromHAR`].
-- Chaining existing locator objects, see [locator docs](./locators.md#matching-inside-a-locator) for details.
+- Chaining existing locator objects, see [locator docs](Guides/Locators/locators.md#matching-inside-a-locator) for details.
 - New property [`property: TestInfo.testId`].
 - New option [`option: name`] in method [`method: Tracing.startChunk`].
 
@@ -1608,7 +1608,7 @@ WebServer is now considered "ready" if request to the specified url has any of t
   await page.locator('role=button[name="log in"]').click();
   ```
 
-  Read more in [our documentation](./locators.md#locate-by-role).
+  Read more in [our documentation](Guides/Locators/locators.md#locate-by-role).
 
 - New [`method: Locator.filter`] API to filter an existing locator
 
@@ -1651,7 +1651,7 @@ WebServer is now considered "ready" if request to the specified url has any of t
   await page.locator('role=button[name="log in"]').click();
   ```
 
-  Read more in [our documentation](./locators.md#locate-by-role).
+  Read more in [our documentation](Guides/Locators/locators.md#locate-by-role).
 - New `scale` option in [`method: Page.screenshot`] for smaller sized screenshots.
 - New `caret` option in [`method: Page.screenshot`] to control text caret. Defaults to `"hide"`.
 
@@ -1819,7 +1819,7 @@ This version was also tested against the following stable channels:
   }).click();
   ```
 
-  Read more in [locator documentation](./api/class-locator#locator-locator)
+  Read more in [locator documentation](api/Classes/class-locator.md#locator-locator)
 
 - New [`method: Locator.page`]
 - [`method: Page.screenshot`] and [`method: Locator.screenshot`] now automatically hide blinking caret
@@ -1856,12 +1856,12 @@ This version was also tested against the following stable channels:
 ### Locator Improvements
 
 - [`method: Locator.dragTo`]
-- [`expect(locator).toBeChecked({ checked })`](./api/class-locatorassertions#locator-assertions-to-be-checked)
+- [`expect(locator).toBeChecked({ checked })`](api/Classes/class-locatorassertions.md#locator-assertions-to-be-checked)
 - Each locator can now be optionally filtered by the text it contains:
     ```js
     await page.locator('li', { hasText: 'my item' }).locator('button').click();
     ```
-    Read more in [locator documentation](./api/class-locator#locator-locator)
+    Read more in [locator documentation](api/Classes/class-locator.md#locator-locator)
 
 
 ### Testing API improvements
@@ -1896,7 +1896,7 @@ This will create a Playwright Test configuration file, optionally add examples, 
 ### New APIs & changes
 
 - new [`testCase.repeatEachIndex`](./api/class-testcase#test-case-repeat-each-index) API
-- [`acceptDownloads`](./api/class-browser#browser-new-context-option-accept-downloads) option now defaults to `true`
+- [`acceptDownloads`](api/Classes/Browser/class-browser.md#browser-new-context-option-accept-downloads) option now defaults to `true`
 
 ### Breaking change: custom config options
 
@@ -1961,7 +1961,7 @@ This version was also tested against the following stable channels:
 
 ### Frame Locators
 
-Playwright 1.17 introduces [frame locators](./api/class-framelocator) - a locator to the iframe on the page. Frame locators capture the logic sufficient to retrieve the `iframe` and then locate elements in that iframe. Frame locators are strict by default, will wait for `iframe` to appear and can be used in Web-First assertions.
+Playwright 1.17 introduces [frame locators](api/Classes/class-framelocator.md) - a locator to the iframe on the page. Frame locators capture the logic sufficient to retrieve the `iframe` and then locate elements in that iframe. Frame locators are strict by default, will wait for `iframe` to appear and can be used in Web-First assertions.
 
 ![Graphics](https://user-images.githubusercontent.com/746130/142082759-2170db38-370d-43ec-8d41-5f9941f57d83.png)
 
@@ -1972,7 +1972,7 @@ const locator = page.frameLocator('#my-iframe').locator('text=Submit');
 await locator.click();
 ```
 
-Read more at [our documentation](./api/class-framelocator).
+Read more at [our documentation](api/Classes/class-framelocator.md).
 
 ### Trace Viewer Update
 
@@ -2004,14 +2004,14 @@ Playwright Trace Viewer is now **available online** at https://trace.playwright.
 
 ### New APIs
 
-- Tracing now supports a [`'title'`](./api/class-tracing#tracing-start-option-title) option
-- Page navigations support a new [`'commit'`](./api/class-page#page-goto) waiting option
+- Tracing now supports a [`'title'`](api/Classes/class-tracing.md#tracing-start-option-title) option
+- Page navigations support a new [`'commit'`](api/Classes/Page/class-page.md#page-goto) waiting option
 - HTML reporter got [new configuration options](./test-reporters#html-reporter)
 - [`testConfig.snapshotDir` option](./api/class-testconfig#test-config-snapshot-dir)
 - [`testInfo.parallelIndex`](./api/class-testinfo#test-info-parallel-index)
 - [`testInfo.titlePath`](./api/class-testinfo#test-info-title-path)
 - [`testOptions.trace`](./api/class-testoptions#test-options-trace) has new options
-- [`expect.toMatchSnapshot`](./api/class-genericassertions.md) supports subdirectories
+- [`expect.toMatchSnapshot`](api/Classes/class-genericassertions.md) supports subdirectories
 - [`reporter.printsToStdio()`](./api/class-reporter#reporter-prints-to-stdio)
 
 
@@ -2026,7 +2026,7 @@ Playwright Trace Viewer is now **available online** at https://trace.playwright.
 
 #### API Testing
 
-Playwright 1.16 introduces new [API Testing](./api/class-apirequestcontext) that lets you send requests to the server directly from Node.js!
+Playwright 1.16 introduces new [API Testing](api/Classes/class-apirequestcontext.md) that lets you send requests to the server directly from Node.js!
 Now you can:
 
 - test your server API
@@ -2233,11 +2233,11 @@ Pass `strict: true` into your action calls to opt in.
 await page.click('button', { strict: true });
 ```
 
-#### 📍 New [**Locators API**](./api/class-locator)
+#### 📍 New [**Locators API**](api/Classes/class-locator.md)
 
 Locator represents a view to the element(s) on the page. It captures the logic sufficient to retrieve the element at any given moment.
 
-The difference between the [Locator](./api/class-locator) and [ElementHandle](./api/class-elementhandle) is that the latter points to a particular element, while [Locator](./api/class-locator) captures the logic of how to retrieve that element.
+The difference between the [Locator](api/Classes/class-locator.md) and [ElementHandle](api/Classes/class-elementhandle.md) is that the latter points to a particular element, while [Locator](api/Classes/class-locator.md) captures the logic of how to retrieve that element.
 
 Also, locators are **"strict" by default**!
 
@@ -2246,7 +2246,7 @@ const locator = page.locator('button');
 await locator.click();
 ```
 
-Learn more in the [documentation](./api/class-locator).
+Learn more in the [documentation](api/Classes/class-locator.md).
 
 #### 🧩 Experimental [**React**](./other-locators.md#react-locator) and [**Vue**](./other-locators.md#vue-locator) selector engines
 
@@ -2292,25 +2292,25 @@ By default, the timeout for assertions is not set, so it'll wait forever, until 
 
 List of all new assertions:
 
-- [`expect(locator).toBeChecked()`](./api/class-locatorassertions#locator-assertions-to-be-checked)
-- [`expect(locator).toBeDisabled()`](./api/class-locatorassertions#locator-assertions-to-be-disabled)
-- [`expect(locator).toBeEditable()`](./api/class-locatorassertions#locator-assertions-to-be-editable)
-- [`expect(locator).toBeEmpty()`](./api/class-locatorassertions#locator-assertions-to-be-empty)
-- [`expect(locator).toBeEnabled()`](./api/class-locatorassertions#locator-assertions-to-be-enabled)
-- [`expect(locator).toBeFocused()`](./api/class-locatorassertions#locator-assertions-to-be-focused)
-- [`expect(locator).toBeHidden()`](./api/class-locatorassertions#locator-assertions-to-be-hidden)
-- [`expect(locator).toBeVisible()`](./api/class-locatorassertions#locator-assertions-to-be-visible)
-- [`expect(locator).toContainText(text, options?)`](./api/class-locatorassertions#locator-assertions-to-contain-text)
-- [`expect(locator).toHaveAttribute(name, value)`](./api/class-locatorassertions#locator-assertions-to-have-attribute)
-- [`expect(locator).toHaveClass(expected)`](./api/class-locatorassertions#locator-assertions-to-have-class)
-- [`expect(locator).toHaveCount(count)`](./api/class-locatorassertions#locator-assertions-to-have-count)
-- [`expect(locator).toHaveCSS(name, value)`](./api/class-locatorassertions#locator-assertions-to-have-css)
-- [`expect(locator).toHaveId(id)`](./api/class-locatorassertions#locator-assertions-to-have-id)
-- [`expect(locator).toHaveJSProperty(name, value)`](./api/class-locatorassertions#locator-assertions-to-have-js-property)
-- [`expect(locator).toHaveText(expected, options)`](./api/class-locatorassertions#locator-assertions-to-have-text)
-- [`expect(page).toHaveTitle(title)`](./api/class-pageassertions#page-assertions-to-have-title)
-- [`expect(page).toHaveURL(url)`](./api/class-pageassertions#page-assertions-to-have-url)
-- [`expect(locator).toHaveValue(value)`](./api/class-locatorassertions#locator-assertions-to-have-value)
+- [`expect(locator).toBeChecked()`](api/Classes/class-locatorassertions.md#locator-assertions-to-be-checked)
+- [`expect(locator).toBeDisabled()`](api/Classes/class-locatorassertions.md#locator-assertions-to-be-disabled)
+- [`expect(locator).toBeEditable()`](api/Classes/class-locatorassertions.md#locator-assertions-to-be-editable)
+- [`expect(locator).toBeEmpty()`](api/Classes/class-locatorassertions.md#locator-assertions-to-be-empty)
+- [`expect(locator).toBeEnabled()`](api/Classes/class-locatorassertions.md#locator-assertions-to-be-enabled)
+- [`expect(locator).toBeFocused()`](api/Classes/class-locatorassertions.md#locator-assertions-to-be-focused)
+- [`expect(locator).toBeHidden()`](api/Classes/class-locatorassertions.md#locator-assertions-to-be-hidden)
+- [`expect(locator).toBeVisible()`](api/Classes/class-locatorassertions.md#locator-assertions-to-be-visible)
+- [`expect(locator).toContainText(text, options?)`](api/Classes/class-locatorassertions.md#locator-assertions-to-contain-text)
+- [`expect(locator).toHaveAttribute(name, value)`](api/Classes/class-locatorassertions.md#locator-assertions-to-have-attribute)
+- [`expect(locator).toHaveClass(expected)`](api/Classes/class-locatorassertions.md#locator-assertions-to-have-class)
+- [`expect(locator).toHaveCount(count)`](api/Classes/class-locatorassertions.md#locator-assertions-to-have-count)
+- [`expect(locator).toHaveCSS(name, value)`](api/Classes/class-locatorassertions.md#locator-assertions-to-have-css)
+- [`expect(locator).toHaveId(id)`](api/Classes/class-locatorassertions.md#locator-assertions-to-have-id)
+- [`expect(locator).toHaveJSProperty(name, value)`](api/Classes/class-locatorassertions.md#locator-assertions-to-have-js-property)
+- [`expect(locator).toHaveText(expected, options)`](api/Classes/class-locatorassertions.md#locator-assertions-to-have-text)
+- [`expect(page).toHaveTitle(title)`](api/Classes/class-pageassertions.md#page-assertions-to-have-title)
+- [`expect(page).toHaveURL(url)`](api/Classes/class-pageassertions.md#page-assertions-to-have-url)
+- [`expect(locator).toHaveValue(value)`](api/Classes/class-locatorassertions.md#locator-assertions-to-have-value)
 
 #### ⛓ Serial mode with [`describe.serial`](./api/class-test#test-describe-serial)
 
@@ -2554,7 +2554,7 @@ This version of Playwright was also tested against the following stable channels
 
 #### New APIs
 
-- [`browserType.launch()`](./api/class-browsertype#browsertypelaunchoptions) now accepts the new `'channel'` option. Read more in [our documentation](./browsers).
+- [`browserType.launch()`](api/Classes/class-browsertype.md#browsertypelaunchoptions) now accepts the new `'channel'` option. Read more in [our documentation](./browsers).
 
 
 ## Version 1.9
@@ -2591,7 +2591,7 @@ This version of Playwright was also tested against the following stable channels
   npx playwright --help
   ```
 - [`method: Page.selectOption`] now waits for the options to be present.
-- New methods to [assert element state](./actionability#assertions) like [`method: Page.isEditable`].
+- New methods to [assert element state](Guides/Auto-waiting/actionability.md#assertions) like [`method: Page.isEditable`].
 
 #### New APIs
 

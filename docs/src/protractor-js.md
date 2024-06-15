@@ -6,8 +6,8 @@ title: "Migrating from Protractor"
 ## Migration Principles
 
 - No need for "webdriver-manager" / Selenium.
-- Protractor’s [ElementFinder] ⇄ [Playwright Test Locator](./api/class-locator)
-- Protractor’s [`waitForAngular`] ⇄ Playwright Test [auto-waiting](./actionability.md)
+- Protractor’s [ElementFinder] ⇄ [Playwright Test Locator](api/Classes/class-locator.md)
+- Protractor’s [`waitForAngular`] ⇄ Playwright Test [auto-waiting](Guides/Auto-waiting/actionability.md)
 - Don’t forget to await in Playwright Test
 
 ## Cheat Sheet
@@ -86,7 +86,7 @@ Migration highlights (see inline comments in the Playwright Test code snippet):
 
 ## Polyfilling `waitForAngular`
 
-Playwright Test has built-in [auto-waiting](./actionability.md) that makes protractor's [`waitForAngular`] unneeded in general case.
+Playwright Test has built-in [auto-waiting](Guides/Auto-waiting/actionability.md) that makes protractor's [`waitForAngular`] unneeded in general case.
 
 However, it might come handy in some edge cases.
 Here's how to polyfill `waitForAngular` function in Playwright Test:
@@ -145,7 +145,7 @@ Once you're on Playwright Test, you get a lot!
 
 - Full zero-configuration TypeScript support
 - Run tests across **all web engines** (Chrome, Firefox, Safari) on **any popular operating system** (Windows, macOS, Ubuntu)
-- Full support for multiple origins, [(i)frames](./api/class-frame), [tabs and contexts](./pages)
+- Full support for multiple origins, [(i)frames](api/Classes/class-frame.md), [tabs and contexts](./pages)
 - Run tests in parallel across multiple browsers
 - Built-in test [artifact collection](./test-use-options.md#recording-options)
 
@@ -160,9 +160,9 @@ Learn more about Playwright Test runner:
 
 - [Getting Started](./intro)
 - [Fixtures](./test-fixtures)
-- [Locators](./locators)
+- [Locators](Guides/Locators/locators.md)
 - [Assertions](./test-assertions)
-- [Auto-waiting](./actionability)
+- [Auto-waiting](Guides/Auto-waiting/actionability.md)
 
 [ElementFinder]: https://www.protractortest.org/#/api?view=ElementFinder
 [`waitForAngular`]: https://www.protractortest.org/#/api?view=ProtractorBrowser.prototype.waitForAngular

@@ -6,7 +6,7 @@ title: "Other locators"
 ## Introduction
 
 :::note
-Check out the main [locators guide](./locators) for most common and recommended locators.
+Check out the main [locators guide](Guides/Locators/locators.md) for most common and recommended locators.
 :::
 
 In addition to recommended locators like [`method: Page.getByRole`] and [`method: Page.getByText`], Playwright supports a variety of other locators described in this guide.
@@ -15,7 +15,7 @@ In addition to recommended locators like [`method: Page.getByRole`] and [`method
 ## CSS locator
 
 :::note
-We recommend prioritizing [user-visible locators](./locators.md#quick-guide) like text or accessible role instead of using CSS that is tied to the implementation and could break when the page changes.
+We recommend prioritizing [user-visible locators](Guides/Locators/locators.md#quick-guide) like text or accessible role instead of using CSS that is tied to the implementation and could break when the page changes.
 :::
 
 Playwright can locate an element by CSS selector.
@@ -133,7 +133,7 @@ Consider a page with two buttons, first invisible and second visible.
 <button>Visible</button>
 ```
 
-* This will find both buttons and throw a [strictness](./locators.md#strictness) violation error:
+* This will find both buttons and throw a [strictness](Guides/Locators/locators.md#strictness) violation error:
 
   ```js
   await page.locator('button').click();
@@ -597,7 +597,7 @@ Vue locator, as well as [Vue DevTools](https://chrome.google.com/webstore/detail
 ## XPath locator
 
 :::warning
-We recommend prioritizing [user-visible locators](./locators.md#quick-guide) like text or accessible role instead of using XPath that is tied to the implementation and easily break when the page changes.
+We recommend prioritizing [user-visible locators](Guides/Locators/locators.md#quick-guide) like text or accessible role instead of using XPath that is tied to the implementation and easily break when the page changes.
 :::
 
 XPath locators are equivalent to calling [`Document.evaluate`](https://developer.mozilla.org/en/docs/Web/API/Document/evaluate).
@@ -663,7 +663,7 @@ await page.Locator("//span[contains(@class, 'spinner__loading')]|//div[@id='conf
 ## Label to form control retargeting
 
 :::warning
-We recommend [locating by label text](./locators.md#locate-by-label) instead of relying to label-to-control retargeting.
+We recommend [locating by label text](Guides/Locators/locators.md#locate-by-label) instead of relying to label-to-control retargeting.
 :::
 
 Targeted input actions in Playwright automatically distinguish between labels and controls, so you can target the label to perform an action on the associated control.
@@ -732,7 +732,7 @@ await Expect(Page.Locator("label")).ToHaveTextAsync("Password");
 ## Legacy text locator
 
 :::warning
-We recommend the modern [text locator](./locators.md#get-by-text) instead.
+We recommend the modern [text locator](Guides/Locators/locators.md#get-by-text) instead.
 :::
 
 Legacy text locator matches elements that contain passed text.
@@ -829,7 +829,7 @@ Input elements of the type `button` and `submit` are matched by their `value` in
 ## id, data-testid, data-test-id, data-test selectors
 
 :::warning
-We recommend [locating by test id](./locators.md#locate-by-test-id) instead.
+We recommend [locating by test id](Guides/Locators/locators.md#locate-by-test-id) instead.
 :::
 
 Playwright supports shorthand for selecting elements using certain attributes. Currently, only
@@ -887,7 +887,7 @@ Attribute selectors are not CSS selectors, so anything CSS-specific like `:enabl
 ## Chaining selectors
 
 :::warning
-We recommend [chaining locators](./locators.md#matching-inside-a-locator) instead.
+We recommend [chaining locators](Guides/Locators/locators.md#matching-inside-a-locator) instead.
 :::
 
 Selectors defined as `engine=body` or in short-form can be combined with the `>>` token, e.g. `selector1 >> selector2 >> selectors3`. When selectors are chained, the next one is queried relative to the previous one's result.
@@ -912,7 +912,7 @@ If a selector needs to include `>>` in the body, it should be escaped inside a s
 ### Intermediate matches
 
 :::warning
-We recommend [filtering by another locator](./locators.md#filter-by-childdescendant) to locate elements that contain other elements.
+We recommend [filtering by another locator](Guides/Locators/locators.md#filter-by-childdescendant) to locate elements that contain other elements.
 :::
 
 By default, chained selectors resolve to an element queried by the last selector. A selector can be prefixed with `*` to capture elements that are queried by an intermediate selector.

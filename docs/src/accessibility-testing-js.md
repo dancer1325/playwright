@@ -70,7 +70,7 @@ test.describe('homepage', () => { // 2
 
 For example, you can use [`AxeBuilder.include()`](https://github.com/dequelabs/axe-core-npm/blob/develop/packages/playwright/README.md#axebuilderincludeselector-string--string) to constrain an accessibility scan to only run against one specific part of a page.
 
-`AxeBuilder.analyze()` will scan the page *in its current state* when you call it. To scan parts of a page that are revealed based on UI interactions, use [Locators](./locators.md) to interact with the page before invoking `analyze()`:
+`AxeBuilder.analyze()` will scan the page *in its current state* when you call it. To scan parts of a page that are revealed based on UI interactions, use [Locators](Guides/Locators/locators.md) to interact with the page before invoking `analyze()`:
 
 ```js
 test('navigation menu should not have automatically detectable accessibility violations', async ({

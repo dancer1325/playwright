@@ -63,7 +63,7 @@ If working with a database then make sure you control the data. Test against a s
 
 ### Use locators
 
-In order to write end to end tests we need to first find elements on the webpage. We can do this by using Playwright's built in [locators](./locators.md). Locators come with auto waiting and retry-ability. Auto waiting means that Playwright performs a range of actionability checks on the elements, such as ensuring the element is visible and enabled before it performs the click. To make tests resilient, we recommend prioritizing user-facing attributes and explicit contracts.
+In order to write end to end tests we need to first find elements on the webpage. We can do this by using Playwright's built in [locators](Guides/Locators/locators.md). Locators come with auto waiting and retry-ability. Auto waiting means that Playwright performs a range of actionability checks on the elements, such as ensuring the element is visible and enabled before it performs the click. To make tests resilient, we recommend prioritizing user-facing attributes and explicit contracts.
 
 ```js
 // 👍
@@ -72,13 +72,13 @@ page.getByRole('button', { name: 'submit' });
 
 #### Use chaining and filtering
 
-Locators can be [chained](./locators.md#matching-inside-a-locator) to narrow down the search to a particular part of the page.
+Locators can be [chained](Guides/Locators/locators.md#matching-inside-a-locator) to narrow down the search to a particular part of the page.
 
 ```js
 const product = page.getByRole('listitem').filter({ hasText: 'Product 2' });
 ```
 
-You can also [filter locators](./locators.md#filtering-locators) by text or by another locator.
+You can also [filter locators](Guides/Locators/locators.md#filtering-locators) by text or by another locator.
 
 ```js
 await page
