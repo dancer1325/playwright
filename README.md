@@ -1,12 +1,11 @@
 # 🎭 Playwright
 
-[![npm version](https://img.shields.io/npm/v/playwright.svg)](https://www.npmjs.com/package/playwright) <!-- GEN:chromium-version-badge -->[![Chromium version](https://img.shields.io/badge/chromium-127.0.6533.5-blue.svg?logo=google-chrome)](https://www.chromium.org/Home)<!-- GEN:stop --> <!-- GEN:firefox-version-badge -->[![Firefox version](https://img.shields.io/badge/firefox-127.0-blue.svg?logo=firefoxbrowser)](https://www.mozilla.org/en-US/firefox/new/)<!-- GEN:stop --> <!-- GEN:webkit-version-badge -->[![WebKit version](https://img.shields.io/badge/webkit-17.4-blue.svg?logo=safari)](https://webkit.org/)<!-- GEN:stop -->
+* := framework -- for -- Web Testing & Automation
 
-## [Documentation](https://playwright.dev) | [API reference](https://playwright.dev/docs/api/class-playwright)
+## [Documentation](docs)
 
-Playwright is a framework for Web Testing and Automation
 * allows
-  * E2E testing in [Chromium](https://www.chromium.org/Home), [Firefox](https://www.mozilla.org/en-US/firefox/new/) and [WebKit](https://webkit.org/)
+  * E2E testing | [Chromium](https://www.chromium.org/Home), [Firefox](https://www.mozilla.org/en-US/firefox/new/) & [WebKit](https://webkit.org/)
     * -- via -- 1! API
   * web automation cross-browser
     * **ever-green**
@@ -16,9 +15,9 @@ Playwright is a framework for Web Testing and Automation
 
 |          | Linux | macOS | Windows |
 |   :---   | :---: | :---: | :---:   |
-| Chromium <!-- GEN:chromium-version -->127.0.6533.5<!-- GEN:stop --> | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| WebKit <!-- GEN:webkit-version -->17.4<!-- GEN:stop --> | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| Firefox <!-- GEN:firefox-version -->127.0<!-- GEN:stop --> | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| Chromium <!-- GEN:chromium-version -->127.0.6533.5<!-- GEN:stop --> | ✅ | ✅ | ✅ |
+| WebKit <!-- GEN:webkit-version -->17.4<!-- GEN:stop --> | ✅ | ✅ | ✅ |
+| Firefox <!-- GEN:firefox-version -->127.0<!-- GEN:stop --> | ✅ | ✅ | ✅ |
 
 * [system requirements](https://playwright.dev/docs/intro#system-requirements)
 * dedicated documentation / language
@@ -29,25 +28,25 @@ Playwright is a framework for Web Testing and Automation
 
 ---
 
-## Installation
+## How to install?
 
 * Playwright Test
-  * := own test runner for end-to-end tests
-  * [Installation configuration](https://playwright.dev/docs/installation)
+  * := 👀OWN test runner -- for -- E2E tests 👀
+  * [Installation configuration](docs/src/Getting%20Started/Installation)
 
 ### Via init command
-* it creates
+* creates
   * configuration file -- 'playwright.config.ts' --
-  * optionally
+  * OPTIONALLY
     * examples -- 'tests/' --
     * GitHub Action workflow
     * first test example.spec.ts -- 'tests/' --
-* Check '/examples/initFromProjectRoot'
-* Check '/examples/initNewProject'
-
+* _Examples:_
+  * [/examples/initFromProjectRoot](examples/initFromProjectRoot)
+  * [/examples/initNewProject](examples/initNewProject)
 
 ### Via Manually
-* Check '/examples/skeletonNPMProject'
+* _Example:_ [/examples/skeletonNPMProject](/examples/skeletonNPMProject)
 
 ---
 
