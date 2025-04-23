@@ -3,7 +3,7 @@
 * := framework -- for -- Web Testing & Automation
 
 * allows
-  * E2E testing | [Chromium](https://www.chromium.org/Home), [Firefox](https://www.mozilla.org/en-US/firefox/new/) & [WebKit](https://webkit.org/)
+  * E2E testing | [Chromium](https://www.chromium.org/Home), [Firefox](https://www.mozilla.org/en-US/firefox/new/), [WebKit](https://webkit.org/), locally, CI & mobile emulations
     * -- via -- 1! API
   * web automation cross-browser
     * **ever-green**
