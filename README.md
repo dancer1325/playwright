@@ -2,8 +2,6 @@
 
 * := framework -- for -- Web Testing & Automation
 
-## [Documentation](docs)
-
 * allows
   * E2E testing | [Chromium](https://www.chromium.org/Home), [Firefox](https://www.mozilla.org/en-US/firefox/new/) & [WebKit](https://webkit.org/)
     * -- via -- 1! API
@@ -19,12 +17,13 @@
 | WebKit <!-- GEN:webkit-version -->17.4<!-- GEN:stop --> | ✅ | ✅ | ✅ |
 | Firefox <!-- GEN:firefox-version -->127.0<!-- GEN:stop --> | ✅ | ✅ | ✅ |
 
-* [system requirements](https://playwright.dev/docs/intro#system-requirements)
-* dedicated documentation / language
-  * [JS/TS](https://playwright.dev/docs/intro) -- default --cf
+* 👀dedicated documentation / language 👀
+  * [JS/TS](https://playwright.dev/docs/intro)
   * [Python](https://playwright.dev/python/docs/intro)
   * [.NET](https://playwright.dev/dotnet/docs/intro)
   * [Java](https://playwright.dev/java/docs/intro)
+* [system requirements](https://playwright.dev/docs/intro#system-requirements)
+  * ALSO / language
 
 ---
 
@@ -126,12 +125,3 @@
     * live DOM snapshots
     * action explorer
     * to investigate
-
----
-
-## Resources
-
-* [Documentation](https://playwright.dev/docs/intro)
-* [API reference](https://playwright.dev/docs/api/class-playwright/)
-* [Contribution guide](CONTRIBUTING.md)
-* [Changelog](https://github.com/microsoft/playwright/releases)
