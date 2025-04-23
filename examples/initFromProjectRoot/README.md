@@ -7,37 +7,23 @@
 
 ## How has it been created?
 * `npm init playwright@latest`
-  * alternatives
-    * `yarn create playwright`
-    * `pnpm create playwright`
-  * what does it make?
-    * download the browsers ❓
-    * create files
-      * 'playwright.config.ts'
-        * Check '../Playwright Test/Test configuration'
-      * 'package.json'
-      * 'package-lock.json'
-      * 'tests/example.spec.ts'
-        * basic example test
-      * 'tests-examples/demo-todo-app.spec.ts'
-        * tests written to test a TODO app
 
 ## How to run?
 * `npx playwright test`
-  * run in headless mode
-    * == if you run the tests -> NO browser open up
-  * `npx playwright test --ui`
-    * run in headed mode
-    * Check '../Playwright Test/UI Mode'
+  * == headless mode
+    * == ❌NO browser open up❌
+* `npx playwright test --ui`
+  * == headed mode
 
 ## How to use reporters?
 * `npx playwright show-report`
   * open LAST test run
 
 ## Notes
-* `npm install -D @playwright/test@latest`
-  * update Playwright to latest version
-* `npx playwright install --with-deps`
-  * download new browser binaries & their dependencies
+* if you want to update ->
+  * `npm install -D @playwright/test@latest`
+    * update Playwright to latest version
+  * `npx playwright install --with-deps`
+    * download new browser binaries & their dependencies
 * `npx playwright --version`
   * check Playwright version / running
