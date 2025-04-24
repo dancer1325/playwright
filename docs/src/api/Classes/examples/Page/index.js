@@ -1,4 +1,4 @@
-const { webkit } = require('playwright');
+const { webkit } = require('playwright'); // == 'chromium' OR 'firefox'
 
 // 1. Events
 // Execute async function
