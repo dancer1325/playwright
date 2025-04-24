@@ -4,101 +4,51 @@ title: "Writing tests"
 ---
 ## Introduction
 
-Playwright tests are simple, they
-
-- **perform actions**, and
-- **assert the state** against expectations.
-
-There is no need to wait for anything prior to performing an action: Playwright
-automatically waits for the wide range of [actionability](../../actionability.md)
-checks to pass prior to performing each action.
-
-There is also no need to deal with the race conditions when performing the checks -
-Playwright assertions are designed in a way that they describe the expectations
-that need to be eventually met.
-
-That's it! These design choices allow Playwright users to forget about flaky
-timeouts and racy checks in their tests altogether.
-
-**You will learn**
-
-- [How to write the first test](/writing-tests.md#first-test)
-- [How to perform actions](/writing-tests.md#actions)
-- [How to use assertions](/writing-tests.md#assertions)
-- [How tests run in isolation](/writing-tests.md#test-isolation)
-- [How to use test hooks](/writing-tests.md#using-test-hooks)
+* Playwright tests
+  * == perform actions + assert the state
+    * perform actions
+      * ❌NO need to wait for anything ❌
+        * == ⚠️ONLY AUTOMATICALLY waits for wide range of [actionability](../../actionability.md) checks ⚠️
+        * -> 💡NO flaky timeouts 💡
+    * assertions
+      * descriptive assertions
+        * == describe the expectations
+        * ❌NO need to deal with the race conditions ❌
 
 ## First test
 
-Take a look at the following example to see how to write a test.
-
-```js title="tests/example.spec.ts"
-import { test, expect } from '@playwright/test';
-
-test('has title', async ({ page }) => {
-  await page.goto('https://playwright.dev/');
-
-  // Expect a title "to contain" a substring.
-  await expect(page).toHaveTitle(/Playwright/);
-});
-
-test('get started link', async ({ page }) => {
-  await page.goto('https://playwright.dev/');
-
-  // Click the get started link.
-  await page.getByRole('link', { name: 'Get started' }).click();
-
-  // Expects page to have a heading with the name of Installation.
-  await expect(page.getByRole('heading', { name: 'Installation' })).toBeVisible();
-});
-```
-
-:::note
-Add `// @ts-check` at the start of each test file when using JavaScript in VS Code to get automatic type checking.
-:::
-
+* if you use JS & VSCode & want AUTOMATIC type checking -> add `// @ts-check` | EACH test file's start
+* _Example:_ [here](/examples/initFromProjectRoot/tests/example.spec.ts)
 
 ## Actions
 
 ### Navigation
 
-Most of the tests will start with navigating page to the URL. After that, test
-will be able to interact with the page elements.
-
-```js
-await page.goto('https://playwright.dev/');
-```
-
-```python
-page.goto("https://playwright.dev/")
-```
-
-Playwright will wait for page to reach the load state prior to moving forward.
-Learn more about the [`method: Page.goto`] options.
+* == navigate -- to -- URL /
+  * 👀PRIOR to moving forward, wait for page -- reach the -- load state 👀
+* uses
+  * 👀| MOST tests' start 👀
+    * Reason: 🧠test will be -- able to interact with the -- page elements 🧠
+* _Examples:_ [here](/examples/initFromProjectRoot/tests/example.spec.ts)
+  * | JS,
+  * | Python, TODO:
+    ```python
+    page.goto("https://playwright.dev/")
+    ```
+* see [`method: Page.goto`] options
 
 ### Interactions
 
-Performing actions starts with locating the elements. Playwright uses [Locators API](../../locators.md) for that. Locators represent a way to find element(s) on the page at any moment, learn more about the [different types](../../locators.md) of locators available. Playwright will wait for the element to be [actionable](../../actionability.md) prior to performing the action, so there is no need to wait for it to become available.
-
-
-```js
-// Create a locator.
-const getStarted = page.getByRole('link', { name: 'Get started' });
-
-// Click it.
-await getStarted.click();
-```
-
-In most cases, it'll be written in one line:
-
-```js
-await page.getByRole('link', { name: 'Get started' }).click();
-```
+* locate the elements
+  * == Performing actions' start
+  * -- via -- [Locators API](../../locators.md)
+  * == 👀find element(s) | page | ANY moment👀
+  * _Example:_ [here](/examples/initFromProjectRoot/tests/example.spec.ts)
 
 ### Basic actions
 
-This is the list of the most popular Playwright actions. Note that there are many more, so make sure to check the [Locator API](../../api/class-locator.md) section to
-learn more about them.
+* MOST popular Playwright actions
+* see [Locator API](../../api/class-locator.md)
 
 | Action | Description |
 | :- | :- |
@@ -114,21 +64,18 @@ learn more about them.
 
 ## Assertions
 
-Playwright includes [test assertions](./test-assertions.md) in the form of `expect` function. To make an assertion, call `expect(value)` and choose a matcher that reflects the expectation.
+* == `expect` function /
+  * matchers
+    * types
+      * sync
+      * async
+        * -> tests
+          * non-flaky
+          * resilient
+    * _Example:_ `toEqual`, `toContain`, `toBeTruthy`
+* see [test assertions](./test-assertions.md)
 
-There are many generic matchers like `toEqual`, `toContain`, `toBeTruthy` that can be used to assert any conditions.
-
-```js
-expect(success).toBeTruthy();
-```
-
-Playwright also includes async matchers that will wait until the expected condition is met. Using these matchers allows making the tests non-flaky and resilient. For example, this code will wait until the page gets the title containing "Playwright":
-
-```js
-await expect(page).toHaveTitle(/Playwright/);
-```
-
-Here is the list of the most popular async assertions. Note that there are [many more](./test-assertions.md) to get familiar with:
+* MOST popular async assertions
 
 | Assertion | Description |
 | :- | :- |
@@ -145,39 +92,21 @@ Here is the list of the most popular async assertions. Note that there are [many
 
 ### Test Isolation
 
-Playwright Test is based on the concept of [test fixtures](./test-fixtures.md) such as the [built in page fixture](./test-fixtures#built-in-fixtures), which is passed into your test. Pages are [isolated between tests due to the Browser Context](./browser-contexts), which is equivalent to a brand new browser profile, where every test gets a fresh environment, even when multiple tests run in a single Browser.
-
-```js title="tests/example.spec.ts"
-import { test } from '@playwright/test';
-
-test('example test', async ({ page }) => {
-  // "page" belongs to an isolated BrowserContext, created for this specific test.
-});
-
-test('another test', async ({ page }) => {
-  // "page" in this second test is completely isolated from the first test.
-});
-```
+* see [test fixtures](./test-fixtures.md) 👀
+  * [built-in fixture, page](./test-fixtures.md#built-in)
+* _Example:_ [here](/examples/initFromProjectRoot/tests/example.spec.ts)
 
 ### Using Test Hooks
 
-You can use various [test hooks](./api/class-test.md) such as `test.describe` to declare a group of tests and `test.beforeEach` and `test.afterEach` which are executed before/after each test. Other hooks include the `test.beforeAll` and `test.afterAll` which are executed once per worker before/after all tests.
+* see [test hooks](./api/class-test.md)
+  * `test.describe`
+    * declare a group of tests
+  * `test.beforeEach` & `test.afterEach`
+    * executed BEFORE/AFTER EACH test
+  * `test.beforeAll` & `test.afterAll`
+    * executed 1! / worker BEFORE/AFTER ALL tests
 
-```js title="tests/example.spec.ts"
-import { test, expect } from '@playwright/test';
-
-test.describe('navigation', () => {
-  test.beforeEach(async ({ page }) => {
-    // Go to the starting url before each test.
-    await page.goto('https://playwright.dev/');
-  });
-
-  test('main navigation', async ({ page }) => {
-    // Assertions use the expect API.
-    await expect(page).toHaveURL('https://playwright.dev/');
-  });
-});
-```
+* _Example:_ [here](/examples/initFromProjectRoot/tests/example.spec.ts)
 
 ## What's Next
 
