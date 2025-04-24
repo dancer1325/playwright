@@ -5,39 +5,36 @@ title: "Fixtures"
 
 ## Introduction
 
-Playwright Test is based on the concept of test fixtures. Test fixtures are used to establish the environment for each test, giving the test everything it needs and nothing else. Test fixtures are isolated between tests. With fixtures, you can group tests based on their meaning, instead of their common setup.
+* Playwright Test
+  * 💡is -- based on -- test fixtures💡
+
+* Test fixtures
+  * allows
+    * establishing the environment / EACH test
+      * 👀== give ALL needed by test & NOTHING else👀
+    * grouping test -- based on -- their meaning (!= their common setup)
+  * ⚠️text fixture1 / test1 -- is isolated between -- text fixture2 / test2⚠️
 
 ### Built-in fixtures
 
-You have already used test fixtures in your first test.
+* _Example:_ [here](/examples/initFromProjectRoot/tests/example.spec.ts)
+* built-in fixtures
 
-```js
-import { test, expect } from '@playwright/test';
-
-test('basic test', async ({ page }) => {
-  await page.goto('https://playwright.dev/');
-
-  await expect(page).toHaveTitle(/Playwright/);
-});
-```
-
-The `{ page }` argument tells Playwright Test to setup the `page` fixture and provide it to your test function.
-
-Here is a list of the pre-defined fixtures that you are likely to use most of the time:
-
-|Fixture    |Type               |Description                      |
-|:----------|:------------------|:--------------------------------|
-|page       |[Page]             |Isolated page for this test run. |
-|context    |[BrowserContext]   |Isolated context for this test run. The `page` fixture belongs to this context as well. Learn how to [configure context](./test-configuration.md). |
-|browser    |[Browser]          |Browsers are shared across tests to optimize resources. Learn how to [configure browser](./test-configuration.md). |
-|browserName|[string]           |The name of the browser currently running the test. Either `chromium`, `firefox` or `webkit`.|
-|request    |[APIRequestContext]|Isolated [APIRequestContext](../api/Classes/class-apirequestcontext.md) instance for this test run.|
+|Fixture    |Type               | Description                                                                                                                                |
+|:----------|:------------------|:-------------------------------------------------------------------------------------------------------------------------------------------|
+|page       |[Page]             | Isolated page / this test run                                                                                                              |
+|context    |[BrowserContext]   | Isolated context / this test run <br/> `page` fixture -- belongs to -- this context <br/> see [configure context](./test-configuration.md) |
+|browser    |[Browser]          | Browsers are shared ACROSS tests -- to optimize -- resources <br/> see [configure browser](./test-configuration.md)                        |
+|browserName|[string]           | browserName / CURRENTLY running the test <br/> ALLOWED values: `chromium`, `firefox` or `webkit`.                                          |
+|request    |[APIRequestContext]| Isolated [APIRequestContext](../api/Classes/class-apirequestcontext.md) instance / this test run                                           |
 
 ### Without fixtures
 
+* TODO:
 Here is how typical test environment setup differs between traditional test style and the fixture-based one.
 
-`TodoPage` is a class that helps interacting with a "todo list" page of the web app, following the [Page Object Model](../pom.md) pattern. It uses Playwright's `page` internally.
+`TodoPage` is a class that helps interacting with a "todo list" page of the web app, following the [Page Object Model](../pom.md) pattern.
+It uses Playwright's `page` internally.
 
 <details>
   <summary>Click to expand the code for the <code>TodoPage</code></summary>
