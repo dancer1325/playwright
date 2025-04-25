@@ -4,27 +4,30 @@ title: "Running and debugging tests"
 ---
 ## Introduction
 
-With Playwright you can run a single test, a set of tests or all tests. Tests can be run on one browser or multiple browsers by using the `--project` flag. Tests are run in parallel by default and are run in a headless manner, meaning no browser window will be opened while running the tests and results will be seen in the terminal. However, you can run tests in headed mode by using the `--headed` CLI argument, or you can run your tests in [UI mode](./test-ui-mode.md) by using the `--ui` flag. See a full trace of your tests complete with watch mode, time travel debugging and more.
-
-**You will learn**
-
-- [How to run tests from the command line](/running-tests.md#command-line)
-- [How to debug tests](/running-tests.md#debugging-tests)
-- [How to open the HTML test reporter](/running-tests.md#test-reports)
+* Playwright
+  * allows you,
+    * run >=1 tests /
+      * if you pass `--project` -> run | >=1 browsers
+      * by default,
+        * run in parallel
+        * run | headless manner
+          * == NO opened | browser == log | terminal
+      * OTHER modes
+        * if you pass `--headed` CLI argument -> headed mode
+        * if you pass `--ui` -> [UI mode](./test-ui-mode.md)
 
 ## Running tests
 ### Command line
 
-You can run your tests with the `playwright test` command. This will run your tests on all browsers as configured in the `playwright.config` file. Tests run in headless mode by default meaning no browser window will be opened while running the tests and results will be seen in the terminal.
-
-```bash
-npx playwright test
-```
+* `npx playwright test`
+  * run your tests | ALL browsers configured | `playwright.config` file
+  * by default, headless mode
 
 ![tests running in command line](https://github.com/microsoft/playwright/assets/13063165/981c1b2b-dc7e-4b85-b241-272b44da6628)
 
 ### Run tests in UI mode
 
+* TODO:
 We highly recommend running your tests with [UI Mode](./test-ui-mode.md) for a better developer experience where you can easily walk through each step of the test and visually see what was happening before, during and after each step. UI mode also comes with many other features such as the locator picker, watch mode and more.
 
 ```bash
