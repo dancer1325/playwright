@@ -110,7 +110,7 @@
 * **[Codegen](https://playwright.dev/docs/codegen)**
   * allows
     * record your actions
-      * on any language
+      * | any language
       * — & then → generate tests
 * **[Playwright inspector](https://playwright.dev/docs/inspector)**
   * allows

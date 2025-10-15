@@ -7,12 +7,31 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ## Introduction
 
-Playwright comes with the ability to generate tests for you as you perform actions in the browser and is a great way to quickly get started with testing. Playwright will look at your page and figure out the best locator, prioritizing [role, text and test id locators](Guides/Locators/locators.md). If the generator finds multiple elements matching the locator, it will improve the locator to make it resilient that uniquely identify the target element.
+* Playwright
+  * allows
+    * generating tests for you -- based on -- performed actions | browser /
+      * figure out the best locator -- following -- the priority [role, text and test id locators](Guides/Locators/locators.md) /
+        * if there are MULTIPLE elements / match the locator -> it improves the locator / UNIQUELY identify the target element
+      * ALLOWED
+        * actions
+          * _Example:_ click OR fill
+        * assertions
+          * -- via -- click 1 toolbar's icon & click | element
+          * are
+            * `'assert visibility'`
+              * == element is visible
+            * `'assert text'`
+              * == element contains specific text
+            * `'assert value'`
+              * == element has a specific value
 
 ## Generate tests in VS Code
+* TODO:
 * langs: js
 
-Install the VS Code extension and generate tests directly from VS Code. The extension is available on the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright). Check out our guide on [getting started with VS Code](./getting-started-vscode.md).
+Install the VS Code extension and generate tests directly from VS Code
+* The extension is available on the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright)
+* Check out our guide on [getting started with VS Code](./getting-started-vscode.md).
 
 <LiteYouTube
     id="LM4yqrOzmFE"
@@ -67,93 +86,51 @@ You can generate locators with the test generator.
 
 ## Generate tests with the Playwright Inspector
 
-When running the `codegen` command two windows will be opened, a browser window where you interact with the website you wish to test and the Playwright Inspector window where you can record your tests and then copy them into your editor.
+* `codegen` command
+  * 2 windows are opened
+    * browser window | you interact -- with the -- website
+    * Playwright Inspector window | you can
+      * record your tests
+      * copy the tests | your editor
 
-### Running Codegen
+* `.. playwright codegen websiteURLWhereGenerateTests`
+  * `websiteURLWhereGenerateTests`
+    * OPTIONAL
+      * if you do NOT specify it -> | opened browser window, specify it
 
-Use the `codegen` command to run the test generator followed by the URL of the website you want to generate tests for. The URL is optional and you can always run the command without it and then add the URL directly into the browser window instead.
+  * ways
+    ```bash js
+    npx playwright codegen demo.playwright.dev/todomvc
+    ```
 
-```bash js
-npx playwright codegen demo.playwright.dev/todomvc
-```
+    ```bash java
+    mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="codegen demo.playwright.dev/todomvc"
+    ```
 
-```bash java
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="codegen demo.playwright.dev/todomvc"
-```
+    ```bash python
+    playwright codegen demo.playwright.dev/todomvc
+    ```
 
-```bash python
-playwright codegen demo.playwright.dev/todomvc
-```
+    ```bash csharp
+    pwsh bin/Debug/netX/playwright.ps1 codegen demo.playwright.dev/todomvc
+    ```
+* record a test
+  * perform actions | browser window
+  * stop the recording & press the **copy** button
 
-```bash csharp
-pwsh bin/Debug/netX/playwright.ps1 codegen demo.playwright.dev/todomvc
-```
-
-### Recording a test
-
-Run the `codegen` command and perform actions in the browser window. Playwright will generate the code for the user interactions which you can see in the Playwright Inspector window. Once you have finished recording your test stop the recording and press the **copy** button to copy your generated test into your editor.
-
-With the test generator you can record:
-* Actions like click or fill by simply interacting with the page
-* Assertions by clicking on one of the icons in the toolbar and then clicking on an element on the page to assert against. You can choose:
-  * `'assert visibility'` to assert that an element is visible
-  * `'assert text'` to assert that an element contains specific text
-  * `'assert value'` to assert that an element has a specific value
-
-######
-* langs: js
-
-![Recording a test](https://github.com/microsoft/playwright/assets/13063165/34a79ea1-639e-4cb3-8115-bfdc78e3d34d)
-
-######
-* langs: java
-
-![recording a test](https://github.com/microsoft/playwright/assets/13063165/ec9c4071-4af8-4ae7-8b36-aebcc29bdbbb)
-
-######
-* langs: python
-
-![recording a test](https://github.com/microsoft/playwright/assets/13063165/9751b609-6e4c-486b-a961-f86f177b1d58)
-
-######
-* langs: csharp
-
-![recording a test](https://github.com/microsoft/playwright/assets/13063165/53bdfb6f-d462-4ce0-ab95-0619faaebf1e)
-
-######
-* langs: js, java, python, csharp
-
-When you have finished interacting with the page, press the **record** button to stop the recording and use the **copy** button to copy the generated code to your editor.
-
-Use the **clear** button to clear the code to start recording again. Once finished close the Playwright inspector window or stop the terminal command.
+* _Example:_ `npx playwright codegen https://www.cncf.io/`
+  ![](static/codegenExample.png)
 
 ### Generating locators
-You can generate [locators](/locators.md) with the test generator.
 
-* Press the `'Record'` button to stop the recording and the `'Pick Locator'` button will appear.
-* Click on the `'Pick Locator'` button and then hover over elements in the browser window to see the locator highlighted underneath each element.
-* To choose a locator click on the element you would like to locate and the code for that locator will appear in the field next to the Pick Locator button.
-* You can then edit the locator in this field to fine tune it or use the copy button to copy it and paste it into your code.
+* steps
+  * stop the recording
+  * select the `'Pick Locator'`
+  * select elements | browser window
+    * -> | Playwright inspector window,
+      * highlight EACH element
 
-######
-* langs: js
-
-![picking a locator](https://github.com/microsoft/playwright/assets/13063165/2c8a12e2-4e98-4fdd-af92-1d73ae696d86)
-
-######
-* langs: java
-
-![picking a locator](https://github.com/microsoft/playwright/assets/13063165/733b48fd-5edf-4150-93f0-018adc52b6ff)
-
-######
-* langs: python
-
-![picking a locator](https://github.com/microsoft/playwright/assets/13063165/95d11f48-96a4-46b9-9c2a-63c3aa4fdce7)
-
-######
-* langs: csharp
-
-![picking a locator](https://github.com/microsoft/playwright/assets/13063165/1478f56f-422f-4276-9696-0674041f11dc)
+* _Example:_ `npx playwright codegen https://www.cncf.io/`
 
 ## Emulation
 
@@ -416,94 +393,9 @@ pwsh bin/Debug/netX/playwright.ps1 codegen --load-storage=auth.json github.com/m
 
 ## Record using custom setup
 
-If you would like to use codegen in some non-standard setup (for example, use [`method: BrowserContext.route`]), it is possible to call [`method: Page.pause`] that will open a separate window with codegen controls.
+* steps
+  * [record -- via -- Codegen](#generate-tests-with-the-playwright-inspector)
+  * | generated code,
+    * add your DESIRED custom setup
+      * _Example:_ `BrowserContext.route`, `Page.pause`
 
-```js
-const { chromium } = require('@playwright/test');
-
-(async () => {
-  // Make sure to run headed.
-  const browser = await chromium.launch({ headless: false });
-
-  // Setup context however you like.
-  const context = await browser.newContext({ /* pass any options */ });
-  await context.route('**/*', route => route.continue());
-
-  // Pause the page, and start recording manually.
-  const page = await context.newPage();
-  await page.pause();
-})();
-```
-
-```java
-import com.microsoft.playwright.*;
-
-public class Example {
-  public static void main(String[] args) {
-    try (Playwright playwright = Playwright.create()) {
-      BrowserType chromium = playwright.chromium();
-      // Make sure to run headed.
-      Browser browser = chromium.launch(new BrowserType.LaunchOptions().setHeadless(false));
-      // Setup context however you like.
-      BrowserContext context = browser.newContext(/* pass any options */);
-      context.route("**/*", route -> route.resume());
-      // Pause the page, and start recording manually.
-      Page page = context.newPage();
-      page.pause();
-    }
-  }
-}
-```
-
-```python async
-import asyncio
-from playwright.async_api import async_playwright
-
-async def main():
-    async with async_playwright() as p:
-        # Make sure to run headed.
-        browser = await p.chromium.launch(headless=False)
-
-        # Setup context however you like.
-        context = await browser.new_context() # Pass any options
-        await context.route('**/*', lambda route: route.continue_())
-
-        # Pause the page, and start recording manually.
-        page = await context.new_page()
-        await page.pause()
-
-asyncio.run(main())
-```
-
-```python sync
-from playwright.sync_api import sync_playwright
-
-with sync_playwright() as p:
-    # Make sure to run headed.
-    browser = p.chromium.launch(headless=False)
-
-    # Setup context however you like.
-    context = browser.new_context() # Pass any options
-    context.route('**/*', lambda route: route.continue_())
-
-    # Pause the page, and start recording manually.
-    page = context.new_page()
-    page.pause()
-```
-
-```csharp
-using Microsoft.Playwright;
-
-using var playwright = await Playwright.CreateAsync();
-var chromium = playwright.Chromium;
-// Make sure to run headed.
-var browser = await chromium.LaunchAsync(new() { Headless = false });
-
-// Setup context however you like.
-var context = await browser.NewContextAsync(); // Pass any options
-await context.RouteAsync("**/*", route => route.ContinueAsync());
-
-// Pause the page, and start recording manually.
-var page = await context.NewPageAsync();
-await page.PauseAsync();
-```
