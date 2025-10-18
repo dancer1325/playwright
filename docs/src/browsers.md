@@ -5,13 +5,13 @@ title: "Browsers"
 
 ## Introduction
 
-Each version of Playwright needs specific versions of browser binaries to operate. You will need to use the Playwright CLI to install these browsers.
-
-With every release, Playwright updates the versions of the browsers it supports, so that the latest Playwright would support the latest browsers at any moment. It means that every time you update Playwright, you might need to re-run the `install` CLI command.
+* ⚠️specific browser version / EACH Playwright version⚠️
+  * latest Playwright -> supporting latest browser versions
+  * 👀if you need OTHER browser versión -> install these browsers -- vía -- Playwright CLI👀 
 
 ## Install browsers
 
-Playwright can install supported browsers. Running the command without arguments will install the default browsers.
+* install supported default browsers
 
 ```bash js
 npx playwright install
@@ -29,7 +29,7 @@ playwright install
 pwsh bin/Debug/netX/playwright.ps1 install
 ```
 
-You can also install specific browsers by providing an argument:
+* specify browser versión -- vía -- argument
 
 ```bash js
 npx playwright install webkit
@@ -47,7 +47,7 @@ playwright install webkit
 pwsh bin/Debug/netX/playwright.ps1 install webkit
 ```
 
-See all supported browsers:
+* supported browsers
 
 ```bash js
 npx playwright install --help
