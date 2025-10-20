@@ -5,7 +5,11 @@ title: "Assertions"
 
 ## Introduction
 
-Playwright includes test assertions in the form of `expect` function. To make an assertion, call `expect(value)` and choose a matcher that reflects the expectation. There are many [generic matchers](../api/Classes/class-genericassertions.md) like `toEqual`, `toContain`, `toBeTruthy` that can be used to assert any conditions.
+- test assertions -- via -- `expect` function
+  ```
+  expect(value).someMatcher()
+  ``` 
+  - [generic matchers](../api/Classes/class-genericassertions.md) 
 
 ```js
 expect(success).toBeTruthy();
