@@ -9,22 +9,22 @@ title: "Assertions"
   ```
   expect(value).someMatcher()
   ``` 
-  - [generic matchers](../api/Classes/class-genericassertions.md) 
+  - matchers
+    - [generic matchers](../api/Classes/class-genericassertions.md) 
 
 ```js
 expect(success).toBeTruthy();
 ```
-
-Playwright also includes web-specific [async matchers](../api/Classes/class-locatorassertions.md) that will wait until
-the expected condition is met. Consider the following example:
+    - [web-specific async matchers](../api/Classes/class-locatorassertions.md)
 
 ```js
 await expect(page.getByTestId('status')).toHaveText('Submitted');
 ```
-
-Playwright will be re-testing the element with the test id of `status` until the fetched element has the `"Submitted"` text. It will re-fetch the element and check it over and over, until the condition is met or until the timeout is reached. You can either pass this timeout or configure it once via the [`property: TestConfig.expect`] value in the test config.
-
-By default, the timeout for assertions is set to 5 seconds. Learn more about [various timeouts](./test-timeouts.md).
+    - Playwright re-tes the assertion UNTIL
+      - matching
+      - timeout 
+        - [by default, 5"](./test-timeouts.md)
+        - ir you want to customize -> [`property: TestConfig.expect`]  
 
 ## Auto-retrying assertions
 
