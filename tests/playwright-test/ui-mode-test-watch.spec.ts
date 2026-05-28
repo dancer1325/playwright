@@ -28,14 +28,14 @@ test('should watch files', async ({ runUITest, writeFiles }) => {
   });
 
   await page.getByText('fails').click();
-  await page.getByRole('listitem').filter({ hasText: 'fails' }).getByTitle('Watch').click();
+  await page.getByRole('treeitem', { name: 'fails' }).getByRole('button', { name: 'Watch' }).click();
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts
         ◯ passes
         ◯ fails 👁 <=
   `);
 
-  await page.getByRole('listitem').filter({ hasText: 'fails' }).getByTitle('Run').click();
+  await page.getByRole('treeitem', { name: 'fails' }).getByRole('button', { name: 'Run' }).click();
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ❌ a.test.ts
@@ -75,7 +75,7 @@ test('should watch e2e deps', async ({ runUITest, writeFiles }) => {
   });
 
   await page.getByText('answer').click();
-  await page.getByRole('listitem').filter({ hasText: 'answer' }).getByTitle('Watch').click();
+  await page.getByRole('treeitem', { name: 'answer' }).getByRole('button', { name: 'Watch' }).click();
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts
         ◯ answer 👁 <=
@@ -102,13 +102,13 @@ test('should batch watch updates', async ({ runUITest, writeFiles }) => {
   });
 
   await page.getByText('a.test.ts').click();
-  await page.getByRole('listitem').filter({ hasText: 'a.test.ts' }).getByTitle('Watch').click();
+  await page.getByRole('treeitem', { name: 'a.test.ts' }).getByRole('button', { name: 'Watch' }).click();
   await page.getByText('b.test.ts').click();
-  await page.getByRole('listitem').filter({ hasText: 'b.test.ts' }).getByTitle('Watch').click();
+  await page.getByRole('treeitem', { name: 'b.test.ts' }).getByRole('button', { name: 'Watch' }).click();
   await page.getByText('c.test.ts').click();
-  await page.getByRole('listitem').filter({ hasText: 'c.test.ts' }).getByTitle('Watch').click();
+  await page.getByRole('treeitem', { name: 'c.test.ts' }).getByRole('button', { name: 'Watch' }).click();
   await page.getByText('d.test.ts').click();
-  await page.getByRole('listitem').filter({ hasText: 'd.test.ts' }).getByTitle('Watch').click();
+  await page.getByRole('treeitem', { name: 'd.test.ts' }).getByRole('button', { name: 'Watch' }).click();
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts 👁
@@ -128,7 +128,7 @@ test('should batch watch updates', async ({ runUITest, writeFiles }) => {
     'd.test.ts': `import { test } from '@playwright/test'; test('test', () => {});`,
   });
 
-  await expect(page.getByTestId('status-line')).toHaveText('4/4 passed (100%)');
+  await expect(page.getByTestId('status-line')).toHaveText('4/4 (100%) — 4 passed');
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ✅ a.test.ts 👁
@@ -150,6 +150,8 @@ test('should watch all', async ({ runUITest, writeFiles }) => {
     'd.test.ts': `import { test } from '@playwright/test'; test('test', () => {});`,
   });
 
+  await page.getByTitle('Watch all').click();
+
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts
         ◯ test
@@ -160,14 +162,13 @@ test('should watch all', async ({ runUITest, writeFiles }) => {
     ▼ ◯ d.test.ts
         ◯ test
   `);
-  await page.getByTitle('Watch all').click();
 
   await writeFiles({
     'a.test.ts': `import { test } from '@playwright/test'; test('test', () => {});`,
     'd.test.ts': `import { test } from '@playwright/test'; test('test', () => {});`,
   });
 
-  await expect(page.getByTestId('status-line')).toHaveText('2/2 passed (100%)');
+  await expect(page.getByTestId('status-line')).toHaveText('2/2 (100%) — 2 passed');
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ✅ a.test.ts
@@ -210,13 +211,44 @@ test('should watch new file', async ({ runUITest, writeFiles }) => {
     'b.test.ts': ` import { test } from '@playwright/test'; test('test', () => {});`,
   });
 
-  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 (100%) — 1 passed');
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts
         ◯ test
     ▼ ✅ b.test.ts
         ✅ test
+  `);
+});
+
+test('should run added test in watched file', async ({ runUITest, writeFiles }) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+    import { test } from '@playwright/test';
+    test('foo', () => {});
+    `,
+  });
+
+  await page.getByText('a.test.ts').click();
+  await page.getByRole('treeitem', { name: 'a.test.ts' }).getByRole('button', { name: 'Watch' }).click();
+
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ◯ a.test.ts 👁 <=
+        ◯ foo
+  `);
+
+  await writeFiles({
+    'a.test.ts': `
+    import { test } from '@playwright/test';
+    test('foo', () => {});
+    test('bar', () => {});
+    `,
+  });
+
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ✅ a.test.ts 👁 <=
+        ✅ foo
+        ✅ bar
   `);
 });
 
@@ -245,7 +277,7 @@ test('should queue watches', async ({ runUITest, writeFiles, createLatch }) => {
   await page.getByTitle('Watch all').click();
   await page.getByTitle('Run all').click();
 
-  await expect(page.getByTestId('status-line')).toHaveText('Running 1/4 passed (25%)');
+  await expect(page.getByTestId('status-line')).toHaveText('Running 1/4 (25%) — 1 passed');
 
   await writeFiles({
     'a.test.ts': `import { test } from '@playwright/test'; test('test', () => {});`,
@@ -255,12 +287,12 @@ test('should queue watches', async ({ runUITest, writeFiles, createLatch }) => {
 
   // Now watches should not kick in.
   await new Promise(f => setTimeout(f, 1000));
-  await expect(page.getByTestId('status-line')).toHaveText('Running 1/4 passed (25%)');
+  await expect(page.getByTestId('status-line')).toHaveText('Running 1/4 (25%) — 1 passed');
 
   // Allow test to finish and new watch to  kick in.
   latch.open();
 
-  await expect(page.getByTestId('status-line')).toHaveText('3/3 passed (100%)');
+  await expect(page.getByTestId('status-line')).toHaveText('3/3 (100%) — 3 passed');
 });
 
 test('should not watch output', async ({ runUITest }) => {
@@ -285,7 +317,68 @@ test('should not watch output', async ({ runUITest }) => {
 
   await page.getByTitle('Run all').click();
 
-  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 (100%) — 1 passed');
   expect(commands).toContain('runTests');
   expect(commands).not.toContain('listTests');
+});
+
+
+test('should have watch icon highlighted when a test is focused and watch on the test is enabled', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passes', () => {});
+    `,
+  });
+
+  await page.getByTestId('test-tree').getByText('a.test.ts').click();
+  // watch icon should not be highlight till the watch icon is clicked
+  await page.getByRole('treeitem', { name: 'passes' }).hover();
+  await expect(page.getByRole('treeitem', { name: 'passes' }).getByRole('button', { name: 'Watch' })).not.toHaveCSS('outline', 'rgb(255, 255, 255) solid 1px');
+
+  await page.getByRole('treeitem', { name: 'passes' }).getByRole('button', { name: 'Watch' }).click();
+  await expect(page.getByRole('treeitem', { name: 'passes' }).getByRole('button', { name: 'Watch' }).locator('.codicon-eye')).toHaveCSS('color', 'rgb(255, 255, 255)');
+  await expect(page.getByRole('treeitem', { name: 'passes' }).getByRole('button', { name: 'Watch' })).toHaveCSS('outline', 'rgb(255, 255, 255) solid 1px');
+
+  // deselection of the tree-row should still show the watch icon when watch on tree row is active
+  await page.getByTestId('test-tree').getByText('a.test.ts').click();
+  await expect(page.getByRole('treeitem', { name: 'passes' }).getByRole('button', { name: 'Watch' })).toBeVisible();
+  await expect(page.getByRole('treeitem', { name: 'passes' }).getByRole('button', { name: 'Watch' })).not.toHaveCSS('outline', 'rgb(255, 255, 255) solid 1px');
+
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ◯ a.test.ts <=
+        ◯ passes 👁
+  `);
+});
+
+test('should watch test defined outside of .spec.ts file', async ({ runUITest, writeFiles }) => {
+  const { page } = await runUITest({
+    'example.spec.ts': `
+      import './impl';
+    `,
+    'impl.ts': `
+      import { test } from '@playwright/test';
+      test('one', async () => {});
+    `,
+  });
+
+  await page.getByRole('treeitem', { name: 'one' }).click();
+  await page.getByRole('treeitem', { name: 'one' }).getByRole('button', { name: 'Watch' }).click();
+
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ◯ example.spec.ts
+        ◯ one 👁 <=
+  `);
+
+  await writeFiles({
+    'impl.ts': `
+      import { test } from '@playwright/test';
+      test('one', async () => { /* modified */ });
+    `,
+  });
+
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ✅ example.spec.ts
+        ✅ one 👁 <=
+  `);
 });

@@ -1,6 +1,5 @@
 # class: CDPSession
 * since: v1.8
-* extends: [EventEmitter]
 
 The `CDPSession` instances are used to talk raw Chrome Devtools Protocol:
 * protocol methods can be called with `session.send` method.
@@ -66,6 +65,30 @@ System.out.println("playback rate is " + playbackRate);
 JsonObject params = new JsonObject();
 params.addProperty("playbackRate", playbackRate / 2);
 client.send("Animation.setPlaybackRate", params);
+```
+
+## event: CDPSession.close
+* since: v1.59
+- argument: <[CDPSession]>
+
+Emitted when the session is closed, either because the target was closed or `session.detach()` was called.
+
+## event: CDPSession.event
+* since: v1.59
+* langs: js
+- argument: <[Object]>
+  - `method` <[string]> CDP event name.
+  - `params` ?<[Object]> CDP event parameters.
+
+Emitted for every CDP event received from the session. Allows subscribing to all CDP events at once without knowing
+their names ahead of time.
+
+**Usage**
+
+```js
+session.on('event', ({ name, params }) => {
+  console.log(`CDP event: ${name}`, params);
+});
 ```
 
 ## async method: CDPSession.detach

@@ -113,6 +113,8 @@ dotnet test --filter "Name~GetStartedLink"
   values={[
     {label: 'MSTest', value: 'mstest'},
     {label: 'NUnit', value: 'nunit'},
+    {label: 'xUnit', value: 'xunit'},
+    {label: 'xUnit v3', value: 'xunit-v3'},
   ]
 }>
 <TabItem value="nunit">
@@ -129,11 +131,37 @@ dotnet test -- MSTest.Parallelize.Workers=5
 ```
 
 </TabItem>
+<TabItem value="xunit">
+
+```bash
+dotnet test -- xUnit.MaxParallelThreads=5
+```
+
+See [here](https://xunit.net/docs/running-tests-in-parallel.html) for more information to run tests in parallel with xUnit.
+
+:::note
+We recommend xUnit 2.8+ which uses the [`conservative` parallelism algorithm](https://xunit.net/docs/running-tests-in-parallel.html#algorithms) by default.
+:::
+
+</TabItem>
+<TabItem value="xunit-v3">
+
+```bash
+dotnet test -- xUnit.MaxParallelThreads=5
+```
+
+See [here](https://xunit.net/docs/running-tests-in-parallel.html) for more information to run tests in parallel with xUnit v3.
+
+:::note
+xUnit v3 uses the [`conservative` parallelism algorithm](https://xunit.net/docs/running-tests-in-parallel.html#algorithms) by default.
+:::
+
+</TabItem>
 </Tabs>
 
 ## Debugging Tests
 
-Since Playwright runs in .NET, you can debug it with your debugger of choice in e.g. Visual Studio Code or Visual Studio. Playwright comes with the Playwright Inspector which allows you to step through Playwright API calls, see their debug logs and explore [locators](../../Guides/Locators/locators.md).
+Since Playwright runs in .NET, you can debug it with your debugger of choice in e.g. Visual Studio Code or Visual Studio. Playwright comes with the Playwright Inspector which allows you to step through Playwright API calls, see their debug logs and explore [locators](./locators.md).
 
 ```bash tab=bash-bash lang=csharp
 PWDEBUG=1 dotnet test
@@ -149,14 +177,14 @@ $env:PWDEBUG=1
 dotnet test
 ```
 
-![debugging tests with playwright inspector](https://github.com/microsoft/playwright/assets/13063165/a1e758d3-d379-414f-be0b-7339f12bb635)
+<img src="https://github.com/microsoft/playwright/assets/13063165/a1e758d3-d379-414f-be0b-7339f12bb635" alt="debugging tests with playwright inspector" width="2700" height="1736" />
 
-Check out our [debugging guide](../../debug.md) to learn more about the [Playwright Inspector](../../debug.md#playwright-inspector) as well as debugging with [Browser Developer tools](../../debug.md#browser-developer-tools).
+Check out our [debugging guide](./debug.md) to learn more about the [Playwright Inspector](./debug.md#playwright-inspector) as well as debugging with [Browser Developer tools](./debug.md#browser-developer-tools).
 
 
 ## What's Next
 
-- [Generate tests with Codegen](../Generating%20tests/codegen-intro.md)
+- [Generate tests with Codegen](./codegen-intro.md)
 - [See a trace of your tests](./trace-viewer-intro.md)
-- [Run tests on CI](../CI%20GitHub%20Actions/ci-intro.md)
-- [Learn more about the MSTest and NUnit base classes](./test-runners.md)
+- [Run tests on CI](./ci-intro.md)
+- [Learn more about the MSTest, NUnit, xUnit and xUnit v3 base classes](./test-runners.md)

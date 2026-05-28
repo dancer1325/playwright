@@ -154,7 +154,7 @@ Raw JavaScript content to be injected into frame.
 * since: v1.8
 - `type` <[string]>
 
-Script type. Use 'module' in order to load a Javascript ES6 module. See
+Script type. Use 'module' in order to load a JavaScript ES6 module. See
 [script](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script) for more details.
 
 ## async method: Frame.addStyleTag
@@ -187,18 +187,17 @@ Raw CSS content to be injected into frame.
 
 ## async method: Frame.check
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.check`] instead. Read more about [locators](../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.check`] instead. Read more about [locators](../locators.md).
 
 This method checks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
 1. Ensure that matched element is a checkbox or a radio input. If not, this method throws. If the element is already
    checked, this method returns immediately.
-1. Wait for [actionability](../../Guides/Auto-waiting/actionability.md) checks on the matched element, unless [`option: force`] option is
+1. Wait for [actionability](../actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 1. Ensure that the element is now checked. If not, this method throws.
 
 When all steps combined have not finished during the specified [`option: timeout`], this method throws a
@@ -210,7 +209,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Frame.check.force = %%-input-force-%%
 * since: v1.8
 
-### option: Frame.check.noWaitAfter = %%-input-no-wait-after-%%
+### option: Frame.check.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: Frame.check.position = %%-input-position-%%
@@ -234,12 +233,12 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ## async method: Frame.click
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.click`] instead. Read more about [locators](../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.click`] instead. Read more about [locators](../locators.md).
 
 This method clicks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
-1. Wait for [actionability](../../Guides/Auto-waiting/actionability.md) checks on the matched element, unless [`option: force`] option is
+1. Wait for [actionability](../actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element, or the specified [`option: position`].
@@ -281,7 +280,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Frame.click.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
-### option: Frame.click.trial = %%-input-trial-%%
+### option: Frame.click.trial = %%-input-trial-with-modifiers-%%
 * since: v1.11
 
 ## async method: Frame.content
@@ -292,18 +291,17 @@ Gets the full HTML contents of the frame, including the doctype.
 
 ## async method: Frame.dblclick
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.dblclick`] instead. Read more about [locators](../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.dblclick`] instead. Read more about [locators](../locators.md).
 * langs:
   - alias-csharp: DblClickAsync
 
 This method double clicks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
-1. Wait for [actionability](../../Guides/Auto-waiting/actionability.md) checks on the matched element, unless [`option: force`] option is
+1. Wait for [actionability](../actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to double click in the center of the element, or the specified [`option: position`].
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set. Note that
    if the first click of the `dblclick()` triggers a navigation event, this method will throw.
 
 When all steps combined have not finished during the specified [`option: timeout`], this method throws a
@@ -328,7 +326,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Frame.dblclick.modifiers = %%-input-modifiers-%%
 * since: v1.8
 
-### option: Frame.dblclick.noWaitAfter = %%-input-no-wait-after-%%
+### option: Frame.dblclick.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: Frame.dblclick.position = %%-input-position-%%
@@ -343,12 +341,12 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Frame.dblclick.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
-### option: Frame.dblclick.trial = %%-input-trial-%%
+### option: Frame.dblclick.trial = %%-input-trial-with-modifiers-%%
 * since: v1.11
 
 ## async method: Frame.dispatchEvent
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.dispatchEvent`] instead. Read more about [locators](../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.dispatchEvent`] instead. Read more about [locators](../locators.md).
 
 The snippet below dispatches the `click` event on the element. Regardless of the visibility state of the element, `click`
 is dispatched. This is equivalent to calling
@@ -463,7 +461,7 @@ Optional event-specific initialization properties.
 ### option: Frame.dragAndDrop.force = %%-input-force-%%
 * since: v1.13
 
-### option: Frame.dragAndDrop.noWaitAfter = %%-input-no-wait-after-%%
+### option: Frame.dragAndDrop.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.13
 
 ### option: Frame.dragAndDrop.strict = %%-input-strict-%%
@@ -483,6 +481,9 @@ Optional event-specific initialization properties.
 
 ### option: Frame.dragAndDrop.targetPosition = %%-input-target-position-%%
 * since: v1.14
+
+### option: Frame.dragAndDrop.steps = %%-input-drag-steps-%%
+* since: v1.57
 
 ## async method: Frame.evalOnSelector
 * since: v1.9
@@ -679,7 +680,7 @@ Console.WriteLine(await frame.EvaluateAsync<int>("1 + 2")); // prints "3"
 [ElementHandle] instances can be passed as an argument to the [`method: Frame.evaluate`]:
 
 ```js
-const bodyHandle = await frame.evaluate('document.body');
+const bodyHandle = await frame.evaluateHandle('document.body');
 const html = await frame.evaluate(([body, suffix]) =>
   body.innerHTML + suffix, [bodyHandle, 'hello'],
 );
@@ -687,25 +688,25 @@ await bodyHandle.dispose();
 ```
 
 ```java
-ElementHandle bodyHandle = frame.evaluate("document.body");
+ElementHandle bodyHandle = frame.evaluateHandle("document.body");
 String html = (String) frame.evaluate("([body, suffix]) => body.innerHTML + suffix", Arrays.asList(bodyHandle, "hello"));
 bodyHandle.dispose();
 ```
 
 ```python async
-body_handle = await frame.evaluate("document.body")
+body_handle = await frame.evaluate_handle("document.body")
 html = await frame.evaluate("([body, suffix]) => body.innerHTML + suffix", [body_handle, "hello"])
 await body_handle.dispose()
 ```
 
 ```python sync
-body_handle = frame.evaluate("document.body")
+body_handle = frame.evaluate_handle("document.body")
 html = frame.evaluate("([body, suffix]) => body.innerHTML + suffix", [body_handle, "hello"])
 body_handle.dispose()
 ```
 
 ```csharp
-var bodyHandle = await frame.EvaluateAsync("document.body");
+var bodyHandle = await frame.EvaluateHandleAsync("document.body");
 var html = await frame.EvaluateAsync<string>("([body, suffix]) => body.innerHTML + suffix", new object [] { bodyHandle, "hello" });
 await bodyHandle.DisposeAsync();
 ```
@@ -772,11 +773,11 @@ JSHandle aHandle = frame.evaluateHandle("document"); // Handle for the "document
 ```
 
 ```python async
-a_handle = await page.evaluate_handle("document") # handle for the "document"
+a_handle = await frame.evaluate_handle("document") # handle for the "document"
 ```
 
 ```python sync
-a_handle = page.evaluate_handle("document") # handle for the "document"
+a_handle = frame.evaluate_handle("document") # handle for the "document"
 ```
 
 ```csharp
@@ -802,15 +803,15 @@ resultHandle.dispose();
 ```
 
 ```python async
-a_handle = await page.evaluate_handle("document.body")
-result_handle = await page.evaluate_handle("body => body.innerHTML", a_handle)
+a_handle = await frame.evaluate_handle("document.body")
+result_handle = await frame.evaluate_handle("body => body.innerHTML", a_handle)
 print(await result_handle.json_value())
 await result_handle.dispose()
 ```
 
 ```python sync
-a_handle = page.evaluate_handle("document.body")
-result_handle = page.evaluate_handle("body => body.innerHTML", a_handle)
+a_handle = frame.evaluate_handle("document.body")
+result_handle = frame.evaluate_handle("body => body.innerHTML", a_handle)
 print(result_handle.json_value())
 result_handle.dispose()
 ```
@@ -836,9 +837,9 @@ Optional argument to pass to [`param: expression`].
 
 ## async method: Frame.fill
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.fill`] instead. Read more about [locators](../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.fill`] instead. Read more about [locators](../locators.md).
 
-This method waits for an element matching [`param: selector`], waits for [actionability](../../Guides/Auto-waiting/actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling. Note that you can pass an empty string to clear the input field.
+This method waits for an element matching [`param: selector`], waits for [actionability](../actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling. Note that you can pass an empty string to clear the input field.
 
 If the target element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be filled instead.
 
@@ -856,7 +857,7 @@ Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
 ### option: Frame.fill.force = %%-input-force-%%
 * since: v1.13
 
-### option: Frame.fill.noWaitAfter = %%-input-no-wait-after-%%
+### option: Frame.fill.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: Frame.fill.strict = %%-input-strict-%%
@@ -870,7 +871,7 @@ Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
 
 ## async method: Frame.focus
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.focus`] instead. Read more about [locators](../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.focus`] instead. Read more about [locators](../locators.md).
 
 This method fetches an element with [`param: selector`] and focuses it. If there's no element matching
 [`param: selector`], the method waits until a matching element appears in the DOM.
@@ -971,7 +972,7 @@ await locator.ClickAsync();
 
 ## async method: Frame.getAttribute
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.getAttribute`] instead. Read more about [locators](../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.getAttribute`] instead. Read more about [locators](../locators.md).
 - returns: <[null]|[string]>
 
 Returns element attribute value.
@@ -1037,6 +1038,8 @@ Attribute name to get the value for.
 * since: v1.27
 
 ### option: Frame.getByRole.exact = %%-locator-get-by-role-option-exact-%%
+
+### option: Frame.getByRole.description = %%-locator-get-by-role-option-description-%%
 
 ## method: Frame.getByTestId
 * since: v1.27
@@ -1121,16 +1124,15 @@ Referer header value. If provided it will take preference over the referer heade
 
 ## async method: Frame.hover
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.hover`] instead. Read more about [locators](../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.hover`] instead. Read more about [locators](../locators.md).
 
 This method hovers over an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
-1. Wait for [actionability](../../Guides/Auto-waiting/actionability.md) checks on the matched element, unless [`option: force`] option is
+1. Wait for [actionability](../actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to hover over the center of the element, or the specified [`option: position`].
-1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
 
 When all steps combined have not finished during the specified [`option: timeout`], this method throws a
 [TimeoutError]. Passing zero timeout disables this.
@@ -1156,15 +1158,15 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Frame.hover.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
-### option: Frame.hover.trial = %%-input-trial-%%
+### option: Frame.hover.trial = %%-input-trial-with-modifiers-%%
 * since: v1.11
 
-### option: Frame.hover.noWaitAfter = %%-input-no-wait-after-%%
+### option: Frame.hover.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.28
 
 ## async method: Frame.innerHTML
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.innerHTML`] instead. Read more about [locators](../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.innerHTML`] instead. Read more about [locators](../locators.md).
 - returns: <[string]>
 
 Returns `element.innerHTML`.
@@ -1183,7 +1185,7 @@ Returns `element.innerHTML`.
 
 ## async method: Frame.innerText
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.innerText`] instead. Read more about [locators](../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.innerText`] instead. Read more about [locators](../locators.md).
 - returns: <[string]>
 
 Returns `element.innerText`.
@@ -1202,7 +1204,7 @@ Returns `element.innerText`.
 
 ## async method: Frame.inputValue
 * since: v1.13
-* discouraged: Use locator-based [`method: Locator.inputValue`] instead. Read more about [locators](../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.inputValue`] instead. Read more about [locators](../locators.md).
 - returns: <[string]>
 
 Returns `input.value` for the selected `<input>` or `<textarea>` or `<select>` element.
@@ -1223,7 +1225,7 @@ Throws for non-input elements. However, if the element is inside the `<label>` e
 
 ## async method: Frame.isChecked
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.isChecked`] instead. Read more about [locators](../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.isChecked`] instead. Read more about [locators](../locators.md).
 - returns: <[boolean]>
 
 Returns whether the element is checked. Throws if the element is not a checkbox or radio input.
@@ -1248,10 +1250,10 @@ Returns `true` if the frame has been detached, or `false` otherwise.
 
 ## async method: Frame.isDisabled
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.isDisabled`] instead. Read more about [locators](../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.isDisabled`] instead. Read more about [locators](../locators.md).
 - returns: <[boolean]>
 
-Returns whether the element is disabled, the opposite of [enabled](../../Guides/Auto-waiting/actionability.md#enabled).
+Returns whether the element is disabled, the opposite of [enabled](../actionability.md#enabled).
 
 ### param: Frame.isDisabled.selector = %%-input-selector-%%
 * since: v1.8
@@ -1267,10 +1269,10 @@ Returns whether the element is disabled, the opposite of [enabled](../../Guides/
 
 ## async method: Frame.isEditable
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.isEditable`] instead. Read more about [locators](../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.isEditable`] instead. Read more about [locators](../locators.md).
 - returns: <[boolean]>
 
-Returns whether the element is [editable](../../Guides/Auto-waiting/actionability.md#editable).
+Returns whether the element is [editable](../actionability.md#editable).
 
 ### param: Frame.isEditable.selector = %%-input-selector-%%
 * since: v1.8
@@ -1288,7 +1290,7 @@ Returns whether the element is [editable](../../Guides/Auto-waiting/actionabilit
 * since: v1.8
 - returns: <[boolean]>
 
-Returns whether the element is [enabled](../../Guides/Auto-waiting/actionability.md#enabled).
+Returns whether the element is [enabled](../actionability.md#enabled).
 
 ### param: Frame.isEnabled.selector = %%-input-selector-%%
 * since: v1.8
@@ -1304,10 +1306,10 @@ Returns whether the element is [enabled](../../Guides/Auto-waiting/actionability
 
 ## async method: Frame.isHidden
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.isHidden`] instead. Read more about [locators](../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.isHidden`] instead. Read more about [locators](../locators.md).
 - returns: <[boolean]>
 
-Returns whether the element is hidden, the opposite of [visible](../../Guides/Auto-waiting/actionability.md#visible).  [`option: selector`] that does not match any elements is considered hidden.
+Returns whether the element is hidden, the opposite of [visible](../actionability.md#visible).  [`param: selector`] that does not match any elements is considered hidden.
 
 ### param: Frame.isHidden.selector = %%-input-selector-%%
 * since: v1.8
@@ -1322,10 +1324,10 @@ Returns whether the element is hidden, the opposite of [visible](../../Guides/Au
 
 ## async method: Frame.isVisible
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.isVisible`] instead. Read more about [locators](../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.isVisible`] instead. Read more about [locators](../locators.md).
 - returns: <[boolean]>
 
-Returns whether the element is [visible](../../Guides/Auto-waiting/actionability.md#visible). [`option: selector`] that does not match any elements is considered not visible.
+Returns whether the element is [visible](../actionability.md#visible). [`param: selector`] that does not match any elements is considered not visible.
 
 ### param: Frame.isVisible.selector = %%-input-selector-%%
 * since: v1.8
@@ -1344,7 +1346,7 @@ Returns whether the element is [visible](../../Guides/Auto-waiting/actionability
 
 %%-template-locator-root-locator-%%
 
-[Learn more about locators](../../Guides/Locators/locators.md).
+[Learn more about locators](../locators.md).
 
 ### param: Frame.locator.selector = %%-find-selector-%%
 * since: v1.14
@@ -1384,7 +1386,7 @@ Parent frame, if any. Detached frames and main frames return `null`.
 
 ## async method: Frame.press
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.press`] instead. Read more about [locators](../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.press`] instead. Read more about [locators](../locators.md).
 
 [`param: key`] can specify the intended
 [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single character to
@@ -1434,7 +1436,7 @@ Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
 
 ## async method: Frame.querySelector
 * since: v1.9
-* discouraged: Use locator-based [`method: Frame.locator`] instead. Read more about [locators](../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Frame.locator`] instead. Read more about [locators](../locators.md).
 * langs:
   - alias-python: query_selector
   - alias-js: $
@@ -1457,7 +1459,7 @@ returns `null`.
 
 ## async method: Frame.querySelectorAll
 * since: v1.9
-* discouraged: Use locator-based [`method: Frame.locator`] instead. Read more about [locators](../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Frame.locator`] instead. Read more about [locators](../locators.md).
 * langs:
   - alias-python: query_selector_all
   - alias-js: $$
@@ -1477,10 +1479,10 @@ returns empty array.
 
 ## async method: Frame.selectOption
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.selectOption`] instead. Read more about [locators](../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.selectOption`] instead. Read more about [locators](../locators.md).
 - returns: <[Array]<[string]>>
 
-This method waits for an element matching [`param: selector`], waits for [actionability](../../Guides/Auto-waiting/actionability.md) checks, waits until all specified options are present in the `<select>` element and selects these options.
+This method waits for an element matching [`param: selector`], waits for [actionability](../actionability.md) checks, waits until all specified options are present in the `<select>` element and selects these options.
 
 If the target element is not a `<select>` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be used instead.
 
@@ -1546,7 +1548,7 @@ await frame.SelectOptionAsync("select#colors", new[] { "red", "green", "blue" })
 ### option: Frame.selectOption.force = %%-input-force-%%
 * since: v1.13
 
-### option: Frame.selectOption.noWaitAfter = %%-input-no-wait-after-%%
+### option: Frame.selectOption.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: Frame.selectOption.strict = %%-input-strict-%%
@@ -1572,18 +1574,17 @@ await frame.SelectOptionAsync("select#colors", new[] { "red", "green", "blue" })
 
 ## async method: Frame.setChecked
 * since: v1.15
-* discouraged: Use locator-based [`method: Locator.setChecked`] instead. Read more about [locators](../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.setChecked`] instead. Read more about [locators](../locators.md).
 
 This method checks or unchecks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
 1. Ensure that matched element is a checkbox or a radio input. If not, this method throws.
 1. If the element already has the right checked state, this method returns immediately.
-1. Wait for [actionability](../../Guides/Auto-waiting/actionability.md) checks on the matched element, unless [`option: force`] option is
+1. Wait for [actionability](../actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 1. Ensure that the element is now checked or unchecked. If not, this method throws.
 
 When all steps combined have not finished during the specified [`option: timeout`], this method throws a
@@ -1598,7 +1599,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Frame.setChecked.force = %%-input-force-%%
 * since: v1.15
 
-### option: Frame.setChecked.noWaitAfter = %%-input-no-wait-after-%%
+### option: Frame.setChecked.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.15
 
 ### option: Frame.setChecked.position = %%-input-position-%%
@@ -1638,7 +1639,7 @@ HTML markup to assign to the page.
 
 ## async method: Frame.setInputFiles
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.setInputFiles`] instead. Read more about [locators](../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.setInputFiles`] instead. Read more about [locators](../locators.md).
 
 Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they
 are resolved relative to the current working directory. For empty array, clears the selected files.
@@ -1652,7 +1653,7 @@ This method expects [`param: selector`] to point to an
 ### param: Frame.setInputFiles.files = %%-input-files-%%
 * since: v1.8
 
-### option: Frame.setInputFiles.noWaitAfter = %%-input-no-wait-after-%%
+### option: Frame.setInputFiles.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: Frame.setInputFiles.strict = %%-input-strict-%%
@@ -1666,16 +1667,15 @@ This method expects [`param: selector`] to point to an
 
 ## async method: Frame.tap
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.tap`] instead. Read more about [locators](../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.tap`] instead. Read more about [locators](../locators.md).
 
 This method taps an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
-1. Wait for [actionability](../../Guides/Auto-waiting/actionability.md) checks on the matched element, unless [`option: force`] option is
+1. Wait for [actionability](../actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.touchscreen`] to tap the center of the element, or the specified [`option: position`].
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 
 When all steps combined have not finished during the specified [`option: timeout`], this method throws a
 [TimeoutError]. Passing zero timeout disables this.
@@ -1693,7 +1693,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Frame.tap.modifiers = %%-input-modifiers-%%
 * since: v1.8
 
-### option: Frame.tap.noWaitAfter = %%-input-no-wait-after-%%
+### option: Frame.tap.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: Frame.tap.position = %%-input-position-%%
@@ -1708,12 +1708,12 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Frame.tap.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
-### option: Frame.tap.trial = %%-input-trial-%%
+### option: Frame.tap.trial = %%-input-trial-with-modifiers-%%
 * since: v1.11
 
 ## async method: Frame.textContent
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.textContent`] instead. Read more about [locators](../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.textContent`] instead. Read more about [locators](../locators.md).
 - returns: <[null]|[string]>
 
 Returns `element.textContent`.
@@ -1762,7 +1762,7 @@ A text to type into a focused element.
 
 Time to wait between key presses in milliseconds. Defaults to 0.
 
-### option: Frame.type.noWaitAfter = %%-input-no-wait-after-%%
+### option: Frame.type.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: Frame.type.strict = %%-input-strict-%%
@@ -1776,18 +1776,17 @@ Time to wait between key presses in milliseconds. Defaults to 0.
 
 ## async method: Frame.uncheck
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.uncheck`] instead. Read more about [locators](../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.uncheck`] instead. Read more about [locators](../locators.md).
 
 This method checks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
 1. Ensure that matched element is a checkbox or a radio input. If not, this method throws. If the element is already
    unchecked, this method returns immediately.
-1. Wait for [actionability](../../Guides/Auto-waiting/actionability.md) checks on the matched element, unless [`option: force`] option is
+1. Wait for [actionability](../actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 1. Ensure that the element is now unchecked. If not, this method throws.
 
 When all steps combined have not finished during the specified [`option: timeout`], this method throws a
@@ -1799,7 +1798,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Frame.uncheck.force = %%-input-force-%%
 * since: v1.8
 
-### option: Frame.uncheck.noWaitAfter = %%-input-no-wait-after-%%
+### option: Frame.uncheck.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: Frame.uncheck.position = %%-input-position-%%
@@ -1973,7 +1972,7 @@ This returns when the frame reaches a required load state, `load` by default. Th
 when this method is called. If current document has already reached the required state, resolves immediately.
 
 :::note
-Most of the time, this method is not needed because Playwright [auto-waits before every action](../../Guides/Auto-waiting/actionability.md).
+Most of the time, this method is not needed because Playwright [auto-waits before every action](../actionability.md).
 :::
 
 **Usage**
@@ -2080,7 +2079,10 @@ a navigation.
 ### param: Frame.waitForNavigation.action = %%-csharp-wait-for-event-action-%%
 * since: v1.12
 
-### option: Frame.waitForNavigation.url = %%-wait-for-navigation-url-%%
+### option: Frame.waitForNavigation.url = %%-js-wait-for-navigation-url-%%
+* since: v1.8
+
+### option: Frame.waitForNavigation.url = %%-python-csharp-java-wait-for-navigation-url-%%
 * since: v1.8
 
 ### option: Frame.waitForNavigation.waitUntil = %%-navigation-wait-until-%%
@@ -2098,7 +2100,7 @@ a navigation.
 ## async method: Frame.waitForSelector
 * since: v1.8
 * discouraged: Use web assertions that assert visibility or a locator-based [`method: Locator.waitFor`] instead.
-  Read more about [locators](../../Guides/Locators/locators.md).
+  Read more about [locators](../locators.md).
 - returns: <[null]|[ElementHandle]>
 
 Returns when element specified by selector satisfies [`option: state`] option. Returns `null` if waiting for `hidden` or
@@ -2276,7 +2278,10 @@ await frame.ClickAsync("a.delayed-navigation"); // clicking the link will indire
 await frame.WaitForURLAsync("**/target.html");
 ```
 
-### param: Frame.waitForURL.url = %%-wait-for-navigation-url-%%
+### param: Frame.waitForURL.url = %%-js-wait-for-navigation-url-%%
+* since: v1.11
+
+### param: Frame.waitForURL.url = %%-python-csharp-java-wait-for-navigation-url-%%
 * since: v1.11
 
 ### option: Frame.waitForURL.timeout = %%-navigation-timeout-%%

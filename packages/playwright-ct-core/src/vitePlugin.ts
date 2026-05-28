@@ -15,26 +15,29 @@
  */
 
 import fs from 'fs';
+import path from 'path';
+
+import { iso, utils, getPlaywrightVersion } from 'playwright-core/lib/coreBundle';
+import { colors, debug } from 'playwright-core/lib/utilsBundle';
+import { cc, transform } from 'playwright/lib/common';
+import { removeDirAndLogToConsole } from 'playwright/lib/util';
+
+import { source as injectedSource } from './generated/indexSource';
+import { createConfig, frameworkConfig, hasJSComponents, populateComponentsFromTests, resolveDirs, transformIndexFile } from './viteUtils';
+
 import type http from 'http';
 import type { AddressInfo } from 'net';
-import path from 'path';
-import { assert, calculateSha1, getPlaywrightVersion, isURLAvailable } from 'playwright-core/lib/utils';
-import { debug } from 'playwright-core/lib/utilsBundle';
-import { internalDependenciesForTestFile, setExternalDependencies } from 'playwright/lib/transform/compilationCache';
-import { stoppable } from 'playwright/lib/utilsBundle';
 import type { FullConfig, Suite } from 'playwright/types/testReporter';
 import type { PluginContext } from 'rollup';
 import type { Plugin, ResolveFn, ResolvedConfig } from 'vite';
 import type { TestRunnerPlugin } from '../../playwright/src/plugins';
-import { source as injectedSource } from './generated/indexSource';
 import type { ImportInfo } from './tsxTransform';
 import type { ComponentRegistry } from './viteUtils';
-import { createConfig, frameworkConfig, hasJSComponents, populateComponentsFromTests, resolveDirs, resolveEndpoint, transformIndexFile } from './viteUtils';
-import { resolveHook } from 'playwright/lib/transform/transform';
+
 
 const log = debug('pw:vite');
 
-let stoppableServer: any;
+let previewHttpServer: http.Server | undefined;
 const playwrightVersion = getPlaywrightVersion();
 
 export function createPlugin(): TestRunnerPlugin {
@@ -49,14 +52,15 @@ export function createPlugin(): TestRunnerPlugin {
     },
 
     begin: async (suite: Suite) => {
-      const result = await buildBundle(config, configDir, suite);
+      const result = await buildBundle(config, configDir);
       if (!result)
         return;
 
       const { viteConfig } = result;
       const { preview } = await import('vite');
       const previewServer = await preview(viteConfig);
-      stoppableServer = stoppable(previewServer.httpServer as http.Server, 0);
+      previewHttpServer = previewServer.httpServer as http.Server;
+      utils.decorateServer(previewHttpServer);
       const isAddressInfo = (x: any): x is AddressInfo => x?.address;
       const address = previewServer.httpServer.address();
       if (isAddressInfo(address)) {
@@ -66,8 +70,19 @@ export function createPlugin(): TestRunnerPlugin {
     },
 
     end: async () => {
-      if (stoppableServer)
-        await new Promise(f => stoppableServer.stop(f));
+      if (previewHttpServer)
+        await new Promise<void>(f => previewHttpServer!.close(() => f()));
+    },
+
+    populateDependencies: async () => {
+      await buildBundle(config, configDir);
+    },
+
+    clearCache: async () => {
+      const configDir = config.configFile ? path.dirname(config.configFile) : config.rootDir;
+      const dirs = await resolveDirs(configDir, config);
+      if (dirs)
+        await removeDirAndLogToConsole(dirs.outDir);
     },
   };
 }
@@ -87,25 +102,12 @@ type BuildInfo = {
   }
 };
 
-export async function buildBundle(config: FullConfig, configDir: string, suite: Suite): Promise<{ buildInfo: BuildInfo, viteConfig: Record<string, any> } | null> {
+export async function buildBundle(config: FullConfig, configDir: string): Promise<{ buildInfo: BuildInfo, viteConfig: Record<string, any> } | null> {
   const { registerSourceFile, frameworkPluginFactory } = frameworkConfig(config);
-  {
-    // Detect a running dev server and use it if available.
-    const endpoint = resolveEndpoint(config);
-    const protocol = endpoint.https ? 'https:' : 'http:';
-    const url = new URL(`${protocol}//${endpoint.host}:${endpoint.port}`);
-    if (await isURLAvailable(url, true)) {
-      // eslint-disable-next-line no-console
-      console.log(`Dev Server is already running at ${url.toString()}, using it.\n`);
-      process.env.PLAYWRIGHT_TEST_BASE_URL = url.toString();
-      return null;
-    }
-  }
-
   const dirs = await resolveDirs(configDir, config);
   if (!dirs) {
     // eslint-disable-next-line no-console
-    console.log(`Template file playwright/index.html is missing.`);
+    console.log(colors.red(`Component testing template file playwright/index.html is missing and there is no existing Vite server. Component tests will fail.\n`));
     return null;
   }
 
@@ -115,15 +117,15 @@ export async function buildBundle(config: FullConfig, configDir: string, suite: 
   let buildInfo: BuildInfo;
 
   const registerSource = injectedSource + '\n' + await fs.promises.readFile(registerSourceFile, 'utf-8');
-  const registerSourceHash = calculateSha1(registerSource);
+  const registerSourceHash = utils.calculateSha1(registerSource);
 
   const { version: viteVersion, build, mergeConfig } = await import('vite');
 
   try {
     buildInfo = JSON.parse(await fs.promises.readFile(buildInfoFile, 'utf-8')) as BuildInfo;
-    assert(buildInfo.version === playwrightVersion);
-    assert(buildInfo.viteVersion === viteVersion);
-    assert(buildInfo.registerSourceHash === registerSourceHash);
+    iso.assert(buildInfo.version === playwrightVersion);
+    iso.assert(buildInfo.viteVersion === viteVersion);
+    iso.assert(buildInfo.registerSourceHash === registerSourceHash);
     buildExists = true;
   } catch (e) {
     buildInfo = {
@@ -157,7 +159,7 @@ export async function buildBundle(config: FullConfig, configDir: string, suite: 
   const viteConfig = await createConfig(dirs, config, frameworkPluginFactory, jsxInJS);
 
   if (sourcesDirty) {
-    // Only add out own plugin when we actually build / transform.
+    // Only add our own plugin when we actually build / transform.
     log('build');
     const depsCollector = new Map<string, string[]>();
     const buildConfig = mergeConfig(viteConfig, {
@@ -169,23 +171,13 @@ export async function buildBundle(config: FullConfig, configDir: string, suite: 
 
   {
     // Update dependencies based on the vite build.
-    for (const projectSuite of suite.suites) {
-      for (const fileSuite of projectSuite.suites) {
-        // For every test file...
-        const testFile = fileSuite.location!.file;
-        const deps = new Set<string>();
-        // Collect its JS dependencies (helpers).
-        for (const file of [testFile, ...(internalDependenciesForTestFile(testFile) || [])]) {
-          // For each helper, get all the imported components.
-          for (const componentFile of componentsByImportingFile.get(file) || []) {
-            // For each component, get all the dependencies.
-            for (const d of buildInfo.deps[componentFile] || [])
-              deps.add(d);
-          }
-        }
-        // Now we have test file => all components along with dependencies.
-        setExternalDependencies(testFile, [...deps]);
+    for (const [importingFile, components] of componentsByImportingFile) {
+      const deps = new Set<string>();
+      for (const component of components) {
+        for (const d of buildInfo.deps[component])
+          deps.add(d);
       }
+      cc.setExternalDependencies(importingFile, [...deps]);
     }
   }
 
@@ -223,8 +215,16 @@ async function checkNewComponents(buildInfo: BuildInfo, componentRegistry: Compo
       break;
     }
   }
-  for (const c of oldComponents.values())
-    componentRegistry.set(c.id, c);
+  for (const c of oldComponents.values()) {
+    try {
+      if ((await fs.promises.stat(c.filename)))
+        componentRegistry.set(c.id, c);
+    } catch (e) {
+      if (e.code !== 'ENOENT')
+        throw e;
+      log('non existent file, skipping component registry:', c.filename);
+    }
+  }
 
   return hasNewComponents;
 }
@@ -255,7 +255,7 @@ function vitePlugin(registerSource: string, templateDir: string, buildInfo: Buil
 
     async writeBundle(this: PluginContext) {
       for (const importInfo of importInfos.values()) {
-        const importPath = resolveHook(importInfo.filename, importInfo.importSource);
+        const importPath = transform.resolveHook(importInfo.filename, importInfo.importSource);
         if (!importPath)
           continue;
         const deps = new Set<string>();
@@ -270,9 +270,11 @@ function vitePlugin(registerSource: string, templateDir: string, buildInfo: Buil
 }
 
 function collectViteModuleDependencies(context: PluginContext, id: string, deps: Set<string>) {
-  if (!path.isAbsolute(id))
+  // Example: "src/Component.tsx?raw" or "src/Component.tsx?import" should resolve to the file path.
+  const cleanedId = id.split(/[?#]/)[0];
+  const normalizedId = path.normalize(cleanedId);
+  if (!path.isAbsolute(normalizedId))
     return;
-  const normalizedId = path.normalize(id);
   if (deps.has(normalizedId))
     return;
   deps.add(normalizedId);

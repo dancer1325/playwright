@@ -119,7 +119,15 @@ it('isEnabled and isDisabled should work', async ({ page }) => {
 });
 
 it('isEditable should work', async ({ page }) => {
-  await page.setContent(`<input id=input1 disabled><textarea></textarea><input id=input2>`);
+  await page.setContent(`
+    <input id=input1 disabled>
+    <textarea></textarea>
+    <input id=input2>
+    <div contenteditable="true"></div>
+    <span id=span1 role=textbox aria-readonly=true></span>
+    <span id=span2 role=textbox></span>
+    <button>button</button>
+  `);
   await page.$eval('textarea', t => t.readOnly = true);
   const input1 = page.locator('#input1');
   expect(await input1.isEditable()).toBe(false);
@@ -130,6 +138,11 @@ it('isEditable should work', async ({ page }) => {
   const textarea = page.locator('textarea');
   expect(await textarea.isEditable()).toBe(false);
   expect(await page.isEditable('textarea')).toBe(false);
+  expect(await page.locator('div').isEditable()).toBe(true);
+  expect(await page.locator('#span1').isEditable()).toBe(false);
+  expect(await page.locator('#span2').isEditable()).toBe(true);
+  const error = await page.locator('button').isEditable().catch(e => e);
+  expect(error.message).toContain('Element is not an <input>, <textarea>, <select> or [contenteditable] and does not have a role allowing [aria-readonly]');
 });
 
 it('isChecked should work', async ({ page }) => {
@@ -179,4 +192,45 @@ it('should return page', async ({ page, server }) => {
 
   const inFrame = page.frames()[1].locator('div');
   expect(inFrame.page()).toBe(page);
+});
+
+it('description should return null for locator without description', async ({ page }) => {
+  const locator = page.locator('button');
+  expect(locator.description()).toBe(null);
+});
+
+it('description should return description for locator with simple description', async ({ page }) => {
+  const locator = page.locator('button').describe('Submit button');
+  expect(locator.description()).toBe('Submit button');
+});
+
+it('description should return description with special characters', async ({ page }) => {
+  const locator = page.locator('div').describe('Button with "quotes" and \'apostrophes\'');
+  expect(locator.description()).toBe('Button with "quotes" and \'apostrophes\'');
+});
+
+it('description should return description for chained locators', async ({ page }) => {
+  const locator = page.locator('form').locator('input').describe('Form input field');
+  expect(locator.description()).toBe('Form input field');
+});
+
+it('description should return description for locator with multiple describe calls', async ({ page }) => {
+  const locator1 = page.locator('foo').describe('First description');
+  expect(locator1.description()).toBe('First description');
+  const locator2 = locator1.locator('button').describe('Second description');
+  expect(locator2.description()).toBe('Second description');
+  const locator3 = locator2.locator('button');
+  expect(locator3.description()).toBe(null);
+});
+
+it('toString() returns formatted locator', async ({ page }) => {
+  const locator = page.getByRole('button', { name: 'Submit' });
+  expect(locator.toString()).toBe(`getByRole('button', { name: 'Submit' })`);
+  expect(locator.description()).toBe(null);
+});
+
+it('toString() prefers description', async ({ page }) => {
+  const locator = page.getByRole('button', { name: 'Submit' }).describe('Submit button');
+  expect(locator.toString()).toBe(`Submit button`);
+  expect(locator.toString()).toBe(locator.description());
 });

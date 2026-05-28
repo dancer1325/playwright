@@ -18,7 +18,7 @@
 import { browserTest as it, expect } from '../config/browserTest';
 
 it.describe('mobile viewport', () => {
-  it.skip(({ browserName }) => browserName === 'firefox');
+  it.skip(({ browserName, isBidi }) => browserName === 'firefox' && !isBidi);
 
   it('should support mobile emulation', async ({ playwright, browser, server }) => {
     const iPhone = playwright.devices['iPhone 6'];
@@ -54,12 +54,11 @@ it.describe('mobile viewport', () => {
     }
   });
 
-  it('should be detectable by Modernizr', async ({ playwright, browser, server }) => {
+  it('should be detectable', async ({ playwright, browser }) => {
     const iPhone = playwright.devices['iPhone 6'];
     const context = await browser.newContext({ ...iPhone });
     const page = await context.newPage();
-    await page.goto(server.PREFIX + '/detect-touch.html');
-    expect(await page.evaluate(() => document.body.textContent!.trim())).toBe('YES');
+    expect(await page.evaluate(() => 'ontouchstart' in window || !!window.TouchEvent)).toBe(true);
     await context.close();
   });
 
@@ -67,8 +66,7 @@ it.describe('mobile viewport', () => {
     const context = await browser.newContext({ viewport: { width: 800, height: 600 }, hasTouch: true });
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
-    await page.addScriptTag({ url: server.PREFIX + '/modernizr.js' });
-    expect(await page.evaluate(() => (window as any)['Modernizr'].touchevents)).toBe(true);
+    expect(await page.evaluate(() => 'ontouchstart' in window || !!window.TouchEvent)).toBe(true);
     await context.close();
   });
 
@@ -93,6 +91,30 @@ it.describe('mobile viewport', () => {
     expect(await page.evaluate(() => window.orientation)).toBe(0);
     await page.setViewportSize({ width: 400, height: 300 });
     expect(await page.evaluate(() => window.orientation)).toBe(90);
+    await context.close();
+  });
+
+  it('should preserve window.orientation override after navigation', async ({ browser, server, isFrozenWebkit }) => {
+    it.skip(isFrozenWebkit);
+
+    const context = await browser.newContext({ viewport: { width: 400, height: 300 }, isMobile: true });
+    const page = await context.newPage();
+    await page.goto(server.PREFIX + '/mobile.html');
+    expect(await page.evaluate(() => window.orientation)).toBe(90);
+    await page.goto(server.CROSS_PROCESS_PREFIX + '/mobile.html');
+    expect(await page.evaluate(() => window.orientation)).toBe(90);
+    await context.close();
+  });
+
+  it('should preserve screen.orientation.type override after navigation', async ({ browser, server, isFrozenWebkit }) => {
+    it.skip(isFrozenWebkit);
+
+    const context = await browser.newContext({ viewport: { width: 300, height: 400 }, isMobile: true });
+    const page = await context.newPage();
+    await page.goto(server.PREFIX + '/mobile.html');
+    expect(await page.evaluate(() => window.screen.orientation.type)).toBe('portrait-primary');
+    await page.goto(server.CROSS_PROCESS_PREFIX + '/mobile.html');
+    expect(await page.evaluate(() => window.screen.orientation.type)).toBe('portrait-primary');
     await context.close();
   });
 
@@ -156,7 +178,7 @@ it.describe('mobile viewport', () => {
     await desktopPage.close();
   });
 
-  it('mouse should work with mobile viewports and cross process navigations', async ({ browser, server, browserName }) => {
+  it('mouse should work with mobile viewports and cross process navigations', async ({ browser, server }) => {
     // @see https://crbug.com/929806
     const context = await browser.newContext({ viewport: { width: 360, height: 640 }, isMobile: true });
     const page = await context.newPage();
@@ -190,7 +212,22 @@ it.describe('mobile viewport', () => {
     await context.close();
   });
 
-  it('view scale should reset after navigation', async ({ browser, browserName }) => {
+  it('should scroll mobile page with background-attachment: fixed', {
+    annotation: [
+      { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31551' },
+      { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23573' },
+    ]
+  }, async ({ playwright, browser, server }) => {
+    const iPhone = playwright.devices['iPhone 12'];
+    const context = await browser.newContext({ ...iPhone });
+    const page = await context.newPage();
+    await page.goto(server.PREFIX + '/input/background-fixed.html');
+    await page.getByRole('button').click();
+    expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(1000);
+    await context.close();
+  });
+
+  it('view scale should reset after navigation', async ({ browser }) => {
     it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/26876' });
     const context = await browser.newContext({
       viewport: { width: 390, height: 664 },

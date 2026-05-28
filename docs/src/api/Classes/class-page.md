@@ -1,98 +1,154 @@
 # class: Page
 * since: v1.8
-* extends: [EventEmitter]
-* \>1 [Page] instances can EXIST / 1 [Browser] instance
 
-* 's methods
-  * -- interact with  --
-    * [Browser]'s 1! tab
-    * [extension background page](https://developer.chrome.com/extensions/background_pages) | Chromium
-  * _Examples:_ creates a page, navigates | URL, saves a screenshot
-    * | JS, [here](index.js)
-    * | Java, [here](Example.java)
-    * | Python, TODO:
-    ```python async
-    import asyncio
-    from playwright.async_api import async_playwright, Playwright
+Page provides methods to interact with a single tab in a [Browser], or an
+[extension background page](https://developer.chrome.com/extensions/background_pages) in Chromium. One [Browser]
+instance might have multiple [Page] instances.
 
-    async def run(playwright: Playwright):
-        webkit = playwright.webkit
-        browser = await webkit.launch()
-        context = await browser.new_context()
-        page = await context.new_page()
-        await page.goto("https://example.com")
-        await page.screenshot(path="screenshot.png")
-        await browser.close()
+This example creates a page, navigates it to a URL, and then saves a screenshot:
 
-    async def main():
-        async with async_playwright() as playwright:
-            await run(playwright)
-    asyncio.run(main())
-    ```
-    ```python sync
-    from playwright.sync_api import sync_playwright, Playwright
+```js
+const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
 
-    def run(playwright: Playwright):
-        webkit = playwright.webkit
-        browser = webkit.launch()
-        context = browser.new_context()
-        page = context.new_page()
-        page.goto("https://example.com")
-        page.screenshot(path="screenshot.png")
-        browser.close()
+(async () => {
+  const browser = await webkit.launch();
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.goto('https://example.com');
+  await page.screenshot({ path: 'screenshot.png' });
+  await browser.close();
+})();
+```
 
-    with sync_playwright() as playwright:
-        run(playwright)
-    ```
-    * | Csharp, TODO:
-    ```csharp
-    using Microsoft.Playwright;
-    using System.Threading.Tasks;
+```java
+import com.microsoft.playwright.*;
 
-    class PageExamples
-    {
-        public static async Task Run()
-        {
-            using var playwright = await Playwright.CreateAsync();
-            await using var browser = await playwright.Webkit.LaunchAsync();
-            var page = await browser.NewPageAsync();
-            await page.GotoAsync("https://www.theverge.com");
-            await page.ScreenshotAsync(new() { Path = "theverge.png" });
-        }
+public class Example {
+  public static void main(String[] args) {
+    try (Playwright playwright = Playwright.create()) {
+      BrowserType webkit = playwright.webkit();
+      Browser browser = webkit.launch();
+      BrowserContext context = browser.newContext();
+      Page page = context.newPage();
+      page.navigate("https://example.com");
+      page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get("screenshot.png")));
+      browser.close();
     }
-    ```
+  }
+}
+```
 
-* 's events
-  * 👀can be handled -- via -- [EventEmitter](https://nodejs.org/api/events.html#class-eventemitter)'s methods 👀 (`on`, `once`, `removeListener`)
-    * `removeListener`
-      * unsubscribe -- from -- events
-    * _Example:_
-      * | JS, [here](index.js)
-      * | Java, [here](Example.java)
-      * | Python, TODO:
-        ```py
-        // 1. once()
-        page.once("load", lambda: print("page loaded!"))
-        // 2. removelistener()
-        def log_request(intercepted_request):
-        print("a request was made:", intercepted_request.url)
-        page.on("request", log_request)
-        # sometime later...
-        page.remove_listener("request", log_request)
-        ```
-      * | Csharp, TODO:
-        ```csharp
-        // 1. once
-        page.Load += (_, _) => Console.WriteLine("Page loaded!");
-        // 2. removelistener
-        void PageLoadHandler(object _, IPage p) {
-        Console.WriteLine("Page loaded!");
-        };
+```python async
+import asyncio
+from playwright.async_api import async_playwright, Playwright
 
-        page.Load += PageLoadHandler;
-        // Do some work...
-        page.Load -= PageLoadHandler;
-        ```
+async def run(playwright: Playwright):
+    webkit = playwright.webkit
+    browser = await webkit.launch()
+    context = await browser.new_context()
+    page = await context.new_page()
+    await page.goto("https://example.com")
+    await page.screenshot(path="screenshot.png")
+    await browser.close()
+
+async def main():
+    async with async_playwright() as playwright:
+        await run(playwright)
+asyncio.run(main())
+```
+
+```python sync
+from playwright.sync_api import sync_playwright, Playwright
+
+def run(playwright: Playwright):
+    webkit = playwright.webkit
+    browser = webkit.launch()
+    context = browser.new_context()
+    page = context.new_page()
+    page.goto("https://example.com")
+    page.screenshot(path="screenshot.png")
+    browser.close()
+
+with sync_playwright() as playwright:
+    run(playwright)
+```
+
+```csharp
+using Microsoft.Playwright;
+using System.Threading.Tasks;
+
+class PageExamples
+{
+    public static async Task Run()
+    {
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Webkit.LaunchAsync();
+        var page = await browser.NewPageAsync();
+        await page.GotoAsync("https://www.theverge.com");
+        await page.ScreenshotAsync(new() { Path = "theverge.png" });
+    }
+}
+```
+
+The Page class emits various events (described below) which can be handled using any of Node's native
+[`EventEmitter`](https://nodejs.org/api/events.html#events_class_eventemitter) methods, such as `on`, `once` or
+`removeListener`.
+
+This example logs a message for a single page `load` event:
+
+```js
+page.once('load', () => console.log('Page loaded!'));
+```
+
+```java
+page.onLoad(p -> System.out.println("Page loaded!"));
+```
+
+```py
+page.once("load", lambda: print("page loaded!"))
+```
+
+```csharp
+page.Load += (_, _) => Console.WriteLine("Page loaded!");
+```
+
+To unsubscribe from events use the `removeListener` method:
+
+```js
+function logRequest(interceptedRequest) {
+  console.log('A request was made:', interceptedRequest.url());
+}
+page.on('request', logRequest);
+// Sometime later...
+page.removeListener('request', logRequest);
+```
+
+```java
+Consumer<Request> logRequest = interceptedRequest -> {
+  System.out.println("A request was made: " + interceptedRequest.url());
+};
+page.onRequest(logRequest);
+// Sometime later...
+page.offRequest(logRequest);
+```
+
+```py
+def log_request(intercepted_request):
+    print("a request was made:", intercepted_request.url)
+page.on("request", log_request)
+# sometime later...
+page.remove_listener("request", log_request)
+```
+
+```csharp
+void PageLoadHandler(object _, IPage p) {
+    Console.WriteLine("Page loaded!");
+};
+
+page.Load += PageLoadHandler;
+// Do some work...
+page.Load -= PageLoadHandler;
+```
 
 ## property: Page.clock
 * since: v1.45
@@ -501,15 +557,9 @@ Emitted when [WebSocket] request is sent.
 Emitted when a dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is spawned by the
 page.
 
-## property: Page.accessibility
-* since: v1.8
-* langs: csharp, js, python
-* deprecated: This property is discouraged. Please use other libraries such as
-  [Axe](https://www.deque.com/axe/) if you need to test page accessibility. See our Node.js [guide](https://playwright.dev/docs/accessibility-testing) for integration with Axe.
-- type: <[Accessibility]>
-
 ## async method: Page.addInitScript
 * since: v1.8
+- returns: <[Disposable]>
 
 Adds a script which would be evaluated in one of the following scenarios:
 * Whenever the page is navigated.
@@ -631,7 +681,7 @@ Raw JavaScript content to be injected into frame.
 * since: v1.8
 - `type` <[string]>
 
-Script type. Use 'module' in order to load a Javascript ES6 module. See
+Script type. Use 'module' in order to load a JavaScript ES6 module. See
 [script](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script) for more details.
 
 ## async method: Page.addStyleTag
@@ -665,20 +715,25 @@ Raw CSS content to be injected into frame.
 
 Brings page to front (activates tab).
 
+## async method: Page.cancelPickLocator
+* since: v1.59
+
+Cancels an ongoing [`method: Page.pickLocator`] call by deactivating pick locator mode.
+If no pick locator mode is active, this method is a no-op.
+
 ## async method: Page.check
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.check`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.check`] instead. Read more about [locators](../locators.md).
 
 This method checks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
 1. Ensure that matched element is a checkbox or a radio input. If not, this method throws. If the element is already
    checked, this method returns immediately.
-1. Wait for [actionability](../../../Guides/Auto-waiting/actionability.md) checks on the matched element, unless [`option: force`] option is
+1. Wait for [actionability](../actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 1. Ensure that the element is now checked. If not, this method throws.
 
 When all steps combined have not finished during the specified [`option: timeout`], this method throws a
@@ -690,7 +745,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Page.check.force = %%-input-force-%%
 * since: v1.8
 
-### option: Page.check.noWaitAfter = %%-input-no-wait-after-%%
+### option: Page.check.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: Page.check.position = %%-input-position-%%
@@ -710,12 +765,12 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ## async method: Page.click
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.click`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.click`] instead. Read more about [locators](../locators.md).
 
 This method clicks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
-1. Wait for [actionability](../../../Guides/Auto-waiting/actionability.md) checks on the matched element, unless [`option: force`] option is
+1. Wait for [actionability](../actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element, or the specified [`option: position`].
@@ -757,7 +812,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Page.click.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
-### option: Page.click.trial = %%-input-trial-%%
+### option: Page.click.trial = %%-input-trial-with-modifiers-%%
 * since: v1.11
 
 ## async method: Page.close
@@ -807,23 +862,21 @@ Get the browser context that the page belongs to.
 Only available for Chromium atm.
 :::
 
-Browser-specific Coverage implementation. See [Coverage](../class-coverage.md) for more details.
+Browser-specific Coverage implementation. See [Coverage](./class-coverage) for more details.
 
 ## async method: Page.dblclick
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.dblclick`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.dblclick`] instead. Read more about [locators](../locators.md).
 * langs:
   - alias-csharp: DblClickAsync
 
 This method double clicks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
-1. Wait for [actionability](../../../Guides/Auto-waiting/actionability.md) checks on the matched element, unless [`option: force`] option is
+1. Wait for [actionability](../actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to double click in the center of the element, or the specified [`option: position`].
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set. Note that
-   if the first click of the `dblclick()` triggers a navigation event, this method will throw.
 
 When all steps combined have not finished during the specified [`option: timeout`], this method throws a
 [TimeoutError]. Passing zero timeout disables this.
@@ -847,7 +900,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Page.dblclick.modifiers = %%-input-modifiers-%%
 * since: v1.8
 
-### option: Page.dblclick.noWaitAfter = %%-input-no-wait-after-%%
+### option: Page.dblclick.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: Page.dblclick.position = %%-input-position-%%
@@ -862,12 +915,12 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Page.dblclick.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
-### option: Page.dblclick.trial = %%-input-trial-%%
+### option: Page.dblclick.trial = %%-input-trial-with-modifiers-%%
 * since: v1.11
 
 ## async method: Page.dispatchEvent
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.dispatchEvent`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.dispatchEvent`] instead. Read more about [locators](../locators.md).
 
 The snippet below dispatches the `click` event on the element. Regardless of the visibility state of the element, `click`
 is dispatched. This is equivalent to calling
@@ -988,9 +1041,9 @@ await page.dragAndDrop('#source', '#target', {
 ```
 
 ```java
-page.dragAndDrop("#source", '#target');
+page.dragAndDrop("#source", "#target");
 // or specify exact positions relative to the top-left corners of the elements:
-page.dragAndDrop("#source", '#target', new Page.DragAndDropOptions()
+page.dragAndDrop("#source", "#target", new Page.DragAndDropOptions()
   .setSourcePosition(34, 7).setTargetPosition(10, 20));
 ```
 
@@ -1035,7 +1088,7 @@ await Page.DragAndDropAsync("#source", "#target", new()
 ### option: Page.dragAndDrop.force = %%-input-force-%%
 * since: v1.13
 
-### option: Page.dragAndDrop.noWaitAfter = %%-input-no-wait-after-%%
+### option: Page.dragAndDrop.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.13
 
 ### option: Page.dragAndDrop.strict = %%-input-strict-%%
@@ -1055,6 +1108,9 @@ await Page.DragAndDropAsync("#source", "#target", new()
 
 ### option: Page.dragAndDrop.targetPosition = %%-input-target-position-%%
 * since: v1.14
+
+### option: Page.dragAndDrop.steps = %%-input-drag-steps-%%
+* since: v1.57
 
 ## async method: Page.emulateMedia
 * since: v1.8
@@ -1164,8 +1220,6 @@ await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches);
 // → true
 await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches);
 // → false
-await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches);
-// → false
 ```
 
 ```java
@@ -1173,8 +1227,6 @@ page.emulateMedia(new Page.EmulateMediaOptions().setColorScheme(ColorScheme.DARK
 page.evaluate("() => matchMedia('(prefers-color-scheme: dark)').matches");
 // → true
 page.evaluate("() => matchMedia('(prefers-color-scheme: light)').matches");
-// → false
-page.evaluate("() => matchMedia('(prefers-color-scheme: no-preference)').matches");
 // → false
 ```
 
@@ -1184,8 +1236,6 @@ await page.evaluate("matchMedia('(prefers-color-scheme: dark)').matches")
 # → True
 await page.evaluate("matchMedia('(prefers-color-scheme: light)').matches")
 # → False
-await page.evaluate("matchMedia('(prefers-color-scheme: no-preference)').matches")
-# → False
 ```
 
 ```python sync
@@ -1194,7 +1244,6 @@ page.evaluate("matchMedia('(prefers-color-scheme: dark)').matches")
 # → True
 page.evaluate("matchMedia('(prefers-color-scheme: light)').matches")
 # → False
-page.evaluate("matchMedia('(prefers-color-scheme: no-preference)').matches")
 ```
 
 ```csharp
@@ -1202,8 +1251,6 @@ await page.EmulateMediaAsync(new() { ColorScheme = ColorScheme.Dark });
 await page.EvaluateAsync("matchMedia('(prefers-color-scheme: dark)').matches");
 // → true
 await page.EvaluateAsync("matchMedia('(prefers-color-scheme: light)').matches");
-// → false
-await page.EvaluateAsync("matchMedia('(prefers-color-scheme: no-preference)').matches");
 // → false
 ```
 
@@ -1228,16 +1275,16 @@ Passing `'Null'` disables CSS media emulation.
 * langs: js, java
 - `colorScheme` <null|[ColorScheme]<"light"|"dark"|"no-preference">>
 
-Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. Passing
-`null` disables color scheme emulation.
+Emulates [prefers-colors-scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme) media feature, supported values are `'light'` and `'dark'`. Passing
+`null` disables color scheme emulation. `'no-preference'` is deprecated.
 
 ### option: Page.emulateMedia.colorScheme
 * since: v1.9
 * langs: csharp, python
 - `colorScheme` <[ColorScheme]<"light"|"dark"|"no-preference"|"null">>
 
-Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. Passing
-`'Null'` disables color scheme emulation.
+Emulates [prefers-colors-scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme) media feature, supported values are `'light'` and `'dark'`. Passing
+`'Null'` disables color scheme emulation. `'no-preference'` is deprecated.
 
 ### option: Page.emulateMedia.reducedMotion
 * since: v1.12
@@ -1264,6 +1311,18 @@ Emulates `'forced-colors'` media feature, supported values are `'active'` and `'
 * since: v1.15
 * langs: csharp, python
 - `forcedColors` <[ForcedColors]<"active"|"none"|"null">>
+
+### option: Page.emulateMedia.contrast
+* since: v1.51
+* langs: js, java
+- `contrast` <null|[Contrast]<"no-preference"|"more">>
+
+Emulates `'prefers-contrast'` media feature, supported values are `'no-preference'`, `'more'`. Passing `null` disables contrast emulation.
+
+### option: Page.emulateMedia.contrast
+* since: v1.51
+* langs: csharp, python
+- `contrast` <[Contrast]<"no-preference"|"more"|"null">>
 
 ## async method: Page.evalOnSelector
 * since: v1.9
@@ -1463,7 +1522,7 @@ Console.WriteLine(await page.EvaluateAsync<int>("1 + 2")); // prints "3"
 [ElementHandle] instances can be passed as an argument to the [`method: Page.evaluate`]:
 
 ```js
-const bodyHandle = await page.evaluate('document.body');
+const bodyHandle = await page.evaluateHandle('document.body');
 const html = await page.evaluate<string, HTMLElement>(([body, suffix]) =>
   body.innerHTML + suffix, [bodyHandle, 'hello']
 );
@@ -1471,25 +1530,25 @@ await bodyHandle.dispose();
 ```
 
 ```java
-ElementHandle bodyHandle = page.evaluate("document.body");
+ElementHandle bodyHandle = page.evaluateHandle("document.body");
 String html = (String) page.evaluate("([body, suffix]) => body.innerHTML + suffix", Arrays.asList(bodyHandle, "hello"));
 bodyHandle.dispose();
 ```
 
 ```python async
-body_handle = await page.evaluate("document.body")
+body_handle = await page.evaluate_handle("document.body")
 html = await page.evaluate("([body, suffix]) => body.innerHTML + suffix", [body_handle, "hello"])
 await body_handle.dispose()
 ```
 
 ```python sync
-body_handle = page.evaluate("document.body")
+body_handle = page.evaluate_handle("document.body")
 html = page.evaluate("([body, suffix]) => body.innerHTML + suffix", [body_handle, "hello"])
 body_handle.dispose()
 ```
 
 ```csharp
-var bodyHandle = await page.EvaluateAsync("document.body");
+var bodyHandle = await page.EvaluateHandleAsync("document.body");
 var html = await page.EvaluateAsync<string>("([body, suffix]) => body.innerHTML + suffix", new object [] { bodyHandle, "hello" });
 await bodyHandle.DisposeAsync();
 ```
@@ -1617,6 +1676,7 @@ Optional argument to pass to [`param: expression`].
 
 ## async method: Page.exposeBinding
 * since: v1.8
+- returns: <[Disposable]>
 
 The method adds a function called [`param: name`] on the `window` object of every frame in this page. When called, the
 function executes [`param: callback`] and returns a [Promise] which resolves to the return value of [`param: callback`].
@@ -1663,7 +1723,7 @@ public class Example {
   public static void main(String[] args) {
     try (Playwright playwright = Playwright.create()) {
       BrowserType webkit = playwright.webkit();
-      Browser browser = webkit.launch({ headless: false });
+      Browser browser = webkit.launch(new BrowserType.LaunchOptions().setHeadless(false));
       BrowserContext context = browser.newContext();
       Page page = context.newPage();
       page.exposeBinding("pageURL", (source, args) -> source.page().url());
@@ -1760,80 +1820,6 @@ class PageExamples
 }
 ```
 
-An example of passing an element handle:
-
-```js
-await page.exposeBinding('clicked', async (source, element) => {
-  console.log(await element.textContent());
-}, { handle: true });
-await page.setContent(`
-  <script>
-    document.addEventListener('click', event => window.clicked(event.target));
-  </script>
-  <div>Click me</div>
-  <div>Or click me</div>
-`);
-```
-
-```java
-page.exposeBinding("clicked", (source, args) -> {
-  ElementHandle element = (ElementHandle) args[0];
-  System.out.println(element.textContent());
-  return null;
-}, new Page.ExposeBindingOptions().setHandle(true));
-page.setContent("" +
-  "<script>\n" +
-  "  document.addEventListener('click', event => window.clicked(event.target));\n" +
-  "</script>\n" +
-  "<div>Click me</div>\n" +
-  "<div>Or click me</div>\n");
-```
-
-```python async
-async def print(source, element):
-    print(await element.text_content())
-
-await page.expose_binding("clicked", print, handle=true)
-await page.set_content("""
-  <script>
-    document.addEventListener('click', event => window.clicked(event.target));
-  </script>
-  <div>Click me</div>
-  <div>Or click me</div>
-""")
-```
-
-```python sync
-def print(source, element):
-    print(element.text_content())
-
-page.expose_binding("clicked", print, handle=true)
-page.set_content("""
-  <script>
-    document.addEventListener('click', event => window.clicked(event.target));
-  </script>
-  <div>Click me</div>
-  <div>Or click me</div>
-""")
-```
-
-```csharp
-var result = new TaskCompletionSource<string>();
-await page.ExposeBindingAsync("clicked", async (BindingSource _, IJSHandle t) =>
-{
-    return result.TrySetResult(await t.AsElement().TextContentAsync());
-});
-
-await page.SetContentAsync("<script>\n" +
-  "  document.addEventListener('click', event => window.clicked(event.target));\n" +
-  "</script>\n" +
-  "<div>Click me</div>\n" +
-  "<div>Or click me</div>\n");
-
-await page.ClickAsync("div");
-Console.WriteLine(await result.Task);
-```
-
 ### param: Page.exposeBinding.name
 * since: v1.8
 - `name` <[string]>
@@ -1843,18 +1829,13 @@ Name of the function on the window object.
 ### param: Page.exposeBinding.callback
 * since: v1.8
 - `callback` <[function]>
+  * alias: BindingCallback
 
 Callback function that will be called in the Playwright's context.
 
-### option: Page.exposeBinding.handle
-* since: v1.8
-- `handle` <[boolean]>
-
-Whether to pass the argument as a handle, instead of passing by value. When passing a handle, only one argument is
-supported. When passing by value, multiple arguments are supported.
-
 ## async method: Page.exposeFunction
 * since: v1.8
+- returns: <[Disposable]>
 
 The method adds a function called [`param: name`] on the `window` object of every frame in the page. When called, the
 function executes [`param: callback`] and returns a [Promise] which resolves to the return value of [`param: callback`].
@@ -1906,26 +1887,27 @@ public class Example {
   public static void main(String[] args) {
     try (Playwright playwright = Playwright.create()) {
       BrowserType webkit = playwright.webkit();
-      Browser browser = webkit.launch({ headless: false });
+      Browser browser = webkit.launch(new BrowserType.LaunchOptions().setHeadless(false));
       Page page = browser.newPage();
       page.exposeFunction("sha256", args -> {
-        String text = (String) args[0];
-        MessageDigest crypto;
         try {
-          crypto = MessageDigest.getInstance("SHA-256");
+          String text = (String) args[0];
+          MessageDigest crypto = MessageDigest.getInstance("SHA-256");
+          byte[] token = crypto.digest(text.getBytes(StandardCharsets.UTF_8));
+          return Base64.getEncoder().encodeToString(token);
         } catch (NoSuchAlgorithmException e) {
           return null;
         }
-        byte[] token = crypto.digest(text.getBytes(StandardCharsets.UTF_8));
-        return Base64.getEncoder().encodeToString(token);
       });
-      page.setContent("<script>\n" +
+      page.setContent(
+        "<script>\n" +
         "  async function onClick() {\n" +
         "    document.querySelector('div').textContent = await window.sha256('PLAYWRIGHT');\n" +
         "  }\n" +
         "</script>\n" +
         "<button onclick=\"onClick()\">Click me</button>\n" +
-        "<div></div>\n");
+        "<div></div>"
+      );
       page.click("button");
     }
   }
@@ -2041,14 +2023,15 @@ Name of the function on the window object
 ### param: Page.exposeFunction.callback
 * since: v1.8
 - `callback` <[function]>
+  * alias: FunctionCallback
 
 Callback function which will be called in Playwright's context.
 
 ## async method: Page.fill
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.fill`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.fill`] instead. Read more about [locators](../locators.md).
 
-This method waits for an element matching [`param: selector`], waits for [actionability](../../../Guides/Auto-waiting/actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling. Note that you can pass an empty string to clear the input field.
+This method waits for an element matching [`param: selector`], waits for [actionability](../actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling. Note that you can pass an empty string to clear the input field.
 
 If the target element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be filled instead.
 
@@ -2066,7 +2049,7 @@ Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
 ### option: Page.fill.force = %%-input-force-%%
 * since: v1.13
 
-### option: Page.fill.noWaitAfter = %%-input-no-wait-after-%%
+### option: Page.fill.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: Page.fill.strict = %%-input-strict-%%
@@ -2080,7 +2063,7 @@ Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
 
 ## async method: Page.focus
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.focus`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.focus`] instead. Read more about [locators](../locators.md).
 
 This method fetches an element with [`param: selector`] and focuses it. If there's no element matching
 [`param: selector`], the method waits until a matching element appears in the DOM.
@@ -2126,7 +2109,7 @@ const frame = page.frame({ url: /.*domain.*/ });
 ```
 
 ```java
-Frame frame = page.frameByUrl(Pattern.compile(".*domain.*");
+Frame frame = page.frameByUrl(Pattern.compile(".*domain.*"));
 ```
 
 ```py
@@ -2142,7 +2125,7 @@ var frame = page.FrameByUrl(".*domain.*");
 * langs: js
 - `frameSelector` <[string]|[Object]>
   - `name` ?<[string]> Frame name specified in the `iframe`'s `name` attribute. Optional.
-  - `url` ?<[string]|[RegExp]|[function]\([URL]\):[boolean]> A glob pattern, regex pattern or predicate receiving
+  - `url` ?<[string]|[RegExp]|[URLPattern]|[function]\([URL]\):[boolean]> A glob pattern, regex pattern, URL pattern, or predicate receiving
     frame's `url` as a [URL] object. Optional.
 
 Frame name or other frame lookup options.
@@ -2230,7 +2213,7 @@ An array of all frames attached to the page.
 
 ## async method: Page.getAttribute
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.getAttribute`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.getAttribute`] instead. Read more about [locators](../locators.md).
 - returns: <[null]|[string]>
 
 Returns element attribute value.
@@ -2286,11 +2269,6 @@ Attribute name to get the value for.
 ## method: Page.getByRole
 * since: v1.27
 - returns: <[Locator]>
-* allows
-  * locating elements by
-    * [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles)
-    * [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes)
-    * [accessible name](https://w3c.github.io/accname/#dfn-accessible-name)
 
 %%-template-locator-get-by-role-%%
 
@@ -2301,6 +2279,8 @@ Attribute name to get the value for.
 * since: v1.27
 
 ### option: Page.getByRole.exact = %%-locator-get-by-role-option-exact-%%
+
+### option: Page.getByRole.description = %%-locator-get-by-role-option-description-%%
 
 ## method: Page.getByTestId
 * since: v1.27
@@ -2336,7 +2316,7 @@ Attribute name to get the value for.
 - returns: <[null]|[Response]>
 
 Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
-last redirect. If can not go back, returns `null`.
+last redirect. If cannot go back, returns `null`.
 
 Navigate to the previous page in history.
 
@@ -2354,9 +2334,61 @@ Navigate to the previous page in history.
 - returns: <[null]|[Response]>
 
 Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
-last redirect. If can not go forward, returns `null`.
+last redirect. If cannot go forward, returns `null`.
 
 Navigate to the next page in history.
+
+## async method: Page.requestGC
+* since: v1.48
+
+Request the page to perform garbage collection. Note that there is no guarantee that all unreachable objects will be collected.
+
+This is useful to help detect memory leaks. For example, if your page has a large object `'suspect'` that might be leaked, you can check that it does not leak by using a [`WeakRef`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakRef).
+
+```js
+// 1. In your page, save a WeakRef for the "suspect".
+await page.evaluate(() => globalThis.suspectWeakRef = new WeakRef(suspect));
+// 2. Request garbage collection.
+await page.requestGC();
+// 3. Check that weak ref does not deref to the original object.
+expect(await page.evaluate(() => !globalThis.suspectWeakRef.deref())).toBe(true);
+```
+
+```java
+// 1. In your page, save a WeakRef for the "suspect".
+page.evaluate("globalThis.suspectWeakRef = new WeakRef(suspect)");
+// 2. Request garbage collection.
+page.requestGC();
+// 3. Check that weak ref does not deref to the original object.
+assertTrue(page.evaluate("!globalThis.suspectWeakRef.deref()"));
+```
+
+```python async
+# 1. In your page, save a WeakRef for the "suspect".
+await page.evaluate("globalThis.suspectWeakRef = new WeakRef(suspect)")
+# 2. Request garbage collection.
+await page.request_gc()
+# 3. Check that weak ref does not deref to the original object.
+assert await page.evaluate("!globalThis.suspectWeakRef.deref()")
+```
+
+```python sync
+# 1. In your page, save a WeakRef for the "suspect".
+page.evaluate("globalThis.suspectWeakRef = new WeakRef(suspect)")
+# 2. Request garbage collection.
+page.request_gc()
+# 3. Check that weak ref does not deref to the original object.
+assert page.evaluate("!globalThis.suspectWeakRef.deref()")
+```
+
+```csharp
+// 1. In your page, save a WeakRef for the "suspect".
+await Page.EvaluateAsync("globalThis.suspectWeakRef = new WeakRef(suspect)");
+// 2. Request garbage collection.
+await Page.RequestGCAsync();
+// 3. Check that weak ref does not deref to the original object.
+Assert.True(await Page.EvaluateAsync("!globalThis.suspectWeakRef.deref()"));
+```
 
 ### option: Page.goForward.waitUntil = %%-navigation-wait-until-%%
 * since: v1.8
@@ -2402,7 +2434,7 @@ Headless mode doesn't support navigation to a PDF document. See the
 - `url` <[string]>
 
 URL to navigate page to. The url should include scheme, e.g. `https://`.
-When a [`option: baseURL`] via the context options was provided and the passed URL is a path,
+When a [`option: Browser.newContext.baseURL`] via the context options was provided and the passed URL is a path,
 it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
 
 ### option: Page.goto.waitUntil = %%-navigation-wait-until-%%
@@ -2421,18 +2453,22 @@ it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/We
 Referer header value. If provided it will take preference over the referer header value set by
 [`method: Page.setExtraHTTPHeaders`].
 
+## async method: Page.hideHighlight
+* since: v1.60
+
+Hide all locator highlight overlays previously added by [`method: Locator.highlight`] on this page.
+
 ## async method: Page.hover
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.hover`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.hover`] instead. Read more about [locators](../locators.md).
 
 This method hovers over an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
-1. Wait for [actionability](../../../Guides/Auto-waiting/actionability.md) checks on the matched element, unless [`option: force`] option is
+1. Wait for [actionability](../actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to hover over the center of the element, or the specified [`option: position`].
-1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
 
 When all steps combined have not finished during the specified [`option: timeout`], this method throws a
 [TimeoutError]. Passing zero timeout disables this.
@@ -2458,15 +2494,15 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Page.hover.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
-### option: Page.hover.trial = %%-input-trial-%%
+### option: Page.hover.trial = %%-input-trial-with-modifiers-%%
 * since: v1.11
 
-### option: Page.hover.noWaitAfter = %%-input-no-wait-after-%%
+### option: Page.hover.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.28
 
 ## async method: Page.innerHTML
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.innerHTML`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.innerHTML`] instead. Read more about [locators](../locators.md).
 - returns: <[string]>
 
 Returns `element.innerHTML`.
@@ -2485,7 +2521,7 @@ Returns `element.innerHTML`.
 
 ## async method: Page.innerText
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.innerText`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.innerText`] instead. Read more about [locators](../locators.md).
 - returns: <[string]>
 
 Returns `element.innerText`.
@@ -2504,7 +2540,7 @@ Returns `element.innerText`.
 
 ## async method: Page.inputValue
 * since: v1.13
-* discouraged: Use locator-based [`method: Locator.inputValue`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.inputValue`] instead. Read more about [locators](../locators.md).
 - returns: <[string]>
 
 Returns `input.value` for the selected `<input>` or `<textarea>` or `<select>` element.
@@ -2525,7 +2561,7 @@ Throws for non-input elements. However, if the element is inside the `<label>` e
 
 ## async method: Page.isChecked
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.isChecked`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.isChecked`] instead. Read more about [locators](../locators.md).
 - returns: <[boolean]>
 
 Returns whether the element is checked. Throws if the element is not a checkbox or radio input.
@@ -2550,10 +2586,10 @@ Indicates that the page has been closed.
 
 ## async method: Page.isDisabled
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.isDisabled`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.isDisabled`] instead. Read more about [locators](../locators.md).
 - returns: <[boolean]>
 
-Returns whether the element is disabled, the opposite of [enabled](../../../Guides/Auto-waiting/actionability.md#enabled).
+Returns whether the element is disabled, the opposite of [enabled](../actionability.md#enabled).
 
 ### param: Page.isDisabled.selector = %%-input-selector-%%
 * since: v1.8
@@ -2569,10 +2605,10 @@ Returns whether the element is disabled, the opposite of [enabled](../../../Guid
 
 ## async method: Page.isEditable
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.isEditable`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.isEditable`] instead. Read more about [locators](../locators.md).
 - returns: <[boolean]>
 
-Returns whether the element is [editable](../../../Guides/Auto-waiting/actionability.md#editable).
+Returns whether the element is [editable](../actionability.md#editable).
 
 ### param: Page.isEditable.selector = %%-input-selector-%%
 * since: v1.8
@@ -2588,10 +2624,10 @@ Returns whether the element is [editable](../../../Guides/Auto-waiting/actionabi
 
 ## async method: Page.isEnabled
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.isEnabled`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.isEnabled`] instead. Read more about [locators](../locators.md).
 - returns: <[boolean]>
 
-Returns whether the element is [enabled](../../../Guides/Auto-waiting/actionability.md#enabled).
+Returns whether the element is [enabled](../actionability.md#enabled).
 
 ### param: Page.isEnabled.selector = %%-input-selector-%%
 * since: v1.8
@@ -2607,10 +2643,10 @@ Returns whether the element is [enabled](../../../Guides/Auto-waiting/actionabil
 
 ## async method: Page.isHidden
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.isHidden`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.isHidden`] instead. Read more about [locators](../locators.md).
 - returns: <[boolean]>
 
-Returns whether the element is hidden, the opposite of [visible](../../../Guides/Auto-waiting/actionability.md#visible).  [`option: selector`] that does not match any elements is considered hidden.
+Returns whether the element is hidden, the opposite of [visible](../actionability.md#visible).  [`param: selector`] that does not match any elements is considered hidden.
 
 ### param: Page.isHidden.selector = %%-input-selector-%%
 * since: v1.8
@@ -2626,10 +2662,10 @@ Returns whether the element is hidden, the opposite of [visible](../../../Guides
 
 ## async method: Page.isVisible
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.isVisible`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.isVisible`] instead. Read more about [locators](../locators.md).
 - returns: <[boolean]>
 
-Returns whether the element is [visible](../../../Guides/Auto-waiting/actionability.md#visible). [`option: selector`] that does not match any elements is considered not visible.
+Returns whether the element is [visible](../actionability.md#visible). [`param: selector`] that does not match any elements is considered not visible.
 
 ### param: Page.isVisible.selector = %%-input-selector-%%
 * since: v1.8
@@ -2646,6 +2682,77 @@ Returns whether the element is [visible](../../../Guides/Auto-waiting/actionabil
 ## property: Page.keyboard
 * since: v1.8
 - type: <[Keyboard]>
+
+
+## async method: Page.clearConsoleMessages
+* since: v1.59
+
+Clears all stored console messages from this page. Subsequent calls to [`method: Page.consoleMessages`] will only return messages logged after the clear.
+
+## async method: Page.clearPageErrors
+* since: v1.59
+
+Clears all stored page errors from this page. Subsequent calls to [`method: Page.pageErrors`] will only return errors thrown after the clear.
+
+## property: Page.localStorage
+* since: v1.61
+- type: <[WebStorage]>
+
+Provides access to the page's `localStorage` for the current origin. See [WebStorage].
+
+```js
+await page.localStorage.setItem('token', 'abc');
+const token = await page.localStorage.getItem('token');
+```
+
+## property: Page.sessionStorage
+* since: v1.61
+- type: <[WebStorage]>
+
+Provides access to the page's `sessionStorage` for the current origin. See [WebStorage].
+
+```js
+await page.sessionStorage.setItem('flag', '1');
+const flag = await page.sessionStorage.getItem('flag');
+```
+
+## async method: Page.consoleMessages
+* since: v1.56
+- returns: <[Array]<[ConsoleMessage]>>
+
+Returns up to (currently) 200 last console messages from this page. See [`event: Page.console`] for more details.
+
+### option: Page.consoleMessages.filter
+* since: v1.59
+- `filter` <[ConsoleMessagesFilter]<"all"|"since-navigation">>
+
+Controls which messages are returned:
+- `'since-navigation'` (default) — returns only messages logged after the last committed main-frame navigation.
+- `'all'` — returns all stored console messages.
+
+
+## async method: Page.pageErrors
+* since: v1.56
+* langs: js, python
+- returns: <[Array]<[Error]>>
+
+Returns up to (currently) 200 last page errors from this page. See [`event: Page.pageError`] for more details.
+
+## async method: Page.pageErrors
+* since: v1.56
+* langs: csharp, java
+- returns: <[Array]<[string]>>
+
+Returns up to (currently) 200 last page errors from this page. See [`event: Page.pageError`] for more details.
+
+### option: Page.pageErrors.filter
+* since: v1.59
+- `filter` <[PageErrorsFilter]<"all"|"since-navigation">>
+
+Controls which errors are returned:
+- `'since-navigation'` (default) — returns only errors thrown after the last committed main-frame navigation.
+- `'all'` — returns all stored page errors.
+
 
 ## method: Page.locator
 * since: v1.14
@@ -2728,15 +2835,14 @@ Returns the opener for popup pages and `null` for others. If the opener has been
 ## async method: Page.pause
 * since: v1.9
 
-Pauses script execution. Playwright will stop executing the script and wait for the user to either press 'Resume'
+Pauses script execution. Playwright will stop executing the script and wait for the user to either press the 'Resume'
 button in the page overlay or to call `playwright.resume()` in the DevTools console.
 
 User can inspect selectors or perform manual steps while paused. Resume will continue running the original script from
 the place it was paused.
 
 :::note
-This method requires Playwright to be started in a headed mode, with a falsy [`option: headless`] value in
-the [`method: BrowserType.launch`].
+This method requires Playwright to be started in a headed mode, with a falsy [`option: BrowserType.launch.headless`] option.
 :::
 
 ## async method: Page.pdf
@@ -2744,10 +2850,6 @@ the [`method: BrowserType.launch`].
 - returns: <[Buffer]>
 
 Returns the PDF buffer.
-
-:::note
-Generating a pdf is currently only supported in Chromium headless.
-:::
 
 `page.pdf()` generates a pdf of the page with `print` css media. To generate a pdf with `screen` media, call
 [`method: Page.emulateMedia`] before calling `page.pdf()`:
@@ -2926,6 +3028,7 @@ Paper margins, defaults to none.
 * since: v1.8
 * langs: csharp, java
 - `margin` <[Object]>
+  * alias-java: Margin
   - `top` ?<[string]> Top margin, accepts values labeled with units. Defaults to `0`.
   - `right` ?<[string]> Right margin, accepts values labeled with units. Defaults to `0`.
   - `bottom` ?<[string]> Bottom margin, accepts values labeled with units. Defaults to `0`.
@@ -2953,9 +3056,43 @@ Whether or not to generate tagged (accessible) PDF. Defaults to `false`.
 
 Whether or not to embed the document outline into the PDF. Defaults to `false`.
 
+## async method: Page.pickLocator
+* since: v1.59
+- returns: <[Locator]>
+
+Enters pick locator mode where hovering over page elements highlights them and shows the corresponding locator.
+Once the user clicks an element, the mode is deactivated and the [Locator] for the picked element is returned.
+
+**Usage**
+
+```js
+const locator = await page.pickLocator();
+console.log(locator);
+```
+
+```java
+Locator locator = page.pickLocator();
+System.out.println(locator);
+```
+
+```python async
+locator = await page.pick_locator()
+print(locator)
+```
+
+```python sync
+locator = page.pick_locator()
+print(locator)
+```
+
+```csharp
+var locator = await page.PickLocatorAsync();
+Console.WriteLine(locator);
+```
+
 ## async method: Page.press
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.press`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.press`] instead. Read more about [locators](../locators.md).
 
 Focuses the element, and then uses [`method: Keyboard.down`] and [`method: Keyboard.up`].
 
@@ -3067,7 +3204,7 @@ Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
 
 ## async method: Page.querySelector
 * since: v1.9
-* discouraged: Use locator-based [`method: Page.locator`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Page.locator`] instead. Read more about [locators](../locators.md).
 * langs:
   - alias-python: query_selector
   - alias-js: $
@@ -3084,7 +3221,7 @@ return value resolves to `null`. To wait for an element on the page, use [`metho
 
 ## async method: Page.querySelectorAll
 * since: v1.9
-* discouraged: Use locator-based [`method: Page.locator`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Page.locator`] instead. Read more about [locators](../locators.md).
 * langs:
   - alias-python: query_selector_all
   - alias-js: $$
@@ -3097,6 +3234,17 @@ return value resolves to `[]`.
 * since: v1.9
 
 
+## async method: Page.requests
+* since: v1.56
+- returns: <[Array]<[Request]>>
+
+Returns up to (currently) 100 last network request from this page. See [`event: Page.request`] for more details.
+
+Returned requests should be accessed immediately, otherwise they might be collected to prevent unbounded memory growth as new requests come in. Once collected, retrieving most information about the request is impossible.
+
+Note that requests reported through the [`event: Page.request`] request are not collected, so there is a trade off between efficient memory usage with [`method: Page.requests`] and the amount of available information reported through [`event: Page.request`].
+
+
 ## async method: Page.addLocatorHandler
 * since: v1.42
 
@@ -3106,18 +3254,16 @@ This method lets you set up a special function, called a handler, that activates
 
 Things to keep in mind:
 * When an overlay is shown predictably, we recommend explicitly waiting for it in your test and dismissing it as a part of your normal test flow, instead of using [`method: Page.addLocatorHandler`].
-* Playwright checks for the overlay every time before executing or retrying an action that requires an [actionability check](../../../Guides/Auto-waiting/actionability.md), or before performing an auto-waiting assertion check. When overlay is visible, Playwright calls the handler first, and then proceeds with the action/assertion. Note that the handler is only called when you perform an action/assertion - if the overlay becomes visible but you don't perform any actions, the handler will not be triggered.
+* Playwright checks for the overlay every time before executing or retrying an action that requires an [actionability check](../actionability.md), or before performing an auto-waiting assertion check. When overlay is visible, Playwright calls the handler first, and then proceeds with the action/assertion. Note that the handler is only called when you perform an action/assertion - if the overlay becomes visible but you don't perform any actions, the handler will not be triggered.
 * After executing the handler, Playwright will ensure that overlay that triggered the handler is not visible anymore. You can opt-out of this behavior with [`option: noWaitAfter`].
 * The execution time of the handler counts towards the timeout of the action/assertion that executed the handler. If your handler takes too long, it might cause timeouts.
 * You can register multiple handlers. However, only a single handler will be running at a time. Make sure the actions within a handler don't depend on another handler.
 
 :::warning
 Running the handler will alter your page state mid-test. For example it will change the currently focused element and move the mouse. Make sure that actions that run after the handler are self-contained and do not rely on the focus and mouse state being unchanged.
-<br />
-<br />
+
 For example, consider a test that calls [`method: Locator.focus`] followed by [`method: Keyboard.press`]. If your handler clicks a button between these two actions, the focused element most likely will be wrong, and key press will happen on the unexpected element. Use [`method: Locator.press`] instead to avoid this problem.
-<br />
-<br />
+
 Another example is a series of mouse actions, where [`method: Mouse.move`] is followed by [`method: Mouse.down`]. Again, when the handler runs between these two actions, the mouse position will be wrong during the mouse down. Prefer self-contained actions like [`method: Locator.click`] that do not rely on the state being unchanged by a handler.
 :::
 
@@ -3138,12 +3284,12 @@ await page.getByRole('button', { name: 'Start here' }).click();
 
 ```java
 // Setup the handler.
-page.addLocatorHandler(page.getByText("Sign up to the newsletter"), () => {
+page.addLocatorHandler(page.getByText("Sign up to the newsletter"), () -> {
   page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("No thanks")).click();
 });
 
 // Write the test as usual.
-page.goto("https://example.com");
+page.navigate("https://example.com");
 page.getByRole("button", Page.GetByRoleOptions().setName("Start here")).click();
 ```
 
@@ -3160,7 +3306,7 @@ page.get_by_role("button", name="Start here").click()
 
 ```python async
 # Setup the handler.
-def handler():
+async def handler():
   await page.get_by_role("button", name="No thanks").click()
 await page.add_locator_handler(page.get_by_text("Sign up to the newsletter"), handler)
 
@@ -3195,12 +3341,12 @@ await page.getByRole('button', { name: 'Start here' }).click();
 
 ```java
 // Setup the handler.
-page.addLocatorHandler(page.getByText("Confirm your security details")), () => {
+page.addLocatorHandler(page.getByText("Confirm your security details"), () -> {
   page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Remind me later")).click();
 });
 
 // Write the test as usual.
-page.goto("https://example.com");
+page.navigate("https://example.com");
 page.getByRole("button", Page.GetByRoleOptions().setName("Start here")).click();
 ```
 
@@ -3217,7 +3363,7 @@ page.get_by_role("button", name="Start here").click()
 
 ```python async
 # Setup the handler.
-def handler():
+async def handler():
   await page.get_by_role("button", name="Remind me later").click()
 await page.add_locator_handler(page.get_by_text("Confirm your security details"), handler)
 
@@ -3252,12 +3398,12 @@ await page.getByRole('button', { name: 'Start here' }).click();
 
 ```java
 // Setup the handler.
-page.addLocatorHandler(page.locator("body")), () => {
+page.addLocatorHandler(page.locator("body"), () -> {
   page.evaluate("window.removeObstructionsForTestIfNeeded()");
-}, new Page.AddLocatorHandlerOptions.setNoWaitAfter(true));
+}, new Page.AddLocatorHandlerOptions().setNoWaitAfter(true));
 
 // Write the test as usual.
-page.goto("https://example.com");
+page.navigate("https://example.com");
 page.getByRole("button", Page.GetByRoleOptions().setName("Start here")).click();
 ```
 
@@ -3274,7 +3420,7 @@ page.get_by_role("button", name="Start here").click()
 
 ```python async
 # Setup the handler.
-def handler():
+async def handler():
   await page.evaluate("window.removeObstructionsForTestIfNeeded()")
 await page.add_locator_handler(page.locator("body"), handler, no_wait_after=True)
 
@@ -3303,7 +3449,7 @@ await page.addLocatorHandler(page.getByLabel('Close'), async locator => {
 ```
 
 ```java
-page.addLocatorHandler(page.getByLabel("Close"), locator => {
+page.addLocatorHandler(page.getByLabel("Close"), locator -> {
   locator.click();
 }, new Page.AddLocatorHandlerOptions().setTimes(1));
 ```
@@ -3315,7 +3461,7 @@ page.add_locator_handler(page.get_by_label("Close"), handler, times=1)
 ```
 
 ```python async
-def handler(locator):
+async def handler(locator):
   await locator.click()
 await page.add_locator_handler(page.get_by_label("Close"), handler, times=1)
 ```
@@ -3365,6 +3511,32 @@ Specifies the maximum number of times this handler should be called. Unlimited b
 
 By default, after calling the handler Playwright will wait until the overlay becomes hidden, and only then Playwright will continue with the action/assertion that triggered the handler. This option allows to opt-out of this behavior, so that overlay can stay visible after the handler has run.
 
+## async method: Page.removeAllListeners
+* since: v1.47
+* langs: js
+
+Removes all the listeners of the given type (or all registered listeners if no type given).
+Allows to wait for async listeners to complete or to ignore subsequent errors from these listeners.
+
+**Usage**
+
+```js
+page.on('request', async request => {
+  const response = await request.response();
+  const body = await response.body();
+  console.log(body.byteLength);
+});
+await page.goto('https://playwright.dev', { waitUntil: 'domcontentloaded' });
+// Waits for all the reported 'request' events to resolve.
+await page.removeAllListeners('request', { behavior: 'wait' });
+```
+
+### param: Page.removeAllListeners.type
+* since: v1.47
+- `type` ?<[string]>
+
+### option: Page.removeAllListeners.behavior = %%-remove-all-listeners-options-behavior-%%
+* since: v1.47
 
 ## async method: Page.removeLocatorHandler
 * since: v1.44
@@ -3406,6 +3578,7 @@ API testing helper associated with this page. This method returns the same insta
 
 ## async method: Page.route
 * since: v1.8
+- returns: <[Disposable]>
 
 Routing provides the capability to modify network requests that are made by a page.
 
@@ -3545,6 +3718,8 @@ await page.RouteAsync("/api/**", async r =>
 });
 ```
 
+If a request matches multiple registered routes, the most recently registered route takes precedence.
+
 Page routes take precedence over browser context routes (set up with [`method: BrowserContext.route`]) when request
 matches both handlers.
 
@@ -3556,11 +3731,17 @@ Enabling routing disables http cache.
 
 ### param: Page.route.url
 * since: v1.8
+* langs: js
+- `url` <[string]|[RegExp]|[URLPattern]|[function]\([URL]\):[boolean]>
+
+A glob pattern, regex pattern, URL pattern, or predicate that receives a [URL] to match during routing. If [`option: Browser.newContext.baseURL`] is set in the context options and the provided URL is a string that does not start with `*`, it is resolved using the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
+
+### param: Page.route.url
+* since: v1.8
+* langs: python, csharp, java
 - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
 
-A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
-When a [`option: baseURL`] via the context options was provided and the passed URL is a path,
-it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
+A glob pattern, regex pattern, or predicate that receives a [URL] to match during routing. If [`option: Browser.newContext.baseURL`] is set in the context options and the provided URL is a string that does not start with `*`, it is resolved using the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
 
 ### param: Page.route.handler
 * since: v1.8
@@ -3585,7 +3766,7 @@ How often a route should be used. By default it will be used every time.
 ## async method: Page.routeFromHAR
 * since: v1.23
 
-If specified the network requests that are made in the page will be served from the HAR file. Read more about [Replaying from HAR](../../../mock.md#replaying-from-har).
+If specified the network requests that are made in the page will be served from the HAR file. Read more about [Replaying from HAR](../mock.md#replaying-from-har).
 
 Playwright will not serve requests intercepted by Service Worker from the HAR file. See [this](https://github.com/microsoft/playwright/issues/1090) issue. We recommend disabling Service Workers when using request interception by setting [`option: Browser.newContext.serviceWorkers`] to `'block'`.
 
@@ -3619,13 +3800,121 @@ A glob pattern, regular expression or predicate to match the request URL. Only r
 * since: v1.32
 - `updateMode` <[HarMode]<"full"|"minimal">>
 
-When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page, cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
+When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page, cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `minimal`.
 
 ### option: Page.routeFromHAR.updateContent
 * since: v1.32
 - `updateContent` <[RouteFromHarUpdateContentPolicy]<"embed"|"attach">>
 
 Optional setting to control resource content management. If `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is specified, content is stored inline the HAR file.
+
+
+## async method: Page.routeWebSocket
+* since: v1.48
+
+This method allows to modify websocket connections that are made by the page.
+
+Note that only `WebSocket`s created after this method was called will be routed. It is recommended to call this method before navigating the page.
+
+**Usage**
+
+Below is an example of a simple mock that responds to a single message. See [WebSocketRoute] for more details and examples.
+
+```js
+await page.routeWebSocket('/ws', ws => {
+  ws.onMessage(message => {
+    if (message === 'request')
+      ws.send('response');
+  });
+});
+```
+
+```java
+page.routeWebSocket("/ws", ws -> {
+  ws.onMessage(frame -> {
+    if ("request".equals(frame.text()))
+      ws.send("response");
+  });
+});
+```
+
+```python async
+def message_handler(ws: WebSocketRoute, message: Union[str, bytes]):
+  if message == "request":
+    ws.send("response")
+
+def handler(ws: WebSocketRoute):
+  ws.on_message(lambda message: message_handler(ws, message))
+
+await page.route_web_socket("/ws", handler)
+```
+
+```python sync
+def message_handler(ws: WebSocketRoute, message: Union[str, bytes]):
+  if message == "request":
+    ws.send("response")
+
+def handler(ws: WebSocketRoute):
+  ws.on_message(lambda message: message_handler(ws, message))
+
+page.route_web_socket("/ws", handler)
+```
+
+```csharp
+await page.RouteWebSocketAsync("/ws", ws => {
+  ws.OnMessage(frame => {
+    if (frame.Text == "request")
+      ws.Send("response");
+  });
+});
+```
+
+### param: Page.routeWebSocket.url
+* since: v1.48
+* langs: js
+- `url` <[string]|[RegExp]|[URLPattern]|[function]\([URL]\):[boolean]>
+
+Only WebSockets with the url matching this pattern will be routed. A string pattern can be relative to the [`option: Browser.newContext.baseURL`] context option.
+
+### param: Page.routeWebSocket.url
+* since: v1.48
+* langs: python, csharp, java
+- `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
+
+Only WebSockets with the url matching this pattern will be routed. A string pattern can be relative to the [`option: Browser.newContext.baseURL`] context option.
+
+### param: Page.routeWebSocket.handler
+* since: v1.48
+* langs: js, python
+- `handler` <[function]\([WebSocketRoute]\): [Promise<any>|any]>
+
+Handler function to route the WebSocket.
+
+### param: Page.routeWebSocket.handler
+* since: v1.48
+* langs: csharp, java
+- `handler` <[function]\([WebSocketRoute]\)>
+
+Handler function to route the WebSocket.
+
+
+## property: Page.screencast
+* since: v1.59
+- type: <[Screencast]>
+
+[Screencast] object associated with this page.
+
+**Usage**
+
+```js
+page.screencast.on('screencastFrame', data => {
+  console.log('received frame, jpeg size:', data.length);
+});
+await page.screencast.start();
+// ... perform actions ...
+await page.screencast.stop();
+```
+
 
 ## async method: Page.screenshot
 * since: v1.8
@@ -3656,10 +3945,10 @@ Returns the buffer with the captured screenshot.
 
 ## async method: Page.selectOption
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.selectOption`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.selectOption`] instead. Read more about [locators](../locators.md).
 - returns: <[Array]<[string]>>
 
-This method waits for an element matching [`param: selector`], waits for [actionability](../../../Guides/Auto-waiting/actionability.md) checks, waits until all specified options are present in the `<select>` element and selects these options.
+This method waits for an element matching [`param: selector`], waits for [actionability](../actionability.md) checks, waits until all specified options are present in the `<select>` element and selects these options.
 
 If the target element is not a `<select>` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be used instead.
 
@@ -3726,7 +4015,7 @@ await page.SelectOptionAsync("select#colors", new[] { "red", "green", "blue" });
 ### option: Page.selectOption.force = %%-input-force-%%
 * since: v1.13
 
-### option: Page.selectOption.noWaitAfter = %%-input-no-wait-after-%%
+### option: Page.selectOption.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: Page.selectOption.strict = %%-input-strict-%%
@@ -3752,18 +4041,17 @@ await page.SelectOptionAsync("select#colors", new[] { "red", "green", "blue" });
 
 ## async method: Page.setChecked
 * since: v1.15
-* discouraged: Use locator-based [`method: Locator.setChecked`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.setChecked`] instead. Read more about [locators](../locators.md).
 
 This method checks or unchecks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
 1. Ensure that matched element is a checkbox or a radio input. If not, this method throws.
 1. If the element already has the right checked state, this method returns immediately.
-1. Wait for [actionability](../../../Guides/Auto-waiting/actionability.md) checks on the matched element, unless [`option: force`] option is
+1. Wait for [actionability](../actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 1. Ensure that the element is now checked or unchecked. If not, this method throws.
 
 When all steps combined have not finished during the specified [`option: timeout`], this method throws a
@@ -3778,7 +4066,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Page.setChecked.force = %%-input-force-%%
 * since: v1.15
 
-### option: Page.setChecked.noWaitAfter = %%-input-no-wait-after-%%
+### option: Page.setChecked.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.15
 
 ### option: Page.setChecked.position = %%-input-position-%%
@@ -3852,7 +4140,7 @@ This setting will change the default maximum time for all the methods accepting 
 * since: v1.8
 - `timeout` <[float]>
 
-Maximum time in milliseconds
+Maximum time in milliseconds. Pass `0` to disable timeout.
 
 ## async method: Page.setExtraHTTPHeaders
 * since: v1.8
@@ -3871,7 +4159,7 @@ An object containing additional HTTP headers to be sent with every request. All 
 
 ## async method: Page.setInputFiles
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.setInputFiles`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.setInputFiles`] instead. Read more about [locators](../locators.md).
 
 Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they
 are resolved relative to the current working directory. For empty array, clears the selected files.
@@ -3886,7 +4174,7 @@ This method expects [`param: selector`] to point to an
 ### param: Page.setInputFiles.files = %%-input-files-%%
 * since: v1.8
 
-### option: Page.setInputFiles.noWaitAfter = %%-input-no-wait-after-%%
+### option: Page.setInputFiles.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: Page.setInputFiles.strict = %%-input-strict-%%
@@ -3952,31 +4240,66 @@ await page.GotoAsync("https://www.microsoft.com");
 ### param: Page.setViewportSize.width
 * since: v1.10
 * langs: csharp, java
-- `width` <[int]> page width in pixels.
+- `width` <[int]>
+
+Page width in pixels.
 
 ### param: Page.setViewportSize.height
 * since: v1.10
 * langs: csharp, java
-- `height` <[int]> page height in pixels.
+- `height` <[int]>
+
+Page height in pixels.
+
+## async method: Page.ariaSnapshot
+* since: v1.59
+- returns: <[string]>
+
+Captures the aria snapshot of the page. Read more about [aria snapshots](../aria-snapshots.md).
+
+### option: Page.ariaSnapshot.mode
+* since: v1.59
+- `mode` <[AriaSnapshotMode]<"ai"|"default">>
+
+When set to `"ai"`, returns a snapshot optimized for AI consumption: including element references like `[ref=e2]` and snapshots of `<iframe>`s. Defaults to `"default"`.
+
+### option: Page.ariaSnapshot.timeout = %%-input-timeout-%%
+* since: v1.59
+
+### option: Page.ariaSnapshot.timeout = %%-input-timeout-js-%%
+* since: v1.59
+
+### option: Page.ariaSnapshot.depth
+* since: v1.59
+- `depth` <[int]>
+
+When specified, limits the depth of the snapshot.
+
+### option: Page.ariaSnapshot.boxes
+* since: v1.60
+- `boxes` <[boolean]>
+
+When `true`, appends each element's bounding box as `[box=x,y,width,height]` to the snapshot. Coordinates are
+relative to the viewport, in CSS pixels, as returned by [`Element.getBoundingClientRect()`](https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect).
+Defaults to `false`.
 
 ## async method: Page.tap
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.tap`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.tap`] instead. Read more about [locators](../locators.md).
 
 This method taps an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
-1. Wait for [actionability](../../../Guides/Auto-waiting/actionability.md) checks on the matched element, unless [`option: force`] option is
+1. Wait for [actionability](../actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.touchscreen`] to tap the center of the element, or the specified [`option: position`].
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 
 When all steps combined have not finished during the specified [`option: timeout`], this method throws a
 [TimeoutError]. Passing zero timeout disables this.
 
 :::note
-[`method: Page.tap`] the method will throw if [`option: hasTouch`] option of the browser context is false.
+[`method: Page.tap`] will throw if the [`option: Browser.newContext.hasTouch`] option of the browser context is false.
 :::
 
 ### param: Page.tap.selector = %%-input-selector-%%
@@ -3988,7 +4311,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Page.tap.modifiers = %%-input-modifiers-%%
 * since: v1.8
 
-### option: Page.tap.noWaitAfter = %%-input-no-wait-after-%%
+### option: Page.tap.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: Page.tap.position = %%-input-position-%%
@@ -4003,12 +4326,12 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Page.tap.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
-### option: Page.tap.trial = %%-input-trial-%%
+### option: Page.tap.trial = %%-input-trial-with-modifiers-%%
 * since: v1.11
 
 ## async method: Page.textContent
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.textContent`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.textContent`] instead. Read more about [locators](../locators.md).
 - returns: <[null]|[string]>
 
 Returns `element.textContent`.
@@ -4061,7 +4384,7 @@ A text to type into a focused element.
 
 Time to wait between key presses in milliseconds. Defaults to 0.
 
-### option: Page.type.noWaitAfter = %%-input-no-wait-after-%%
+### option: Page.type.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: Page.type.strict = %%-input-strict-%%
@@ -4075,18 +4398,17 @@ Time to wait between key presses in milliseconds. Defaults to 0.
 
 ## async method: Page.uncheck
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.uncheck`] instead. Read more about [locators](../../../Guides/Locators/locators.md).
+* discouraged: Use locator-based [`method: Locator.uncheck`] instead. Read more about [locators](../locators.md).
 
 This method unchecks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
 1. Ensure that matched element is a checkbox or a radio input. If not, this method throws. If the element is already
    unchecked, this method returns immediately.
-1. Wait for [actionability](../../../Guides/Auto-waiting/actionability.md) checks on the matched element, unless [`option: force`] option is
+1. Wait for [actionability](../actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 1. Ensure that the element is now unchecked. If not, this method throws.
 
 When all steps combined have not finished during the specified [`option: timeout`], this method throws a
@@ -4098,7 +4420,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Page.uncheck.force = %%-input-force-%%
 * since: v1.8
 
-### option: Page.uncheck.noWaitAfter = %%-input-no-wait-after-%%
+### option: Page.uncheck.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: Page.uncheck.position = %%-input-position-%%
@@ -4132,9 +4454,17 @@ the [`param: url`].
 
 ### param: Page.unroute.url
 * since: v1.8
+* langs: js
+- `url` <[string]|[RegExp]|[URLPattern]|[function]\([URL]\):[boolean]>
+
+A glob pattern, regex pattern, URL pattern, or predicate receiving [URL] to match while routing.
+
+### param: Page.unroute.url
+* since: v1.8
+* langs: python, csharp, java
 - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
 
-A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
+A glob pattern, regex pattern, or predicate receiving [URL] to match while routing.
 
 ### param: Page.unroute.handler
 * since: v1.8
@@ -4158,11 +4488,13 @@ Optional handler function to route the request.
 * since: v1.8
 - returns: <[null]|[Video]>
 
-Video object associated with this page.
+Video object associated with this page. Can be used to access the video file when using the `recordVideo` context option.
 
 ## method: Page.viewportSize
 * since: v1.8
 - returns: <[null]|[Object]>
+  * alias: ViewportSize
+  * alias-csharp: PageViewportSizeResult
   - `width` <[int]> page width in pixels.
   - `height` <[int]> page height in pixels.
 
@@ -4475,7 +4807,7 @@ This resolves when the page reaches a required load state, `load` by default. Th
 when this method is called. If current document has already reached the required state, resolves immediately.
 
 :::note
-Most of the time, this method is not needed because Playwright [auto-waits before every action](../../../Guides/Auto-waiting/actionability.md).
+Most of the time, this method is not needed because Playwright [auto-waits before every action](../actionability.md).
 :::
 
 **Usage**
@@ -4630,7 +4962,10 @@ a navigation.
 ### param: Page.waitForNavigation.action = %%-csharp-wait-for-event-action-%%
 * since: v1.12
 
-### option: Page.waitForNavigation.url = %%-wait-for-navigation-url-%%
+### option: Page.waitForNavigation.url = %%-js-wait-for-navigation-url-%%
+* since: v1.8
+
+### option: Page.waitForNavigation.url = %%-python-csharp-java-wait-for-navigation-url-%%
 * since: v1.8
 
 ### option: Page.waitForNavigation.waitUntil = %%-navigation-wait-until-%%
@@ -4683,7 +5018,7 @@ Receives the [Page] object and resolves to truthy value when the waiting should 
   * alias-csharp: RunAndWaitForRequest
 - returns: <[Request]>
 
-Waits for the matching request and returns it. See [waiting for event](../../../events.md#waiting-for-event) for more details about events.
+Waits for the matching request and returns it. See [waiting for event](../events.md#waiting-for-event) for more details about events.
 
 **Usage**
 
@@ -4764,7 +5099,7 @@ await page.RunAndWaitForRequestAsync(async () =>
 - `urlOrPredicate` <[string]|[RegExp]|[function]\([Request]\):[boolean]>
 
 Request URL string, regex or predicate receiving [Request] object.
-When a [`option: baseURL`] via the context options was provided and the passed URL is a path,
+When a [`option: Browser.newContext.baseURL`] via the context options was provided and the passed URL is a path,
 it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
 
 ### param: Page.waitForRequest.urlOrPredicate
@@ -4822,7 +5157,7 @@ Receives the [Request] object and resolves to truthy value when the waiting shou
   * alias-csharp: RunAndWaitForResponse
 - returns: <[Response]>
 
-Returns the matched response. See [waiting for event](../../../events.md#waiting-for-event) for more details about events.
+Returns the matched response. See [waiting for event](../events.md#waiting-for-event) for more details about events.
 
 **Usage**
 
@@ -4908,7 +5243,7 @@ await page.RunAndWaitForResponseAsync(async () =>
 - `urlOrPredicate` <[string]|[RegExp]|[function]\([Response]\):[boolean]>
 
 Request URL string, regex or predicate receiving [Response] object.
-When a [`option: baseURL`] via the context options was provided and the passed URL is a path,
+When a [`option: Browser.newContext.baseURL`] via the context options was provided and the passed URL is a path,
 it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
 
 ### param: Page.waitForResponse.urlOrPredicate
@@ -4917,7 +5252,7 @@ it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/We
 - `urlOrPredicate` <[string]|[RegExp]|[function]\([Response]\):[boolean]|[Promise]<[boolean]>>
 
 Request URL string, regex or predicate receiving [Response] object.
-When a [`option: baseURL`] via the context options was provided and the passed URL is a path,
+When a [`option: Browser.newContext.baseURL`] via the context options was provided and the passed URL is a path,
 it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
 
 ### option: Page.waitForResponse.timeout
@@ -4933,7 +5268,7 @@ changed by using the [`method: BrowserContext.setDefaultTimeout`] or [`method: P
 ## async method: Page.waitForSelector
 * since: v1.8
 * discouraged: Use web assertions that assert visibility or a locator-based [`method: Locator.waitFor`] instead.
-  Read more about [locators](../../../Guides/Locators/locators.md).
+  Read more about [locators](../locators.md).
 - returns: <[null]|[ElementHandle]>
 
 Returns when element specified by selector satisfies [`option: state`] option. Returns `null` if waiting for `hidden` or
@@ -5167,7 +5502,10 @@ await page.ClickAsync("a.delayed-navigation"); // clicking the link will indirec
 await page.WaitForURLAsync("**/target.html");
 ```
 
-### param: Page.waitForURL.url = %%-wait-for-navigation-url-%%
+### param: Page.waitForURL.url = %%-js-wait-for-navigation-url-%%
+* since: v1.11
+
+### param: Page.waitForURL.url = %%-python-csharp-java-wait-for-navigation-url-%%
 * since: v1.11
 
 ### option: Page.waitForURL.timeout = %%-navigation-timeout-%%

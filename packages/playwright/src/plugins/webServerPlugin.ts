@@ -13,28 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import path from 'path';
 import net from 'net';
+import path from 'path';
 
-import { colors, debug } from 'playwright-core/lib/utilsBundle';
-import { raceAgainstDeadline, launchProcess, monotonicTime, isURLAvailable } from 'playwright-core/lib/utils';
+import colors from 'colors/safe';
+import debug from 'debug';
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { monotonicTime } from '@isomorphic/time';
+import { raceAgainstDeadline } from '@isomorphic/timeoutRunner';
+import { isURLAvailable } from '@utils/network';
+import { launchProcess } from '@utils/processLauncher';
 
+import type { TestRunnerPlugin, TestRunnerPluginRegistration } from '.';
 import type { FullConfig } from '../../types/testReporter';
-import type { TestRunnerPlugin } from '.';
-import type { FullConfigInternal } from '../common/config';
+import type { FullConfigInternal } from '../common';
 import type { ReporterV2 } from '../reporters/reporterV2';
-
 
 export type WebServerPluginOptions = {
   command: string;
   url?: string;
+  wait?: { stdout?: RegExp, stderr?: RegExp };
   ignoreHTTPSErrors?: boolean;
   timeout?: number;
+  gracefulShutdown?: { signal: 'SIGINT' | 'SIGTERM', timeout?: number };
   reuseExistingServer?: boolean;
   cwd?: string;
   env?: { [key: string]: string; };
   stdout?: 'pipe' | 'ignore';
   stderr?: 'pipe' | 'ignore';
+  name?: string;
 };
 
 const DEFAULT_ENVIRONMENT_VARIABLES = {
@@ -52,6 +59,8 @@ export class WebServerPlugin implements TestRunnerPlugin {
   private _options: WebServerPluginOptions;
   private _checkPortOnly: boolean;
   private _reporter?: ReporterV2;
+  private _waitForStdioPromise: ManualPromise | undefined;
+
   name = 'playwright:webserver';
 
   constructor(options: WebServerPluginOptions, checkPortOnly: boolean) {
@@ -61,7 +70,8 @@ export class WebServerPlugin implements TestRunnerPlugin {
 
   public async setup(config: FullConfig, configDir: string, reporter: ReporterV2) {
     this._reporter = reporter;
-    this._isAvailableCallback = this._options.url ? getIsAvailableFunction(this._options.url, this._checkPortOnly, !!this._options.ignoreHTTPSErrors, this._reporter.onStdErr?.bind(this._reporter)) : undefined;
+    if (this._options.url)
+      this._isAvailableCallback = getIsAvailableFunction(this._options.url, this._checkPortOnly, !!this._options.ignoreHTTPSErrors, this._reporter.onStdErr?.bind(this._reporter));
     this._options.cwd = this._options.cwd ? path.resolve(configDir, this._options.cwd) : configDir;
     try {
       await this._startProcess();
@@ -73,7 +83,9 @@ export class WebServerPlugin implements TestRunnerPlugin {
   }
 
   public async teardown() {
+    debugWebServer(`Terminating the WebServer`);
     await this._killProcess?.();
+    debugWebServer(`Terminated the WebServer`);
   }
 
   private async _startProcess(): Promise<void> {
@@ -89,8 +101,11 @@ export class WebServerPlugin implements TestRunnerPlugin {
       throw new Error(`${this._options.url ?? `http://localhost${port ? ':' + port : ''}`} is already used, make sure that nothing is running on the port/url or set reuseExistingServer:true in config.webServer.`);
     }
 
+    if (!this._options.command)
+      throw new Error('config.webServer.command cannot be empty');
+
     debugWebServer(`Starting WebServer process ${this._options.command}...`);
-    const { launchedProcess, kill } = await launchProcess({
+    const { launchedProcess, gracefullyClose } = await launchProcess({
       command: this._options.command,
       env: {
         ...DEFAULT_ENVIRONMENT_VARIABLES,
@@ -100,39 +115,93 @@ export class WebServerPlugin implements TestRunnerPlugin {
       cwd: this._options.cwd,
       stdio: 'stdin',
       shell: true,
-      // Reject to indicate that we cannot close the web server gracefully
-      // and should fallback to non-graceful shutdown.
-      attemptToGracefullyClose: () => Promise.reject(),
+      attemptToGracefullyClose: async () => {
+        if (process.platform === 'win32')
+          throw new Error('Graceful shutdown is not supported on Windows');
+        if (!this._options.gracefulShutdown)
+          throw new Error('skip graceful shutdown');
+
+        const { signal, timeout = 0 } = this._options.gracefulShutdown;
+
+        // proper usage of SIGINT is to send it to the entire process group, see https://www.cons.org/cracauer/sigint.html
+        // there's no such convention for SIGTERM, so we decide what we want. signaling the process group for consistency.
+        process.kill(-launchedProcess.pid!, signal);
+
+        return new Promise<void>((resolve, reject) => {
+          const timer = timeout !== 0
+            ? setTimeout(() => reject(new Error(`process didn't close gracefully within timeout`)), timeout)
+            : undefined;
+          launchedProcess.once('close', (...args) => {
+            clearTimeout(timer);
+            resolve();
+          });
+        });
+      },
       log: () => {},
       onExit: code => processExitedReject(new Error(code ? `Process from config.webServer was not able to start. Exit code: ${code}` : 'Process from config.webServer exited early.')),
       tempDirectories: [],
     });
-    this._killProcess = kill;
+    this._killProcess = gracefullyClose;
 
     debugWebServer(`Process started`);
 
-    launchedProcess.stderr!.on('data', line => {
-      if (debugWebServer.enabled || (this._options.stderr === 'pipe' || !this._options.stderr))
-        this._reporter!.onStdErr?.(colors.dim('[WebServer] ') + line.toString());
-    });
-    launchedProcess.stdout!.on('data', line => {
+    if (this._options.wait?.stdout || this._options.wait?.stderr)
+      this._waitForStdioPromise = new ManualPromise();
+    const stdioWaitCollectors = {
+      stdout: this._options.wait?.stdout ? '' : undefined,
+      stderr: this._options.wait?.stderr ? '' : undefined,
+    };
+
+    launchedProcess.stdout!.on('data', data => {
       if (debugWebServer.enabled || this._options.stdout === 'pipe')
-        this._reporter!.onStdOut?.(colors.dim('[WebServer] ') + line.toString());
+        this._reporter!.onStdOut?.(prefixOutputLines(data.toString(), this._options.name));
     });
+
+    launchedProcess.stderr!.on('data', data => {
+      if (debugWebServer.enabled || (this._options.stderr === 'pipe' || !this._options.stderr))
+        this._reporter!.onStdErr?.(prefixOutputLines(data.toString(), this._options.name));
+    });
+
+    const resolveStdioPromise = () => {
+      stdioWaitCollectors.stdout = undefined;
+      stdioWaitCollectors.stderr = undefined;
+      this._waitForStdioPromise?.resolve();
+    };
+
+    for (const stdio of ['stdout', 'stderr'] as const) {
+      launchedProcess[stdio]!.on('data', data => {
+        if (!this._options.wait?.[stdio] || stdioWaitCollectors[stdio] === undefined)
+          return;
+        stdioWaitCollectors[stdio] += data.toString();
+        this._options.wait[stdio].lastIndex = 0;
+        const result = this._options.wait[stdio].exec(stdioWaitCollectors[stdio]);
+        if (result) {
+          for (const [key, value] of Object.entries(result.groups || {}))
+            process.env[key.toUpperCase()] = value;
+          resolveStdioPromise();
+        }
+      });
+    }
   }
 
   private async _waitForProcess() {
-    if (!this._isAvailableCallback) {
+    if (!this._isAvailableCallback && !this._waitForStdioPromise) {
       this._processExitedPromise.catch(() => {});
       return;
     }
+
     debugWebServer(`Waiting for availability...`);
     const launchTimeout = this._options.timeout || 60 * 1000;
     const cancellationToken = { canceled: false };
-    const { timedOut } = (await Promise.race([
-      raceAgainstDeadline(() => waitFor(this._isAvailableCallback!, cancellationToken), monotonicTime() + launchTimeout),
-      this._processExitedPromise,
-    ]));
+    const deadline = monotonicTime() + launchTimeout;
+
+    const racingPromises = [this._processExitedPromise];
+    if (this._isAvailableCallback)
+      racingPromises.push(raceAgainstDeadline(() => waitFor(this._isAvailableCallback!, cancellationToken), deadline));
+    if (this._waitForStdioPromise)
+      racingPromises.push(raceAgainstDeadline(() => this._waitForStdioPromise!, deadline));
+
+    const { timedOut } = await Promise.race(racingPromises);
     cancellationToken.canceled = true;
     if (timedOut)
       throw new Error(`Timed out waiting ${launchTimeout}ms from config.webServer.`);
@@ -152,7 +221,17 @@ async function isPortUsed(port: number): Promise<boolean> {
           resolve(true);
         });
   });
-  return await innerIsPortUsed('127.0.0.1') || await innerIsPortUsed('::1');
+  return new Promise<boolean>(resolve => {
+    let pending = 2;
+    const onResult = (result: boolean) => {
+      if (result)
+        resolve(true);
+      else if (--pending === 0)
+        resolve(false);
+    };
+    void innerIsPortUsed('127.0.0.1').then(onResult);
+    void innerIsPortUsed('::1').then(onResult);
+  });
 }
 
 async function waitFor(waitFn: () => Promise<boolean>, cancellationToken: { canceled: boolean }) {
@@ -179,23 +258,42 @@ export const webServer = (options: WebServerPluginOptions): TestRunnerPlugin => 
   return new WebServerPlugin(options, false);
 };
 
-export const webServerPluginsForConfig = (config: FullConfigInternal): TestRunnerPlugin[] => {
+export const webServerPluginsForConfig = (config: FullConfigInternal): TestRunnerPluginRegistration[] => {
   const shouldSetBaseUrl = !!config.config.webServer;
-  const webServerPlugins = [];
-  for (const webServerConfig of config.webServers) {
-    if (webServerConfig.port && webServerConfig.url)
-      throw new Error(`Either 'port' or 'url' should be specified in config.webServer.`);
+  const plugins: TestRunnerPluginRegistration[] = [];
+  for (const webServerConfig of config.webServers)
+    plugins.push({ factory: createWebServerPlugin(webServerConfig, shouldSetBaseUrl) });
 
-    let url: string | undefined;
-    if (webServerConfig.port || webServerConfig.url) {
-      url = webServerConfig.url || `http://localhost:${webServerConfig.port}`;
-
-      // We only set base url when only the port is given. That's a legacy mode we have regrets about.
-      if (shouldSetBaseUrl && !webServerConfig.url)
-        process.env.PLAYWRIGHT_TEST_BASE_URL = url;
-    }
-    webServerPlugins.push(new WebServerPlugin({ ...webServerConfig,  url }, webServerConfig.port !== undefined));
+  for (const project of config.projects) {
+    for (const webServerConfig of project.webServers)
+      plugins.push({ factory: createWebServerPlugin(webServerConfig, false), projectId: project.id });
   }
 
-  return webServerPlugins;
+  return plugins;
 };
+
+function createWebServerPlugin(webServerConfig: WebServerPluginOptions & { port?: number }, shouldSetBaseUrl: boolean): TestRunnerPlugin {
+  if (webServerConfig.port && webServerConfig.url)
+    throw new Error(`Either 'port' or 'url' should be specified in config.webServer.`);
+
+  let url: string | undefined;
+  if (webServerConfig.port || webServerConfig.url) {
+    url = webServerConfig.url || `http://localhost:${webServerConfig.port}`;
+
+    // We only set base url when only the port is given. That's a legacy mode we have regrets about.
+    if (shouldSetBaseUrl && !webServerConfig.url)
+      process.env.PLAYWRIGHT_TEST_BASE_URL = url;
+  }
+  return new WebServerPlugin({ ...webServerConfig, url }, webServerConfig.port !== undefined);
+}
+
+function prefixOutputLines(output: string, prefixName: string = 'WebServer'): string {
+  const lastIsNewLine = output[output.length - 1] === '\n';
+  let lines = output.split('\n');
+  if (lastIsNewLine)
+    lines.pop();
+  lines = lines.map(line => colors.dim(`[${prefixName}] `) + line);
+  if (lastIsNewLine)
+    lines.push('');
+  return lines.join('\n');
+}

@@ -46,6 +46,19 @@ test('should list tests', async ({ runUITest }) => {
         ◯ passes
         ◯ fails
   `);
+
+  await expect(page).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] passes"
+          - treeitem "[icon-circle-outline] fails"
+          - treeitem "[icon-circle-outline] suite" [expanded=false]
+      - treeitem "[icon-circle-outline] b.test.ts" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] passes"
+          - treeitem "[icon-circle-outline] fails"
+  `);
 });
 
 test('should list all tests from projects with clashing names', async ({ runUITest }) => {
@@ -100,6 +113,22 @@ test('should list all tests from projects with clashing names', async ({ runUITe
           ◯ one
           ◯ two
   `);
+
+  await expect(page).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] bar" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] b.test.ts" [expanded]:
+            - group:
+              - treeitem "[icon-circle-outline] three"
+              - treeitem "[icon-circle-outline] four"
+      - treeitem "[icon-circle-outline] foo" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] a.test.ts" [expanded] [selected]:
+            - group:
+              - treeitem "[icon-circle-outline] one"
+              - treeitem "[icon-circle-outline] two"
+  `);
 });
 
 test('should traverse up/down', async ({ runUITest }) => {
@@ -111,6 +140,14 @@ test('should traverse up/down', async ({ runUITest }) => {
         ◯ fails
       ► ◯ suite
   `);
+  await expect(page).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] a.test.ts" [expanded] [selected]:
+        - group:
+          - treeitem "[icon-circle-outline] passes"
+          - treeitem "[icon-circle-outline] fails"
+          - treeitem "[icon-circle-outline] suite" [expanded=false]
+  `);
 
   await page.keyboard.press('ArrowDown');
   await expect.poll(dumpTestTree(page)).toContain(`
@@ -119,6 +156,16 @@ test('should traverse up/down', async ({ runUITest }) => {
         ◯ fails
       ► ◯ suite
   `);
+  await expect(page).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] passes" [selected]
+          - treeitem "[icon-circle-outline] fails"
+          - treeitem "[icon-circle-outline] suite" [expanded=false]
+  `);
+  await expect(page).toMatchAriaSnapshot();
+
   await page.keyboard.press('ArrowDown');
   await expect.poll(dumpTestTree(page)).toContain(`
     ▼ ◯ a.test.ts
@@ -126,6 +173,15 @@ test('should traverse up/down', async ({ runUITest }) => {
         ◯ fails <=
       ► ◯ suite
   `);
+  await expect(page).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] passes"
+          - treeitem "[icon-circle-outline] fails" [selected]
+          - treeitem "[icon-circle-outline] suite" [expanded=false]
+  `);
+  await expect(page).toMatchAriaSnapshot();
 
   await page.keyboard.press('ArrowUp');
   await expect.poll(dumpTestTree(page)).toContain(`
@@ -134,6 +190,15 @@ test('should traverse up/down', async ({ runUITest }) => {
         ◯ fails
       ► ◯ suite
   `);
+  await expect(page).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] passes" [selected]
+          - treeitem "[icon-circle-outline] fails"
+          - treeitem "[icon-circle-outline] suite" [expanded=false]
+  `);
+  await expect(page).toMatchAriaSnapshot();
 });
 
 test('should expand / collapse groups', async ({ runUITest }) => {
@@ -149,6 +214,17 @@ test('should expand / collapse groups', async ({ runUITest }) => {
           ◯ inner passes
           ◯ inner fails
   `);
+  await expect(page).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] passes"
+          - treeitem "[icon-circle-outline] fails"
+          - treeitem "[icon-circle-outline] suite" [expanded] [selected]:
+            - group:
+              - treeitem "[icon-circle-outline] inner passes"
+              - treeitem "[icon-circle-outline] inner fails"
+  `);
 
   await page.keyboard.press('ArrowLeft');
   await expect.poll(dumpTestTree(page)).toContain(`
@@ -156,6 +232,14 @@ test('should expand / collapse groups', async ({ runUITest }) => {
         ◯ passes
         ◯ fails
       ► ◯ suite <=
+  `);
+  await expect(page).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] passes"
+          - treeitem "[icon-circle-outline] fails"
+          - treeitem "[icon-circle-outline] suite" [selected] [expanded=false]
   `);
 
   await page.getByTestId('test-tree').getByText('passes').first().click();
@@ -165,10 +249,21 @@ test('should expand / collapse groups', async ({ runUITest }) => {
         ◯ passes
         ◯ fails
   `);
+  await expect(page).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] a.test.ts" [expanded] [selected]:
+        - group:
+          - treeitem "[icon-circle-outline] passes"
+          - treeitem "[icon-circle-outline] fails"
+  `);
 
   await page.keyboard.press('ArrowLeft');
   await expect.poll(dumpTestTree(page)).toContain(`
     ► ◯ a.test.ts <=
+  `);
+  await expect(page).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] a.test.ts" [selected] [expanded=false]
   `);
 });
 
@@ -195,6 +290,16 @@ test('should merge folder trees', async ({ runUITest }) => {
     ▼ ◯ in-a.test.ts
         ◯ passes
   `);
+  await expect(page).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] b" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] c" [expanded=false]
+          - treeitem "[icon-circle-outline] in-b.test.ts" [expanded=false]
+      - treeitem "[icon-circle-outline] in-a.test.ts" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] passes"
+  `);
 });
 
 test('should list parametrized tests', async ({ runUITest }) => {
@@ -213,16 +318,23 @@ test('should list parametrized tests', async ({ runUITest }) => {
 
   await page.getByText('cookies').click();
   await page.keyboard.press('ArrowRight');
-  await page.getByText('<anonymous>').click();
-  await page.keyboard.press('ArrowRight');
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts
-      ▼ ◯ cookies
-        ▼ ◯ <anonymous> <=
-            ◯ test FR
-            ◯ test DE
-            ◯ test LT
+      ▼ ◯ cookies <=
+          ◯ test FR
+          ◯ test DE
+          ◯ test LT
+  `);
+  await expect(page).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] cookies" [expanded] [selected]:
+            - group:
+              - treeitem "[icon-circle-outline] test FR"
+              - treeitem "[icon-circle-outline] test DE"
+              - treeitem "[icon-circle-outline] test LT"
   `);
 });
 
@@ -242,16 +354,23 @@ test('should update parametrized tests', async ({ runUITest, writeFiles }) => {
 
   await page.getByText('cookies').click();
   await page.keyboard.press('ArrowRight');
-  await page.getByText('<anonymous>').click();
-  await page.keyboard.press('ArrowRight');
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts
-      ▼ ◯ cookies
-        ▼ ◯ <anonymous> <=
-            ◯ test FR
-            ◯ test DE
-            ◯ test LT
+      ▼ ◯ cookies <=
+          ◯ test FR
+          ◯ test DE
+          ◯ test LT
+  `);
+  await expect(page).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] cookies" [expanded] [selected]:
+            - group:
+              - treeitem "[icon-circle-outline] test FR"
+              - treeitem "[icon-circle-outline] test DE"
+              - treeitem "[icon-circle-outline] test LT"
   `);
 
   await writeFiles({
@@ -270,10 +389,18 @@ test('should update parametrized tests', async ({ runUITest, writeFiles }) => {
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts
-      ▼ ◯ cookies
-        ▼ ◯ <anonymous> <=
-            ◯ test FR
-            ◯ test LT
+      ▼ ◯ cookies <=
+          ◯ test FR
+          ◯ test LT
+  `);
+  await expect(page).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] cookies" [expanded] [selected]:
+            - group:
+              - treeitem "[icon-circle-outline] test FR"
+              - treeitem "[icon-circle-outline] test LT"
   `);
 });
 
@@ -290,10 +417,126 @@ test('should collapse all', async ({ runUITest }) => {
           ◯ inner passes
           ◯ inner fails
   `);
+  await expect(page).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] passes"
+          - treeitem "[icon-circle-outline] fails"
+          - treeitem "[icon-circle-outline] suite" [expanded] [selected]:
+            - group:
+              - treeitem "[icon-circle-outline] inner passes"
+              - treeitem "[icon-circle-outline] inner fails"
+  `);
 
   await page.getByTitle('Collapse all').click();
   await expect.poll(dumpTestTree(page)).toContain(`
     ► ◯ a.test.ts
+  `);
+  await expect(page).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] a.test.ts" [expanded=false]
+  `);
+});
+
+test('should expand all', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32825' }
+}, async ({ runUITest }) => {
+  const { page } = await runUITest(basicTestTree);
+
+  await page.getByTestId('test-tree').getByText('suite').click();
+  await page.getByTitle('Collapse all').click();
+  await expect.poll(dumpTestTree(page)).toContain(`
+    ► ◯ a.test.ts
+    ► ◯ b.test.ts
+  `);
+
+  await page.getByTitle('Expand all').click();
+  await expect.poll(dumpTestTree(page)).toContain(`
+    ▼ ◯ a.test.ts
+        ◯ passes
+        ◯ fails
+      ▼ ◯ suite
+          ◯ inner passes
+          ◯ inner fails
+    ▼ ◯ b.test.ts
+        ◯ passes
+        ◯ fails
+  `);
+  await expect(page).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] passes"
+          - treeitem "[icon-circle-outline] fails"
+          - treeitem "[icon-circle-outline] suite" [expanded]:
+            - group:
+              - treeitem "[icon-circle-outline] inner passes"
+              - treeitem "[icon-circle-outline] inner fails"
+      - treeitem "[icon-circle-outline] b.test.ts" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] passes"
+          - treeitem "[icon-circle-outline] fails"
+  `);
+});
+
+test('should allow expanding entire subtrees', async ({ runUITest }) => {
+  const { page } = await runUITest(basicTestTree);
+
+  await page.getByTestId('test-tree').getByText('suite').click();
+  await page.getByTitle('Collapse all').click();
+  await expect.poll(dumpTestTree(page)).toContain(`
+    ► ◯ a.test.ts
+    ► ◯ b.test.ts
+  `);
+
+  const firstTestClosedLocator = page.getByTitle('a.test.ts').locator('.codicon-chevron-right').first();
+  const firstTestOpenLocator = page.getByTitle('a.test.ts').locator('.codicon-chevron-down').first();
+
+  await firstTestClosedLocator.click();
+  await expect.poll(dumpTestTree(page)).toContain(`
+    ▼ ◯ a.test.ts
+        ◯ passes
+        ◯ fails
+      ► ◯ suite
+    ► ◯ b.test.ts
+  `);
+
+  await firstTestOpenLocator.click();
+  await firstTestClosedLocator.click({ modifiers: ['Alt'] });
+
+  await expect.poll(dumpTestTree(page)).toContain(`
+    ▼ ◯ a.test.ts
+        ◯ passes
+        ◯ fails
+      ▼ ◯ suite
+          ◯ inner passes
+          ◯ inner fails
+    ► ◯ b.test.ts
+  `);
+
+  await firstTestOpenLocator.click();
+  await firstTestClosedLocator.click();
+
+  await expect.poll(dumpTestTree(page)).toContain(`
+    ▼ ◯ a.test.ts
+        ◯ passes
+        ◯ fails
+      ▼ ◯ suite
+          ◯ inner passes
+          ◯ inner fails
+    ► ◯ b.test.ts
+  `);
+
+  await firstTestOpenLocator.click({ modifiers: ['Alt'] });
+  await firstTestClosedLocator.click();
+
+  await expect.poll(dumpTestTree(page)).toContain(`
+    ▼ ◯ a.test.ts
+        ◯ passes
+        ◯ fails
+      ► ◯ suite
+    ► ◯ b.test.ts
   `);
 });
 
@@ -322,5 +565,69 @@ test('should resolve title conflicts', async ({ runUITest }) => {
       ▼ ◯ foo <=
           ◯ bar
           ◯ bar 2
+  `);
+  await expect(page).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] foo"
+          - treeitem "[icon-circle-outline] foo" [expanded] [selected]:
+            - group:
+              - treeitem "[icon-circle-outline] bar"
+              - treeitem "[icon-circle-outline] bar 2"
+  `);
+});
+
+test('should merge files', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+
+      test("first", () => {});
+
+      test.describe("group", () => {
+        test("second", () => {});
+      });
+
+      test("third", () => {});
+    `,
+    'b.test.ts': `
+      import { test } from '@playwright/test';
+
+      test("fourth", () => {});
+
+      test.describe("group", () => {
+        test("fifth", () => {});
+      });
+
+      test("sixth", () => {});
+    `
+  });
+
+  await page.getByText('Settings', { exact: true }).click();
+  await page.getByLabel('Merge files').click();
+
+  await expect.poll(dumpTestTree(page)).toContain(`
+    ▼ ◯ <anonymous>
+        ◯ first
+        ◯ third
+        ◯ fourth
+        ◯ sixth
+    ▼ ◯ group
+        ◯ second
+        ◯ fifth
+  `);
+  await expect(page).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] <anonymous>" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] first"
+          - treeitem "[icon-circle-outline] third"
+          - treeitem "[icon-circle-outline] fourth"
+          - treeitem "[icon-circle-outline] sixth"
+      - treeitem "[icon-circle-outline] group" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] second"
+          - treeitem "[icon-circle-outline] fifth"
   `);
 });

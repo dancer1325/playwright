@@ -22,8 +22,8 @@ it.skip(({ isAndroid }) => {
 
 let ignoreDelta = false;
 
-it.beforeAll(async ({ browserMajorVersion, browserName, isElectron, platform }) => {
-  if (((browserName === 'chromium' && browserMajorVersion >= 102) || isElectron) && platform === 'darwin') {
+it.beforeAll(async ({ browserName, isElectron, platform }) => {
+  if (((browserName === 'chromium') || isElectron) && platform === 'darwin') {
     // Chromium reports deltaX/deltaY scaled by host device scale factor.
     // https://bugs.chromium.org/p/chromium/issues/detail?id=1324819
     // https://github.com/microsoft/playwright/issues/7362
@@ -51,37 +51,6 @@ async function expectEvent(page: Page, expected: any) {
 it('should dispatch wheel events @smoke', async ({ page, server }) => {
   await page.setContent(`<div style="width: 5000px; height: 5000px;"></div>`);
   await page.mouse.move(50, 60);
-  await listenForWheelEvents(page, 'div');
-  await page.mouse.wheel(0, 100);
-  await page.waitForFunction('window.scrollY === 100');
-  await expectEvent(page, {
-    deltaX: 0,
-    deltaY: 100,
-    clientX: 50,
-    clientY: 60,
-    deltaMode: 0,
-    ctrlKey: false,
-    shiftKey: false,
-    altKey: false,
-    metaKey: false,
-  });
-});
-
-it('should dispatch wheel events after context menu was opened', async ({ page, browserName, isWindows }) => {
-  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20823' });
-  it.fixme(browserName === 'firefox');
-  it.skip(browserName === 'chromium' && isWindows, 'context menu support is best-effort for Linux and MacOS');
-
-  await page.setContent(`<div style="width: 5000px; height: 5000px;"></div>`);
-  await page.mouse.move(50, 60);
-  await page.evaluate(() => {
-    window['contextMenuPromise'] = new Promise(x => {
-      window.addEventListener('contextmenu', x, false);
-    });
-  });
-  await page.mouse.down({ button: 'right' });
-  await page.evaluate(() => window['contextMenuPromise']);
-
   await listenForWheelEvents(page, 'div');
   await page.mouse.wheel(0, 100);
   await page.waitForFunction('window.scrollY === 100');
@@ -230,7 +199,8 @@ it('should work when the event is canceled', async ({ page }) => {
 
 async function listenForWheelEvents(page: Page, selector: string) {
   await page.evaluate(selector => {
-    document.querySelector(selector).addEventListener('wheel', (e: WheelEvent) => {
+    document.querySelector(selector).addEventListener('wheel', event => {
+      const e = event as WheelEvent;
       window['lastEvent'] = {
         deltaX: e.deltaX,
         deltaY: e.deltaY,

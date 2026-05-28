@@ -14,37 +14,33 @@
  * limitations under the License.
  */
 
-import type { Locator, Page } from 'playwright-core';
-import type { ExpectScreenshotOptions, Page as PageEx } from 'playwright-core/lib/client/page';
-import { currentTestInfo } from '../common/globals';
-import type { ImageComparatorOptions, Comparator } from 'playwright-core/lib/utils';
-import { getComparator, sanitizeForFilePath } from 'playwright-core/lib/utils';
-import {
-  addSuffixToFilePath,
-  trimLongString, callLogText,
-  expectTypes,
-  sanitizeFilePathBeforeExtension,
-  windowsFilesystemFriendlyLength } from '../util';
-import { colors } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
 import path from 'path';
-import { mime } from 'playwright-core/lib/utilsBundle';
-import type { TestInfoImpl } from '../worker/testInfo';
-import type { ExpectMatcherState } from '../../types/test';
-import type { MatcherResult } from './matcherHint';
-import type { FullProjectInternal } from '../common/config';
+
+import colors from 'colors/safe';
+import { getMimeTypeForPath } from '@isomorphic/mimeType';
+import { isString } from '@isomorphic/stringUtils';
+import { compareBuffersOrStrings, getComparator } from '@utils/comparators';
+import { addSuffixToFilePath } from '@utils/fileUtils';
+
+import { callLogText, expectTypes, formatMatcherMessage } from './matcherHint';
+import { expectConfig } from './expect';
+
+import type { MatcherAttachment, MatcherResult } from './matcherHint';
+import type { ExpectMatcherStateInternal } from './matchers';
+import type { ExpectTestInfo } from './expect';
+import type { Locator, Page } from 'playwright-core';
+import type { ExpectScreenshotOptions, Page as PageEx } from 'playwright-core/lib/client/page';
+import type { Comparator, ImageComparatorOptions } from '@utils/comparators';
 
 type NameOrSegments = string | string[];
-const snapshotNamesSymbol = Symbol('snapshotNames');
 
-type SnapshotNames = {
-  anonymousSnapshotIndex: number;
-  namedSnapshotIndex: { [key: string]: number };
-};
-
-type ImageMatcherResult = MatcherResult<string, string> & { diff?: string };
-
-type ToHaveScreenshotConfigOptions = NonNullable<NonNullable<FullProjectInternal['expect']>['toHaveScreenshot']> & {
+type ToHaveScreenshotConfigOptions = ImageComparatorOptions & {
+  animations?: 'allow' | 'disabled';
+  caret?: 'hide' | 'initial';
+  scale?: 'css' | 'device';
+  stylePath?: string | string[];
+  timeout?: number;
   _comparator?: string;
 };
 
@@ -59,7 +55,6 @@ type ToHaveScreenshotOptions = ToHaveScreenshotConfigOptions & {
   mask?: Array<Locator>;
   maskColor?: string;
   omitBackground?: boolean;
-  timeout?: number;
 };
 
 // Keep in sync with above (begin).
@@ -69,31 +64,33 @@ const NonConfigProperties: (keyof ToHaveScreenshotOptions)[] = [
   'mask',
   'maskColor',
   'omitBackground',
-  'timeout',
 ];
 // Keep in sync with above (end).
 
 class SnapshotHelper {
-  readonly testInfo: TestInfoImpl;
-  readonly outputBaseName: string;
+  readonly testInfo: ExpectTestInfo;
+  readonly name: string;
+  readonly attachmentBaseName: string;
   readonly legacyExpectedPath: string;
   readonly previousPath: string;
-  readonly snapshotPath: string;
+  readonly expectedPath: string;
   readonly actualPath: string;
   readonly diffPath: string;
   readonly mimeType: string;
   readonly kind: 'Screenshot'|'Snapshot';
-  readonly updateSnapshots: 'all' | 'none' | 'missing';
+  readonly updateSnapshots: 'all' | 'changed' | 'missing' | 'none';
   readonly comparator: Comparator;
   readonly options: Omit<ToHaveScreenshotOptions, '_comparator'> & { comparator?: string };
   readonly matcherName: string;
   readonly locator: Locator | undefined;
+  readonly state: ExpectMatcherStateInternal;
 
   constructor(
-    testInfo: TestInfoImpl,
-    matcherName: string,
+    state: ExpectMatcherStateInternal,
+    testInfo: ExpectTestInfo,
+    matcherName: 'toMatchSnapshot' | 'toHaveScreenshot',
     locator: Locator | undefined,
-    anonymousSnapshotExtension: string,
+    anonymousSnapshotExtension: string | undefined,
     configOptions: ToHaveScreenshotConfigOptions,
     nameOrOptions: NameOrSegments | { name?: NameOrSegments } & ToHaveScreenshotOptions,
     optOptions: ToHaveScreenshotOptions,
@@ -108,49 +105,16 @@ class SnapshotHelper {
       name = nameFromOptions;
     }
 
-    let snapshotNames = (testInfo as any)[snapshotNamesSymbol] as SnapshotNames;
-    if (!(testInfo as any)[snapshotNamesSymbol]) {
-      snapshotNames = {
-        anonymousSnapshotIndex: 0,
-        namedSnapshotIndex: {},
-      };
-      (testInfo as any)[snapshotNamesSymbol] = snapshotNames;
-    }
+    this.name = Array.isArray(name) ? name.join(path.sep) : name || '';
+    const resolvedPaths = testInfo._resolveSnapshotPaths(matcherName === 'toHaveScreenshot' ? 'screenshot' : 'snapshot', name, 'updateSnapshotIndex', anonymousSnapshotExtension);
+    this.expectedPath = resolvedPaths.absoluteSnapshotPath;
+    this.attachmentBaseName = resolvedPaths.relativeOutputPath;
 
-    // Consider the use case below. We should save actual to different paths.
-    //
-    //   expect.toMatchSnapshot('a.png')
-    //   // noop
-    //   expect.toMatchSnapshot('a.png')
-
-    let inputPathSegments: string[];
-    if (!name) {
-      const fullTitleWithoutSpec = [
-        ...testInfo.titlePath.slice(1),
-        ++snapshotNames.anonymousSnapshotIndex,
-      ].join(' ');
-      inputPathSegments = [sanitizeForFilePath(trimLongString(fullTitleWithoutSpec)) + '.' + anonymousSnapshotExtension];
-      // Trim the output file paths more aggressively to avoid hitting Windows filesystem limits.
-      this.outputBaseName = sanitizeForFilePath(trimLongString(fullTitleWithoutSpec, windowsFilesystemFriendlyLength)) + '.' + anonymousSnapshotExtension;
-    } else {
-      // We intentionally do not sanitize user-provided array of segments, but for backwards
-      // compatibility we do sanitize the name if it is a single string.
-      // See https://github.com/microsoft/playwright/pull/9156
-      inputPathSegments = Array.isArray(name) ? name : [sanitizeFilePathBeforeExtension(name)];
-      const joinedName = Array.isArray(name) ? name.join(path.sep) : name;
-      snapshotNames.namedSnapshotIndex[joinedName] = (snapshotNames.namedSnapshotIndex[joinedName] || 0) + 1;
-      const index = snapshotNames.namedSnapshotIndex[joinedName];
-      if (index > 1)
-        this.outputBaseName = addSuffixToFilePath(joinedName, `-${index - 1}`);
-      else
-        this.outputBaseName = joinedName;
-    }
-    this.snapshotPath = testInfo.snapshotPath(...inputPathSegments);
-    const outputFile = testInfo._getOutputPath(sanitizeFilePathBeforeExtension(this.outputBaseName));
-    this.legacyExpectedPath = addSuffixToFilePath(outputFile, '-expected');
-    this.previousPath = addSuffixToFilePath(outputFile, '-previous');
-    this.actualPath = addSuffixToFilePath(outputFile, '-actual');
-    this.diffPath = addSuffixToFilePath(outputFile, '-diff');
+    const outputBasePath = testInfo._getOutputPath(resolvedPaths.relativeOutputPath);
+    this.legacyExpectedPath = addSuffixToFilePath(outputBasePath, '-expected');
+    this.previousPath = addSuffixToFilePath(outputBasePath, '-previous');
+    this.actualPath = addSuffixToFilePath(outputBasePath, '-actual');
+    this.diffPath = addSuffixToFilePath(outputBasePath, '-diff');
 
     const filteredConfigOptions = { ...configOptions };
     for (const prop of NonConfigProperties)
@@ -175,40 +139,42 @@ class SnapshotHelper {
     this.matcherName = matcherName;
     this.locator = locator;
 
-    this.updateSnapshots = testInfo.config.updateSnapshots;
-    this.mimeType = mime.getType(path.basename(this.snapshotPath)) ?? 'application/octet-string';
+    this.updateSnapshots = expectConfig().updateSnapshots;
+    this.mimeType = getMimeTypeForPath(path.basename(this.expectedPath)) ?? 'application/octet-stream';
     this.comparator = getComparator(this.mimeType);
 
     this.testInfo = testInfo;
+    this.state = state;
     this.kind = this.mimeType.startsWith('image/') ? 'Screenshot' : 'Snapshot';
   }
 
-  createMatcherResult(message: string, pass: boolean, log?: string[]): ImageMatcherResult {
-    const unfiltered: ImageMatcherResult = {
+  createMatcherResult(message: string, pass: boolean, log?: string[], attachments?: MatcherAttachment[]): MatcherResult<string, string> {
+    const unfiltered: MatcherResult<string, string> = {
       name: this.matcherName,
-      expected: this.snapshotPath,
+      expected: this.expectedPath,
       actual: this.actualPath,
       diff: this.diffPath,
       pass,
       message: () => message,
       log,
+      attachments,
     };
-    return Object.fromEntries(Object.entries(unfiltered).filter(([_, v]) => v !== undefined)) as ImageMatcherResult;
+    return Object.fromEntries(Object.entries(unfiltered).filter(([_, v]) => v !== undefined)) as MatcherResult<string, string>;
   }
 
-  handleMissingNegated(): ImageMatcherResult {
-    const isWriteMissingMode = this.updateSnapshots === 'all' || this.updateSnapshots === 'missing';
-    const message = `A snapshot doesn't exist at ${this.snapshotPath}${isWriteMissingMode ? ', matchers using ".not" won\'t write them automatically.' : '.'}`;
+  handleMissingNegated(): MatcherResult<string, string> {
+    const isWriteMissingMode = this.updateSnapshots !== 'none';
+    const message = `A snapshot doesn't exist at ${this.expectedPath}${isWriteMissingMode ? ', matchers using ".not" won\'t write them automatically.' : '.'}`;
     // NOTE: 'isNot' matcher implies inversed value.
     return this.createMatcherResult(message, true);
   }
 
-  handleDifferentNegated(): ImageMatcherResult {
+  handleDifferentNegated(): MatcherResult<string, string> {
     // NOTE: 'isNot' matcher implies inversed value.
     return this.createMatcherResult('', false);
   }
 
-  handleMatchingNegated(): ImageMatcherResult {
+  handleMatchingNegated(): MatcherResult<string, string> {
     const message = [
       colors.red(`${this.kind} comparison failed:`),
       '',
@@ -218,25 +184,28 @@ class SnapshotHelper {
     return this.createMatcherResult(message, true);
   }
 
-  handleMissing(actual: Buffer | string): ImageMatcherResult {
-    const isWriteMissingMode = this.updateSnapshots === 'all' || this.updateSnapshots === 'missing';
-    if (isWriteMissingMode) {
-      writeFileSync(this.snapshotPath, actual);
-      writeFileSync(this.actualPath, actual);
-      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.outputBaseName, '-actual'), contentType: this.mimeType, path: this.actualPath });
-    }
-    const message = `A snapshot doesn't exist at ${this.snapshotPath}${isWriteMissingMode ? ', writing actual.' : '.'}`;
-    if (this.updateSnapshots === 'all') {
+  handleMissing(actual: Buffer | string): MatcherResult<string, string> {
+    const attachments: MatcherAttachment[] = [];
+    const isWriteMissingMode = this.updateSnapshots !== 'none';
+    if (isWriteMissingMode)
+      writeFileSync(this.expectedPath, actual);
+    attachments.push({ name: addSuffixToFilePath(this.attachmentBaseName, '-expected'), contentType: this.mimeType, path: this.expectedPath });
+    writeFileSync(this.actualPath, actual);
+    attachments.push({ name: addSuffixToFilePath(this.attachmentBaseName, '-actual'), contentType: this.mimeType, path: this.actualPath });
+    const message = `A snapshot doesn't exist at ${this.expectedPath}${isWriteMissingMode ? ', writing actual.' : '.'}`;
+    if (this.updateSnapshots === 'all' || this.updateSnapshots === 'changed') {
       /* eslint-disable no-console */
       console.log(message);
-      return this.createMatcherResult(message, true);
+      return this.createMatcherResult(message, true, undefined, attachments);
     }
     if (this.updateSnapshots === 'missing') {
-      this.testInfo._hasNonRetriableError = true;
-      this.testInfo._failWithError(new Error(message));
-      return this.createMatcherResult('', true);
+      return {
+        ...this.createMatcherResult('', true, undefined, attachments),
+        softError: new Error(message),
+        shouldNotRetryTest: true,
+      };
     }
-    return this.createMatcherResult(message, false);
+    return this.createMatcherResult(message, false, undefined, attachments);
   }
 
   handleDifferent(
@@ -244,95 +213,104 @@ class SnapshotHelper {
     expected: Buffer | string | undefined,
     previous: Buffer | string | undefined,
     diff: Buffer | string | undefined,
-    diffError: string | undefined,
-    log: string[] | undefined,
-    title = `${this.kind} comparison failed:`): ImageMatcherResult {
-    const output = [
-      colors.red(title),
-      '',
-    ];
-    if (diffError)
-      output.push(indent(diffError, '  '));
-
+    header: string,
+    diffError: string,
+    log: string[] | undefined): MatcherResult<string, string> {
+    const output = [`${header}${indent(diffError, '  ')}`];
+    if (this.name) {
+      output.push('');
+      output.push(`  Snapshot: ${this.name}`);
+    }
+    const attachments: MatcherAttachment[] = [];
     if (expected !== undefined) {
       // Copy the expectation inside the `test-results/` folder for backwards compatibility,
       // so that one can upload `test-results/` directory and have all the data inside.
       writeFileSync(this.legacyExpectedPath, expected);
-      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.outputBaseName, '-expected'), contentType: this.mimeType, path: this.snapshotPath });
-      output.push(`\nExpected: ${colors.yellow(this.snapshotPath)}`);
+      attachments.push({ name: addSuffixToFilePath(this.attachmentBaseName, '-expected'), contentType: this.mimeType, path: this.expectedPath });
     }
     if (previous !== undefined) {
       writeFileSync(this.previousPath, previous);
-      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.outputBaseName, '-previous'), contentType: this.mimeType, path: this.previousPath });
-      output.push(`Previous: ${colors.yellow(this.previousPath)}`);
+      attachments.push({ name: addSuffixToFilePath(this.attachmentBaseName, '-previous'), contentType: this.mimeType, path: this.previousPath });
     }
     if (actual !== undefined) {
       writeFileSync(this.actualPath, actual);
-      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.outputBaseName, '-actual'), contentType: this.mimeType, path: this.actualPath });
-      output.push(`Received: ${colors.yellow(this.actualPath)}`);
+      attachments.push({ name: addSuffixToFilePath(this.attachmentBaseName, '-actual'), contentType: this.mimeType, path: this.actualPath });
     }
     if (diff !== undefined) {
       writeFileSync(this.diffPath, diff);
-      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.outputBaseName, '-diff'), contentType: this.mimeType, path: this.diffPath });
-      output.push(`    Diff: ${colors.yellow(this.diffPath)}`);
+      attachments.push({ name: addSuffixToFilePath(this.attachmentBaseName, '-diff'), contentType: this.mimeType, path: this.diffPath });
     }
 
     if (log?.length)
-      output.push(callLogText(log));
+      output.push(callLogText(this.state.utils, log));
     else
       output.push('');
 
-    return this.createMatcherResult(output.join('\n'), false, log);
+    return this.createMatcherResult(output.join('\n'), false, log, attachments);
   }
 
-  handleMatching(): ImageMatcherResult {
+  handleMatching(): MatcherResult<string, string> {
     return this.createMatcherResult('', true);
   }
 }
 
 export function toMatchSnapshot(
-  this: ExpectMatcherState,
+  this: ExpectMatcherStateInternal,
   received: Buffer | string,
   nameOrOptions: NameOrSegments | { name?: NameOrSegments } & ImageComparatorOptions = {},
   optOptions: ImageComparatorOptions = {}
 ): MatcherResult<NameOrSegments | { name?: NameOrSegments }, string> {
-  const testInfo = currentTestInfo();
+  const testInfo = expectConfig().testInfo;
   if (!testInfo)
     throw new Error(`toMatchSnapshot() must be called during the test`);
   if (received instanceof Promise)
     throw new Error('An unresolved Promise was passed to toMatchSnapshot(), make sure to resolve it by adding await to it.');
 
-  if (testInfo._projectInternal.ignoreSnapshots)
+  if (expectConfig().ignoreSnapshots)
     return { pass: !this.isNot, message: () => '', name: 'toMatchSnapshot', expected: nameOrOptions };
 
-  const configOptions = testInfo._projectInternal.expect?.toMatchSnapshot || {};
+  const configOptions = expectConfig().toMatchSnapshot || {};
   const helper = new SnapshotHelper(
-      testInfo, 'toMatchSnapshot', undefined, determineFileExtension(received),
+      this, testInfo, 'toMatchSnapshot', undefined, '.' + determineFileExtension(received),
       configOptions, nameOrOptions, optOptions);
 
   if (this.isNot) {
-    if (!fs.existsSync(helper.snapshotPath))
+    if (!fs.existsSync(helper.expectedPath))
       return helper.handleMissingNegated();
-    const isDifferent = !!helper.comparator(received, fs.readFileSync(helper.snapshotPath), helper.options);
+    const isDifferent = !!helper.comparator(received, fs.readFileSync(helper.expectedPath), helper.options);
     return isDifferent ? helper.handleDifferentNegated() : helper.handleMatchingNegated();
   }
 
-  if (!fs.existsSync(helper.snapshotPath))
+  if (!fs.existsSync(helper.expectedPath))
     return helper.handleMissing(received);
 
-  const expected = fs.readFileSync(helper.snapshotPath);
+  const expected = fs.readFileSync(helper.expectedPath);
+
+  if (helper.updateSnapshots === 'all') {
+    if (!compareBuffersOrStrings(received, expected))
+      return helper.handleMatching();
+    writeFileSync(helper.expectedPath, received);
+    /* eslint-disable no-console */
+    console.log(helper.expectedPath + ' is not the same, writing actual.');
+    return helper.createMatcherResult(helper.expectedPath + ' running with --update-snapshots, writing actual.', true);
+  }
+
+  if (helper.updateSnapshots === 'changed') {
+    const result = helper.comparator(received, expected, helper.options);
+    if (!result)
+      return helper.handleMatching();
+    writeFileSync(helper.expectedPath, received);
+    /* eslint-disable no-console */
+    console.log(helper.expectedPath + ' does not match, writing actual.');
+    return helper.createMatcherResult(helper.expectedPath + ' running with --update-snapshots, writing actual.', true);
+  }
+
   const result = helper.comparator(received, expected, helper.options);
   if (!result)
     return helper.handleMatching();
 
-  if (helper.updateSnapshots === 'all') {
-    writeFileSync(helper.snapshotPath, received);
-    /* eslint-disable no-console */
-    console.log(helper.snapshotPath + ' does not match, writing actual.');
-    return helper.createMatcherResult(helper.snapshotPath + ' running with --update-snapshots, writing actual.', true);
-  }
-
-  return helper.handleDifferent(received, expected, undefined, result.diff, result.errorMessage, undefined);
+  const header = formatMatcherMessage(this.utils, { promise: this.promise, isNot: this.isNot, matcherName: 'toMatchSnapshot', receiver: isString(received) ? 'string' : 'Buffer', expectation: 'expected' });
+  return helper.handleDifferent(received, expected, undefined, result.diff, header, result.errorMessage, undefined);
 }
 
 export function toHaveScreenshotStepTitle(
@@ -348,26 +326,27 @@ export function toHaveScreenshotStepTitle(
 }
 
 export async function toHaveScreenshot(
-  this: ExpectMatcherState,
+  this: ExpectMatcherStateInternal,
   pageOrLocator: Page | Locator,
   nameOrOptions: NameOrSegments | { name?: NameOrSegments } & ToHaveScreenshotOptions = {},
   optOptions: ToHaveScreenshotOptions = {}
 ): Promise<MatcherResult<NameOrSegments | { name?: NameOrSegments }, string>> {
-  const testInfo = currentTestInfo();
+  const testInfo = expectConfig().testInfo;
   if (!testInfo)
     throw new Error(`toHaveScreenshot() must be called during the test`);
 
-  if (testInfo._projectInternal.ignoreSnapshots)
+  if (expectConfig().ignoreSnapshots)
     return { pass: !this.isNot, message: () => '', name: 'toHaveScreenshot', expected: nameOrOptions };
 
   expectTypes(pageOrLocator, ['Page', 'Locator'], 'toHaveScreenshot');
-  const [page, locator] = pageOrLocator.constructor.name === 'Page' ? [(pageOrLocator as PageEx), undefined] : [(pageOrLocator as Locator).page() as PageEx, pageOrLocator as Locator];
-  const configOptions = testInfo._projectInternal.expect?.toHaveScreenshot || {};
-  const helper = new SnapshotHelper(testInfo, 'toHaveScreenshot', locator, 'png', configOptions, nameOrOptions, optOptions);
-  if (!helper.snapshotPath.toLowerCase().endsWith('.png'))
-    throw new Error(`Screenshot name "${path.basename(helper.snapshotPath)}" must have '.png' extension`);
+  const [page, locator] = (pageOrLocator as any)._apiName === 'Page' ? [(pageOrLocator as PageEx), undefined] : [(pageOrLocator as Locator).page() as PageEx, pageOrLocator as Locator];
+  const configOptions = expectConfig().toHaveScreenshot || {};
+  const helper = new SnapshotHelper(this, testInfo, 'toHaveScreenshot', locator, undefined, configOptions, nameOrOptions, optOptions);
+  if (!helper.expectedPath.toLowerCase().endsWith('.png'))
+    throw new Error(`Screenshot name "${path.basename(helper.expectedPath)}" must have '.png' extension`);
   expectTypes(pageOrLocator, ['Page', 'Locator'], 'toHaveScreenshot');
   const style = await loadScreenshotStyles(helper.options.stylePath);
+  const timeout = helper.options.timeout ?? this.timeout;
   const expectScreenshotOptions: ExpectScreenshotOptions = {
     locator,
     animations: helper.options.animations ?? 'disabled',
@@ -380,61 +359,86 @@ export async function toHaveScreenshot(
     scale: helper.options.scale ?? 'css',
     style,
     isNot: !!this.isNot,
-    timeout: helper.options.timeout ?? this.timeout,
+    timeout,
     comparator: helper.options.comparator,
     maxDiffPixels: helper.options.maxDiffPixels,
     maxDiffPixelRatio: helper.options.maxDiffPixelRatio,
     threshold: helper.options.threshold,
   };
 
-  const hasSnapshot = fs.existsSync(helper.snapshotPath);
+  const hasSnapshot = fs.existsSync(helper.expectedPath);
   if (this.isNot) {
     if (!hasSnapshot)
       return helper.handleMissingNegated();
-
-    // Having `errorMessage` means we timed out while waiting
-    // for screenshots not to match, so screenshots
-    // are actually the same in the end.
-    expectScreenshotOptions.expected = await fs.promises.readFile(helper.snapshotPath);
-    const isDifferent = !(await page._expectScreenshot(expectScreenshotOptions)).errorMessage;
-    return isDifferent ? helper.handleDifferentNegated() : helper.handleMatchingNegated();
   }
 
   // Fast path: there's no screenshot and we don't intend to update it.
-  if (helper.updateSnapshots === 'none' && !hasSnapshot)
-    return helper.createMatcherResult(`A snapshot doesn't exist at ${helper.snapshotPath}.`, false);
+  if (!this.isNot && helper.updateSnapshots === 'none' && !hasSnapshot)
+    return helper.createMatcherResult(`A snapshot doesn't exist at ${helper.expectedPath}.`, false);
 
-  if (!hasSnapshot) {
-    // Regenerate a new screenshot by waiting until two screenshots are the same.
-    const { actual, previous, diff, errorMessage, log } = await page._expectScreenshot(expectScreenshotOptions);
-    // We tried re-generating new snapshot but failed.
-    // This can be due to e.g. spinning animation, so we want to show it as a diff.
-    if (errorMessage)
-      return helper.handleDifferent(actual, undefined, previous, diff, undefined, log, errorMessage);
+  // Hide overlays during screenshot capture so they don't affect visual comparison.
+  await page.screencast.hideOverlays();
+  try {
+    if (this.isNot) {
+      // Having `errorMessage` means we timed out while waiting
+      // for screenshots not to match, so screenshots
+      // are actually the same in the end.
+      expectScreenshotOptions.expected = await fs.promises.readFile(helper.expectedPath);
+      const isDifferent = !(await page._expectScreenshot(expectScreenshotOptions)).errorMessage;
+      return isDifferent ? helper.handleDifferentNegated() : helper.handleMatchingNegated();
+    }
 
-    // We successfully generated new screenshot.
-    return helper.handleMissing(actual!);
+    if (!hasSnapshot) {
+      // Regenerate a new screenshot by waiting until two screenshots are the same.
+      const { actual, previous, diff, errorMessage, log, timedOut } = await page._expectScreenshot(expectScreenshotOptions);
+      // We tried re-generating new snapshot but failed.
+      // This can be due to e.g. spinning animation, so we want to show it as a diff.
+      if (errorMessage) {
+        const header = formatMatcherMessage(this.utils, { promise: this.promise, isNot: this.isNot, matcherName: 'toHaveScreenshot', locator: locator?.toString(), expectation: 'expected', timeout, timedOut });
+        return helper.handleDifferent(actual, undefined, previous, diff, header, errorMessage, log);
+      }
+
+      // We successfully generated new screenshot.
+      return helper.handleMissing(actual!);
+    }
+
+    // General case:
+    // - snapshot exists
+    // - regular matcher (i.e. not a `.not`)
+    const expected = await fs.promises.readFile(helper.expectedPath);
+    expectScreenshotOptions.expected = helper.updateSnapshots === 'all' ? undefined : expected;
+
+    const { actual, previous, diff, errorMessage, log, timedOut } = await page._expectScreenshot(expectScreenshotOptions);
+    const writeFiles = (actualBuffer: Buffer) => {
+      writeFileSync(helper.expectedPath, actualBuffer);
+      writeFileSync(helper.actualPath, actualBuffer);
+      /* eslint-disable no-console */
+      console.log(helper.expectedPath + ' is re-generated, writing actual.');
+      return helper.createMatcherResult(helper.expectedPath + ' running with --update-snapshots, writing actual.', true);
+    };
+
+    if (!errorMessage) {
+      // Screenshot is matching, but is not necessarily the same as the expected.
+      if (helper.updateSnapshots === 'all' && actual && compareBuffersOrStrings(actual, expected)) {
+        console.log(helper.expectedPath + ' is re-generated, writing actual.');
+        return writeFiles(actual);
+      }
+      return helper.handleMatching();
+    }
+
+    if (helper.updateSnapshots === 'changed' || helper.updateSnapshots === 'all') {
+      if (actual)
+        return writeFiles(actual);
+      let header = formatMatcherMessage(this.utils, { promise: this.promise, isNot: this.isNot, matcherName: 'toHaveScreenshot', locator: locator?.toString(), expectation: 'expected', timeout, timedOut });
+      header += '  Failed to re-generate expected.\n';
+      return helper.handleDifferent(actual, expectScreenshotOptions.expected, previous, diff, header, errorMessage, log);
+    }
+
+    const header = formatMatcherMessage(this.utils, { promise: this.promise, isNot: this.isNot, matcherName: 'toHaveScreenshot', locator: locator?.toString(), expectation: 'expected', timeout, timedOut });
+    return helper.handleDifferent(actual, expectScreenshotOptions.expected, previous, diff, header, errorMessage, log);
+  } finally {
+    await page.screencast.showOverlays();
   }
-
-  // General case:
-  // - snapshot exists
-  // - regular matcher (i.e. not a `.not`)
-  // - perhaps an 'all' flag to update non-matching screenshots
-  expectScreenshotOptions.expected = await fs.promises.readFile(helper.snapshotPath);
-  const { actual, diff, errorMessage, log } = await page._expectScreenshot(expectScreenshotOptions);
-
-  if (!errorMessage)
-    return helper.handleMatching();
-
-  if (helper.updateSnapshots === 'all') {
-    writeFileSync(helper.snapshotPath, actual!);
-    writeFileSync(helper.actualPath, actual!);
-    /* eslint-disable no-console */
-    console.log(helper.snapshotPath + ' is re-generated, writing actual.');
-    return helper.createMatcherResult(helper.snapshotPath + ' running with --update-snapshots, writing actual.', true);
-  }
-
-  return helper.handleDifferent(actual, expectScreenshotOptions.expected, undefined, diff, errorMessage, log);
 }
 
 function writeFileSync(aPath: string, content: Buffer | string) {

@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import type { Locator } from 'playwright/test';
-import type { TestType } from '@playwright/experimental-ct-core';
+import type { TestType, Locator } from '@playwright/experimental-ct-core';
 
 type ComponentSlot = string | string[];
 type ComponentSlots = Record<string, ComponentSlot> & { default?: ComponentSlot };
@@ -40,29 +39,32 @@ export interface MountOptionsJsx<HooksConfig> {
 }
 
 export interface MountResult<Component> extends Locator {
-  unmount(): Promise<void>;
-  update(options: {
+  unmount: () => Promise<void>;
+  update: (options: {
     props?: Partial<ComponentProps<Component>>;
     slots?: Partial<ComponentSlots>;
     on?: Partial<ComponentEvents>;
-  }): Promise<void>;
+  }) => Promise<void>;
 }
 
 export interface MountResultJsx extends Locator {
-  unmount(): Promise<void>;
-  update(component: JSX.Element): Promise<void>;
+  unmount: () => Promise<void>;
+  update: (component: JSX.Element) => Promise<void>;
 }
 
-export const test: TestType<{
-  mount<HooksConfig>(
-    component: JSX.Element,
-    options: MountOptionsJsx<HooksConfig>
-  ): Promise<MountResultJsx>;
-  mount<HooksConfig, Component = unknown>(
-    component: Component,
-    options?: MountOptions<HooksConfig, Component>
-  ): Promise<MountResult<Component>>;
-}>;
+export interface ComponentFixtures {
+  mount: {
+    <HooksConfig>(
+      component: JSX.Element,
+      options?: MountOptionsJsx<HooksConfig>
+    ): Promise<MountResultJsx>;
+    <HooksConfig, Component = unknown>(
+      component: Component,
+      options?: MountOptions<HooksConfig, Component>
+    ): Promise<MountResult<Component>>;
+  };
+}
 
-export { defineConfig, PlaywrightTestConfig } from '@playwright/experimental-ct-core';
-export { expect, devices } from 'playwright/test';
+export const test: TestType<ComponentFixtures>;
+
+export { defineConfig, PlaywrightTestConfig, expect, devices } from '@playwright/experimental-ct-core';

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import type { TestStatus, Metadata, PlaywrightTestOptions, PlaywrightWorkerOptions, ReporterDescription, FullConfig, FullProject } from './test';
-export type { FullConfig, FullProject, TestStatus } from './test';
+import type { TestStatus, Metadata, PlaywrightTestOptions, PlaywrightWorkerOptions, ReporterDescription, FullConfig, FullProject, Location, WorkerInfo } from './test';
+export type { FullConfig, FullProject, TestStatus, Location, WorkerInfo } from './test';
 
 /**
  * Result of the full test run.
@@ -109,6 +109,8 @@ export interface JSONReportError {
 
 export interface JSONReportTestResult {
   workerIndex: number;
+  parallelIndex: number;
+  shardIndex?: number;
   status: TestStatus | undefined;
   duration: number;
   error: TestError | undefined;
@@ -124,6 +126,7 @@ export interface JSONReportTestResult {
     body?: string;
     contentType: string;
   }[];
+  annotations: { type: string, description?: string }[];
   errorLocation?: Location;
 }
 

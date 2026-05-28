@@ -1,7 +1,7 @@
 /*
   Copyright (c) Microsoft Corporation.
 
-  Licensed under the Apache License, Version 2.0 (the 'License");
+  Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
   You may obtain a copy of the License at
 
@@ -14,18 +14,25 @@
   limitations under the License.
 */
 
+import { clsx } from '../uiUtils';
 import './toolbar.css';
 import * as React from 'react';
 
 type ToolbarProps = {
   noShadow?: boolean;
   noMinHeight?: boolean;
+  sidebarBackground?: boolean;
+  className?: string;
+  onClick?: (e: React.MouseEvent) => void;
 };
 
 export const Toolbar: React.FC<React.PropsWithChildren<ToolbarProps>> = ({
   noShadow,
   children,
-  noMinHeight
+  noMinHeight,
+  className,
+  sidebarBackground,
+  onClick,
 }) => {
-  return <div className={'toolbar' + (noShadow ? ' no-shadow' : '') + (noMinHeight ? ' no-min-height' : '')}>{children}</div>;
+  return <div className={clsx('toolbar', noShadow && 'no-shadow', noMinHeight && 'no-min-height', className, sidebarBackground && 'toolbar-sidebar-background')} onClick={onClick}>{children}</div>;
 };

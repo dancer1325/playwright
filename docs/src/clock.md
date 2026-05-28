@@ -2,11 +2,24 @@
 id: clock
 title: "Clock"
 ---
+import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ## Introduction
 
 Accurately simulating time-dependent behavior is essential for verifying the correctness of applications. Utilizing [Clock] functionality allows developers to manipulate and control time within tests, enabling the precise validation of features such as rendering time, timeouts, scheduled tasks without the delays and variability of real-time execution.
 
+The [Clock] API provides the following methods to control time:
+- `setFixedTime`: Sets the fixed time for `Date.now()` and `new Date()`.
+- `install`: initializes the clock and allows you to:
+  - `pauseAt`: Pauses the time at a specific time.
+  - `fastForward`: Fast forwards the time.
+  - `runFor`: Runs the time for a specific duration.
+  - `resume`: Resumes the time.
+- `setSystemTime`: Sets the current system time.
+
+The recommended approach is to use `setFixedTime` to set the time to a specific value. If that doesn't work for your use case, you can use `install` which allows you to pause time later on, fast forward it, tick it, etc. `setSystemTime` is only recommended for advanced use cases.
+
+:::note
 [`property: Page.clock`] overrides native global classes and functions related to time allowing them to be manually controlled:
   - `Date`
   - `setTimeout`
@@ -18,6 +31,12 @@ Accurately simulating time-dependent behavior is essential for verifying the cor
   - `requestIdleCallback`
   - `cancelIdleCallback`
   - `performance`
+  - `Event.timeStamp`
+:::
+
+:::warning
+If you call `install` at any point in your test, the call _MUST_ occur before any other clock related calls (see note above for list). Calling these methods out of order will result in undefined behavior. For example, you cannot call `setInterval`, followed by `install`, then `clearInterval`, as `install` overrides the native definition of the clock functions.
+:::
 
 ## Test with predefined time
 
@@ -29,7 +48,7 @@ That way the time flows naturally, but `Date.now` always returns a fixed value.
 <script>
   const renderTime = () => {
     document.getElementById('current-time').textContent =
-        new Date().toLocaleTimeString();
+        new Date().toLocaleString();
   };
   setInterval(renderTime, 1000);
 </script>
@@ -45,6 +64,47 @@ await page.clock.setFixedTime(new Date('2024-02-02T10:30:00'));
 await expect(page.getByTestId('current-time')).toHaveText('2/2/2024, 10:30:00 AM');
 ```
 
+```python async
+await page.clock.set_fixed_time(datetime.datetime(2024, 2, 2, 10, 0, 0))
+await page.goto("http://localhost:3333")
+await expect(page.get_by_test_id("current-time")).to_have_text("2/2/2024, 10:00:00 AM")
+
+await page.clock.set_fixed_time(datetime.datetime(2024, 2, 2, 10, 30, 0))
+# We know that the page has a timer that updates the time every second.
+await expect(page.get_by_test_id("current-time")).to_have_text("2/2/2024, 10:30:00 AM")
+```
+
+```python sync
+page.clock.set_fixed_time(datetime.datetime(2024, 2, 2, 10, 0, 0))
+page.goto("http://localhost:3333")
+expect(page.get_by_test_id("current-time")).to_have_text("2/2/2024, 10:00:00 AM")
+page.clock.set_fixed_time(datetime.datetime(2024, 2, 2, 10, 30, 0))
+# We know that the page has a timer that updates the time every second.
+expect(page.get_by_test_id("current-time")).to_have_text("2/2/2024, 10:30:00 AM")
+```
+
+```java
+SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+page.clock().setFixedTime(format.parse("2024-02-02T10:00:00"));
+page.navigate("http://localhost:3333");
+Locator locator = page.getByTestId("current-time");
+assertThat(locator).hasText("2/2/2024, 10:00:00 AM");
+page.clock().setFixedTime(format.parse("2024-02-02T10:30:00"));
+// We know that the page has a timer that updates the time every second.
+assertThat(locator).hasText("2/2/2024, 10:30:00 AM");
+```
+
+```csharp
+// Set the fixed time for the clock.
+await Page.Clock.SetFixedTimeAsync(new DateTime(2024, 2, 2, 10, 0, 0));
+await Page.GotoAsync("http://localhost:3333");
+await Expect(Page.GetByTestId("current-time")).ToHaveTextAsync("2/2/2024, 10:00:00 AM");
+// Set the fixed time for the clock.
+await Page.Clock.SetFixedTimeAsync(new DateTime(2024, 2, 2, 10, 30, 0));
+// We know that the page has a timer that updates the time every second.
+await Expect(Page.GetByTestId("current-time")).ToHaveTextAsync("2/2/2024, 10:30:00 AM");
+```
+
 ## Consistent time and timers
 
 Sometimes your timers depend on `Date.now` and are confused when the `Date.now` value does not change over time.
@@ -55,7 +115,7 @@ In this case, you can install the clock and fast forward to the time of interest
 <script>
   const renderTime = () => {
     document.getElementById('current-time').textContent =
-        new Date().toLocaleTimeString();
+        new Date().toLocaleString();
   };
   setInterval(renderTime, 1000);
 </script>
@@ -118,13 +178,14 @@ expect(page.get_by_test_id("current-time")).to_have_text("2/2/2024, 10:30:00 AM"
 ```java
 // Initialize clock with some time before the test time and let the page load
 // naturally. `Date.now` will progress as the timers fire.
-page.clock().install(new Clock.InstallOptions().setTime(Instant.parse("2024-02-02T08:00:00")));
+SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+page.clock().install(new Clock.InstallOptions().setTime(format.parse("2024-02-02T08:00:00")));
 page.navigate("http://localhost:3333");
 Locator locator = page.getByTestId("current-time");
 
 // Pretend that the user closed the laptop lid and opened it again at 10am.
 // Pause the time once reached that point.
-page.clock().pauseAt(Instant.parse("2024-02-02T10:00:00"));
+page.clock().pauseAt(format.parse("2024-02-02T10:00:00"));
 
 // Assert the page state.
 assertThat(locator).hasText("2/2/2024, 10:00:00 AM");
@@ -137,9 +198,9 @@ assertThat(locator).hasText("2/2/2024, 10:30:00 AM");
 ```csharp
 // Initialize clock with some time before the test time and let the page load naturally.
 // `Date.now` will progress as the timers fire.
-await Page.Clock.InstallAsync(new
+await Page.Clock.InstallAsync(new()
 {
-  Time = new DateTime(2024, 2, 2, 8, 0, 0)
+  TimeDate = new DateTime(2024, 2, 2, 8, 0, 0)
 });
 await Page.GotoAsync("http://localhost:3333");
 
@@ -148,11 +209,11 @@ await Page.GotoAsync("http://localhost:3333");
 await Page.Clock.PauseAtAsync(new DateTime(2024, 2, 2, 10, 0, 0));
 
 // Assert the page state.
-await Expect(Page.GetByTestId("current-time")).ToHaveText("2/2/2024, 10:00:00 AM");
+await Expect(Page.GetByTestId("current-time")).ToHaveTextAsync("2/2/2024, 10:00:00 AM");
 
 // Close the laptop lid again and open it at 10:30am.
 await Page.Clock.FastForwardAsync("30:00");
-await Expect(Page.GetByTestId("current-time")).ToHaveText("2/2/2024, 10:30:00 AM");
+await Expect(Page.GetByTestId("current-time")).ToHaveTextAsync("2/2/2024, 10:30:00 AM");
 ```
 
 ## Test inactivity monitoring
@@ -160,6 +221,26 @@ await Expect(Page.GetByTestId("current-time")).ToHaveText("2/2/2024, 10:30:00 AM
 Inactivity monitoring is a common feature in web applications that logs out users after a period of inactivity.
 Testing this feature can be tricky because you need to wait for a long time to see the effect.
 With the help of the clock, you can speed up time and test this feature quickly.
+
+```html
+<div id="remaining-time" data-testid="remaining-time"></div>
+<script>
+  const endTime = Date.now() + 5 * 60_000;
+  const renderTime = () => {
+    const diffInSeconds = Math.round((endTime - Date.now()) / 1000);
+    if (diffInSeconds <= 0) {
+      document.getElementById('remaining-time').textContent =
+        'You have been logged out due to inactivity.';
+    } else {
+      document.getElementById('remaining-time').textContent =
+        `You will be logged out in ${diffInSeconds} seconds.`;
+    }
+    setTimeout(renderTime, 1000);
+  };
+  renderTime();
+</script>
+<button type="button">Interaction</button>
+```
 
 ```js
 // Initial time does not matter for the test, so we can pick current time.
@@ -171,7 +252,7 @@ await page.getByRole('button').click();
 // Fast forward time 5 minutes as if the user did not do anything.
 // Fast forward is like closing the laptop lid and opening it after 5 minutes.
 // All the timers due will fire once immediately, as in the real browser.
-await page.clock.fastForward('5:00');
+await page.clock.fastForward('05:00');
 
 // Check that the user was logged out automatically.
 await expect(page.getByText('You have been logged out due to inactivity.')).toBeVisible();
@@ -187,7 +268,7 @@ await page.get_by_role("button").click()
 # Fast forward time 5 minutes as if the user did not do anything.
 # Fast forward is like closing the laptop lid and opening it after 5 minutes.
 # All the timers due will fire once immediately, as in the real browser.
-await page.clock.fast_forward("5:00")
+await page.clock.fast_forward("05:00")
 
 # Check that the user was logged out automatically.
 await expect(page.getByText("You have been logged out due to inactivity.")).toBeVisible()
@@ -203,7 +284,7 @@ page.get_by_role("button").click()
 # Fast forward time 5 minutes as if the user did not do anything.
 # Fast forward is like closing the laptop lid and opening it after 5 minutes.
 # All the timers due will fire once immediately, as in the real browser.
-page.clock.fast_forward("5:00")
+page.clock.fast_forward("05:00")
 
 # Check that the user was logged out automatically.
 expect(page.get_by_text("You have been logged out due to inactivity.")).to_be_visible()
@@ -221,7 +302,7 @@ locator.click();
 // Fast forward time 5 minutes as if the user did not do anything.
 // Fast forward is like closing the laptop lid and opening it after 5 minutes.
 // All the timers due will fire once immediately, as in the real browser.
-page.clock().fastForward("5:00");
+page.clock().fastForward("05:00");
 
 // Check that the user was logged out automatically.
 assertThat(page.getByText("You have been logged out due to inactivity.")).isVisible();
@@ -238,7 +319,7 @@ await page.GetByRole("button").ClickAsync();
 // Fast forward time 5 minutes as if the user did not do anything.
 // Fast forward is like closing the laptop lid and opening it after 5 minutes.
 // All the timers due will fire once immediately, as in the real browser.
-await Page.Clock.FastForwardAsync("5:00");
+await Page.Clock.FastForwardAsync("05:00");
 
 // Check that the user was logged out automatically.
 await Expect(Page.GetByText("You have been logged out due to inactivity.")).ToBeVisibleAsync();
@@ -254,7 +335,7 @@ animation frames in the process to achieve a fine-grained control over the passa
 <script>
   const renderTime = () => {
     document.getElementById('current-time').textContent =
-        new Date().toLocaleTimeString();
+        new Date().toLocaleString();
   };
   setInterval(renderTime, 1000);
 </script>
@@ -315,15 +396,16 @@ expect(locator).to_have_text("2/2/2024, 10:00:02 AM")
 ```
 
 ```java
+SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 // Initialize clock with a specific time, let the page load naturally.
 page.clock().install(new Clock.InstallOptions()
-    .setTime(Instant.parse("2024-02-02T08:00:00")));
+    .setTime(format.parse("2024-02-02T08:00:00")));
 page.navigate("http://localhost:3333");
 Locator locator = page.getByTestId("current-time");
 
 // Pause the time flow, stop the timers, you now have manual control
 // over the page time.
-page.clock().pauseAt(Instant.parse("2024-02-02T10:00:00"));
+page.clock().pauseAt(format.parse("2024-02-02T10:00:00"));
 assertThat(locator).hasText("2/2/2024, 10:00:00 AM");
 
 // Tick through time manually, firing all timers in the process.
@@ -334,9 +416,9 @@ assertThat(locator).hasText("2/2/2024, 10:00:02 AM");
 
 ```csharp
 // Initialize clock with a specific time, let the page load naturally.
-await Page.Clock.InstallAsync(new
+await Page.Clock.InstallAsync(new()
 {
-  Time = new DateTime(2024, 2, 2, 8, 0, 0, DateTimeKind.Pst)
+  TimeDate = new DateTime(2024, 2, 2, 8, 0, 0, DateTimeKind.Pst)
 });
 await page.GotoAsync("http://localhost:3333");
 var locator = page.GetByTestId("current-time");
@@ -351,3 +433,10 @@ await Expect(locator).ToHaveTextAsync("2/2/2024, 10:00:00 AM");
 await Page.Clock.RunForAsync(2000);
 await Expect(locator).ToHaveTextAsync("2/2/2024, 10:00:02 AM");
 ```
+
+## Related Videos
+
+<LiteYouTube
+  id="54_aC-rVKHg"
+  title="Playwright 1.45"
+/>

@@ -1,6 +1,6 @@
 ---
 id: test-use-options
-title: "Test use options"
+title: "Configuration (use)"
 ---
 
 ## Introduction
@@ -17,7 +17,7 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   use: {
     // Base URL to use in actions like `await page.goto('/')`.
-    baseURL: 'http://127.0.0.1:3000',
+    baseURL: 'http://localhost:3000',
 
     // Populates context with given storage state.
     storageState: 'state.json',
@@ -29,11 +29,11 @@ export default defineConfig({
 | Option | Description |
 | :- | :- |
 | [`property: TestOptions.baseURL`] | Base URL used for all pages in the context. Allows navigating by using just the path, for example `page.goto('/settings')`. |
-| [`property: TestOptions.storageState`] | Populates context with given storage state. Useful for easy authentication, [learn more](../auth.md). |
+| [`property: TestOptions.storageState`] | Populates context with given storage state. Useful for easy authentication, [learn more](./auth.md). |
 
 ### Emulation Options
 
-With Playwright you can emulate a real device such as a mobile phone or tablet. See our [guide on projects](./test-projects.md) for more info on emulating devices. You can also emulate the `"geolocation"`, `"locale"` and `"timezone"` for all tests or for a specific test as well as set the `"permissions"` to show notifications or change the `"colorScheme"`. See our [Emulation](emulation.md) guide to learn more.
+With Playwright you can emulate a real device such as a mobile phone or tablet. See our [guide on projects](./test-projects.md) for more info on emulating devices. You can also emulate the `"geolocation"`, `"locale"` and `"timezone"` for all tests or for a specific test as well as set the `"permissions"` to show notifications or change the `"colorScheme"`. See our [Emulation](./emulation.md) guide to learn more.
 
 
 ```js title="playwright.config.ts"
@@ -64,12 +64,12 @@ export default defineConfig({
 
 | Option | Description |
 | :- | :- |
-| [`property: TestOptions.colorScheme`] | [Emulates](emulation.md#color-scheme-and-media) `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'` |
-| [`property: TestOptions.geolocation`] | Context [geolocation](emulation.md#geolocation). |
-| [`property: TestOptions.locale`] | [Emulates](emulation.md#locale--timezone) the user locale, for example `en-GB`, `de-DE`, etc. |
-| [`property: TestOptions.permissions`] | A list of [permissions](emulation.md#permissions) to grant to all pages in the context. |
-| [`property: TestOptions.timezoneId`] | Changes the [timezone](emulation.md#locale--timezone) of the context. |
-| [`property: TestOptions.viewport`] | [Viewport](emulation.md#viewport) used for all pages in the context. |
+| [`property: TestOptions.colorScheme`] | [Emulates](./emulation.md#color-scheme-and-media) `'prefers-colors-scheme'` media feature, supported values are `'light'` and `'dark'` |
+| [`property: TestOptions.geolocation`] | Context [geolocation](./emulation.md#geolocation). |
+| [`property: TestOptions.locale`] | [Emulates](./emulation.md#locale--timezone) the user locale, for example `en-GB`, `de-DE`, etc. |
+| [`property: TestOptions.permissions`] | A list of [permissions](./emulation.md#permissions) to grant to all pages in the context. |
+| [`property: TestOptions.timezoneId`] | Changes the [timezone](./emulation.md#locale--timezone) of the context. |
+| [`property: TestOptions.viewport`] | [Viewport](./emulation.md#viewport) used for all pages in the context. |
 
 ### Network Options
 
@@ -111,16 +111,16 @@ export default defineConfig({
 
 | Option | Description |
 | :- | :- |
-| [`property: TestOptions.acceptDownloads`] | Whether to automatically download all the attachments, defaults to `true`. [Learn more](../downloads.md) about working with downloads. |
+| [`property: TestOptions.acceptDownloads`] | Whether to automatically download all the attachments, defaults to `true`. [Learn more](./downloads.md) about working with downloads. |
 | [`property: TestOptions.extraHTTPHeaders`] | An object containing additional HTTP headers to be sent with every request. All header values must be strings. |
-| [`property: TestOptions.httpCredentials`] | Credentials for [HTTP authentication](../network.md#http-authentication). |
+| [`property: TestOptions.httpCredentials`] | Credentials for [HTTP authentication](./network.md#http-authentication). |
 | [`property: TestOptions.ignoreHTTPSErrors`] | Whether to ignore HTTPS errors during navigation. |
 | [`property: TestOptions.offline`] | Whether to emulate network being offline. |
-| [`property: TestOptions.proxy`] | [Proxy settings](../network.md#http-proxy) used for all pages in the test. |
+| [`property: TestOptions.proxy`] | [Proxy settings](./network.md#http-proxy) used for all pages in the test. |
 
 
 :::note
-You don't have to configure anything to mock network requests. Just define a custom [Route] that mocks the network for a browser context. See our [network mocking guide](../network.md) to learn more.
+You don't have to configure anything to mock network requests. Just define a custom [Route] that mocks the network for a browser context. See our [network mocking guide](./network.md) to learn more.
 :::
 
 ### Recording Options
@@ -148,9 +148,9 @@ export default defineConfig({
 
 | Option | Description |
 | :- | :- |
-| [`property: TestOptions.screenshot`] | Capture [screenshots](../screenshots.md) of your test. Options include `'off'`, `'on'` and `'only-on-failure'` |
-| [`property: TestOptions.trace`] | Playwright can produce test traces while running the tests. Later on, you can view the trace and get detailed information about Playwright execution by opening [Trace Viewer](../trace-viewer.md). Options include: `'off'`, `'on'`, `'retain-on-failure'` and `'on-first-retry'`  |
-| [`property: TestOptions.video`] | Playwright can record [videos](../videos.md) for your tests. Options include: `'off'`, `'on'`, `'retain-on-failure'` and `'on-first-retry'` |
+| [`property: TestOptions.screenshot`] | Capture [screenshots](./screenshots.md) of your test. Options include `'off'`, `'on'` and `'only-on-failure'` |
+| [`property: TestOptions.trace`] | Playwright can produce test traces while running the tests. Later on, you can view the trace and get detailed information about Playwright execution by opening [Trace Viewer](./trace-viewer.md). Options include: `'off'`, `'on'`, `'retain-on-failure'` and `'on-first-retry'`  |
+| [`property: TestOptions.video`] | Playwright can record [videos](./videos.md) for your tests. Options include: `'off'`, `'on'`, `'retain-on-failure'` and `'on-first-retry'` |
 
 
 ### Other Options
@@ -186,13 +186,13 @@ export default defineConfig({
 | [`property: TestOptions.actionTimeout`] | Timeout for each Playwright action in milliseconds. Defaults to `0` (no timeout). Learn more about [timeouts](./test-timeouts.md) and how to set them for a single test. |
 | [`property: TestOptions.browserName`] | Name of the browser that runs tests. Defaults to 'chromium'. Options include `chromium`, `firefox`, or `webkit`. |
 | [`property: TestOptions.bypassCSP`] |Toggles bypassing Content-Security-Policy. Useful when CSP includes the production origin. Defaults to `false`. |
-| [`property: TestOptions.channel`] | Browser channel to use. [Learn more](../browsers.md) about different browsers and channels. |
+| [`property: TestOptions.channel`] | Browser channel to use. [Learn more](./browsers.md) about different browsers and channels. |
 | [`property: TestOptions.headless`] | Whether to run the browser in headless mode meaning no browser is shown when running tests. Defaults to `true`. |
-| [`property: TestOptions.testIdAttribute`] | Changes the default [`data-testid` attribute](../Guides/Locators/locators.md#locate-by-test-id) used by Playwright locators. |
+| [`property: TestOptions.testIdAttribute`] | Changes the default [`data-testid` attribute](./locators.md#locate-by-test-id) used by Playwright locators. |
 
 ### More browser and context options
 
-Any options accepted by [`method: BrowserType.launch`] or [`method: Browser.newContext`] can be put into `launchOptions` or `contextOptions` respectively in the `use` section.
+Any options accepted by [`method: BrowserType.launch`], [`method: Browser.newContext`] or [`method: BrowserType.connect`] can be put into `launchOptions`, `contextOptions` or `connectOptions` respectively in the `use` section.
 
 ```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
@@ -294,5 +294,56 @@ test.describe('french language block', () => {
   test('example', async ({ page }) => {
     // ...
   });
+});
+```
+
+### Reset an option
+
+You can reset an option to the value defined in the config file. Consider the following config that sets a `baseURL`:
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  use: {
+    baseURL: 'https://playwright.dev',
+  },
+});
+```
+
+You can now configure `baseURL` for a file, and also opt-out for a single test.
+
+```js title="intro.spec.ts"
+import { test } from '@playwright/test';
+
+// Configure baseURL for this file.
+test.use({ baseURL: 'https://playwright.dev/docs/intro' });
+
+test('check intro contents', async ({ page }) => {
+  // This test will use "https://playwright.dev/docs/intro" base url as defined above.
+});
+
+test.describe(() => {
+  // Reset the value to a config-defined one.
+  test.use({ baseURL: undefined });
+
+  test('can navigate to intro from the home page', async ({ page }) => {
+    // This test will use "https://playwright.dev" base url as defined in the config.
+  });
+});
+```
+
+If you would like to completely reset the value to `undefined`, use a long-form fixture notation.
+
+```js title="intro.spec.ts"
+import { test } from '@playwright/test';
+
+// Completely unset baseURL for this file.
+test.use({
+  baseURL: [async ({}, use) => use(undefined), { scope: 'test' }],
+});
+
+test('no base url', async ({ page }) => {
+  // This test will not have a base url.
 });
 ```

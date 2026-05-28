@@ -23,7 +23,7 @@ const test = baseTest.extend<{ runServer: () => Promise<PlaywrightServer> }>({
     let server: PlaywrightServer | undefined;
     await use(async () => {
       const runServer = new RunServer();
-      await runServer.start(childProcess, 'extension');
+      await runServer.start(childProcess, { mode: 'extension' });
       server = runServer;
       return server;
     });
@@ -97,4 +97,55 @@ test('should reuse browser with special characters in the launch options', async
   const [workerIndex2, guid2] = result.outputLines[1].split(':');
   expect(guid2).toBe(guid1);
   expect(workerIndex2).not.toBe(workerIndex1);
+});
+
+test('should produce correct test steps', async ({ runInlineTest, runServer }) => {
+  const server = await runServer();
+  const result = await runInlineTest({
+    'reporter.ts': `
+      class Reporter {
+        onStepBegin(test, result, step) {
+          console.log('%% onStepBegin [' + step.category + '] ' + step.title);
+        }
+        onStepEnd(test, result, step) {
+            console.log('%% onStepEnd [' + step.category + '] ' + step.title);
+        }
+      }
+      module.exports = Reporter;
+    `,
+    'src/a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('a', async ({ page }) => {
+        await page.goto('about:blank');
+        await page.evaluate(() => console.log('hello'));
+      });
+    `,
+  }, { reporter: './reporter.ts,list' }, { PW_TEST_REUSE_CONTEXT: '1', PW_TEST_CONNECT_WS_ENDPOINT: server.wsEndpoint() });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.outputLines).toEqual([
+    'onStepBegin [hook] Before Hooks',
+    'onStepBegin [fixture] Fixture "browser"',
+    'onStepBegin [pw:api] connect',
+    'onStepEnd [pw:api] connect',
+    'onStepEnd [fixture] Fixture "browser"',
+    'onStepBegin [fixture] Fixture "context"',
+    'onStepEnd [fixture] Fixture "context"',
+    'onStepBegin [fixture] Fixture "page"',
+    'onStepBegin [pw:api] Create page',
+    'onStepEnd [pw:api] Create page',
+    'onStepEnd [fixture] Fixture "page"',
+    'onStepEnd [hook] Before Hooks',
+    'onStepBegin [pw:api] Navigate to "about:blank"',
+    'onStepEnd [pw:api] Navigate to "about:blank"',
+    'onStepBegin [pw:api] Evaluate',
+    'onStepEnd [pw:api] Evaluate',
+    'onStepBegin [hook] After Hooks',
+    'onStepBegin [fixture] Fixture "page"',
+    'onStepEnd [fixture] Fixture "page"',
+    'onStepBegin [fixture] Fixture "context"',
+    'onStepEnd [fixture] Fixture "context"',
+    'onStepEnd [hook] After Hooks'
+  ]);
 });

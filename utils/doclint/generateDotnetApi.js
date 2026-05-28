@@ -61,9 +61,9 @@ documentation.setLinkRenderer(item => {
   else if (item.member)
     return `<see cref="I${toTitleCase(item.member.clazz.name)}.${toMemberName(item.member)}${asyncSuffix}"/>`;
   else if (item.option)
-    return `<paramref name="${item.option}"/>`;
+    return `<paramref name="${item.option.name}"/>`;
   else if (item.param)
-    return `<paramref name="${item.param}"/>`;
+    return `<paramref name="${item.param.name}"/>`;
   else
     throw new Error('Unknown link format.');
 });
@@ -82,9 +82,12 @@ classNameMap.set('boolean', 'bool');
 classNameMap.set('any', 'object');
 classNameMap.set('Buffer', 'byte[]');
 classNameMap.set('path', 'string');
+classNameMap.set('Date', 'DateTime');
 classNameMap.set('URL', 'string');
 classNameMap.set('RegExp', 'Regex');
 classNameMap.set('Readable', 'Stream');
+classNameMap.set('Disposable', 'IAsyncDisposable');
+classNameMap.set('Promise', 'Task');
 
 /**
  *
@@ -131,6 +134,8 @@ function writeFile(kind, name, spec, body, folder, extendsName = null) {
 function renderClass(clazz) {
   const name = classNameMap.get(clazz.name);
   if (name === 'TimeoutException')
+    return;
+  if (name === 'IAsyncDisposable')
     return;
 
   const body = [];
@@ -322,7 +327,10 @@ function renderMember(member, parent, options, out) {
     renderMemberDoc(member, out);
     if (member.deprecated)
       out.push(`[System.Obsolete]`);
-    out.push(`event EventHandler<${type}> ${name};`);
+    if (type === 'void')
+      out.push(`event EventHandler ${name};`);
+    else
+      out.push(`event EventHandler<${type}> ${name};`);
     return;
   }
 
@@ -381,6 +389,12 @@ function getPropertyOverloads(type, member, name, parent) {
  * @param {*} parent
  */
 function generateNameDefault(member, name, t, parent) {
+  const structName = t.langAliases?.csharp || t.langAliases?.default;
+  if (structName) {
+    registerModelType(structName, t);
+    return structName;
+  }
+
   if (!t.properties
     && !t.templates
     && !t.union
@@ -399,37 +413,24 @@ function generateNameDefault(member, name, t, parent) {
       if (names[2] === names[1])
         names.pop(); // get rid of duplicates, cheaply
       let attemptedName = names.pop();
-      const typesDiffer = function(left, right) {
+      const typesDiffer = function(/** @type {Documentation.Type} */ left, /** @type {Documentation.Type} */ right) {
         if (left.expression && right.expression)
           return left.expression !== right.expression;
-        return JSON.stringify(right.properties) !== JSON.stringify(left.properties);
+        const toExpression = (/** @type {Documentation.Member} */ t) => t.name + t.type?.expression;
+        const leftOverRightProperties = new Set(left.properties?.map(toExpression) ?? []);
+        for (const prop of right.properties ?? []) {
+          const expression = toExpression(prop);
+          if (!leftOverRightProperties.has(expression))
+            return true;
+          leftOverRightProperties.delete(expression);
+        }
+        return leftOverRightProperties.size > 0;
       };
       while (true) {
         // crude attempt at removing plurality
         if (attemptedName.endsWith('s')
           && !['properties', 'httpcredentials'].includes(attemptedName.toLowerCase()))
           attemptedName = attemptedName.substring(0, attemptedName.length - 1);
-
-        // For some of these we don't want to generate generic types.
-        // For some others we simply did not have the code that was deduping the names.
-        if (attemptedName === 'BoundingBox')
-          attemptedName = `${parent.name}BoundingBoxResult`;
-        if (attemptedName === 'BrowserContextCookie')
-          attemptedName = 'BrowserContextCookiesResult';
-        if (attemptedName === 'File' || (parent.name === 'FormData' && ['SetValue', 'AppendValue'].includes(attemptedName)))
-          attemptedName = `FilePayload`;
-        if (attemptedName === 'Size')
-          attemptedName = 'RequestSizesResult';
-        if (attemptedName === 'ViewportSize' && parent.name === 'Page')
-          attemptedName = 'PageViewportSizeResult';
-        if (attemptedName === 'SecurityDetail')
-          attemptedName = 'ResponseSecurityDetailsResult';
-        if (attemptedName === 'ServerAddr')
-          attemptedName = 'ResponseServerAddrResult';
-        if (attemptedName === 'Timing')
-          attemptedName = 'RequestTimingResult';
-        if (attemptedName === 'HeadersArray')
-          attemptedName = 'Header';
 
         const probableType = modelTypes.get(attemptedName);
         if ((probableType && typesDiffer(t, probableType))
@@ -511,7 +512,8 @@ function renderMethod(member, parent, name, options, out) {
     && !name.startsWith('Get')
     && name !== 'CreateFormData'
     && !name.startsWith('PostDataJSON')
-    && !name.startsWith('As')) {
+    && !name.startsWith('As')
+    && name !== 'ConnectToServer') {
     if (!member.async) {
       if (member.spec && !options.nodocs)
         out.push(...XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
@@ -709,7 +711,7 @@ function translateType(type, parent, generateNameCallback = t => t.name, optiona
   if (type.expression === '[null]|[Error]')
     return 'void';
 
-  if (type.name == 'Promise' && type.templates?.[0].name === 'any')
+  if (type.name === 'Promise' && type.templates?.[0].name === 'any')
     return 'Task';
 
   if (type.union) {
@@ -722,8 +724,6 @@ function translateType(type, parent, generateNameCallback = t => t.name, optiona
       console.warn(`${type.name} should be a 'string', but was a ${type.expression}`);
       return `string`;
     }
-    if (type.union.length === 2 && type.union[1].name === 'Array' && type.union[1].templates[0].name === type.union[0].name)
-      return `IEnumerable<${type.union[0].name}>`; // an example of this is [string]|[Array]<[string]>
     if (type.expression === '[float]|"raf"')
       return `Polling`; // hardcoded because there's no other way to denote this
 
@@ -829,8 +829,9 @@ function translateType(type, parent, generateNameCallback = t => t.name, optiona
  * @param {Documentation.Type} type
  */
 function registerModelType(typeName, type) {
-  if (['object', 'string', 'int'].includes(typeName))
+  if (['object', 'string', 'int', 'long'].includes(typeName))
     return;
+
   if (typeName.endsWith('Option'))
     return;
 

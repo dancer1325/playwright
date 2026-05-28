@@ -15,12 +15,14 @@
  */
 
 import { test } from '@playwright/test';
+import os from 'os';
 
 export type PlatformWorkerFixtures = {
   platform: 'win32' | 'darwin' | 'linux';
   isWindows: boolean;
   isMac: boolean;
   isLinux: boolean;
+  macVersion: number; // major only, 11 or later, zero if not mac
 };
 
 function platform(): 'win32' | 'darwin' | 'linux' {
@@ -33,9 +35,20 @@ function platform(): 'win32' | 'darwin' | 'linux' {
   return process.platform as 'win32' | 'darwin' | 'linux';
 }
 
+function macVersion() {
+  if (process.platform !== 'darwin')
+    return 0;
+  const darwinMajor = +os.release().split('.')[0];
+  // Apple jumped from macOS 15 (Sequoia) to macOS 26 (Tahoe), so Darwin 25 = macOS 26.
+  if (darwinMajor >= 25)
+    return darwinMajor + 1;
+  return darwinMajor - 9;
+}
+
 export const platformTest = test.extend<{}, PlatformWorkerFixtures>({
   platform: [platform(), { scope: 'worker' }],
   isWindows: [platform() === 'win32', { scope: 'worker' }],
   isMac: [platform() === 'darwin', { scope: 'worker' }],
   isLinux: [platform() === 'linux', { scope: 'worker' }],
+  macVersion: [macVersion(), { scope: 'worker' }],
 });

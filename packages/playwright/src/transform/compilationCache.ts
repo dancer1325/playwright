@@ -17,8 +17,13 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { sourceMapSupport } from '../utilsBundle';
-import { isWorkerProcess } from '../common/globals';
+
+import sourceMapSupport from 'source-map-support';
+import { calculateSha1 } from '@utils/crypto';
+import { isUnderTest } from '@utils/debug';
+
+import { isWorkerProcess } from '../globals';
+import { packageRoot } from '../package';
 
 export type MemoryCache = {
   codePath: string;
@@ -64,19 +69,17 @@ const fileDependencies = new Map<string, Set<string>>();
 // Dependencies resolved by the external bundler.
 const externalDependencies = new Map<string, Set<string>>();
 
-let sourceMapSupportInstalled = false;
+const devSourceInfix = path.sep + 'playwright' + path.sep + 'packages' + path.sep;
 
-export function installSourceMapSupportIfNeeded() {
-  if (sourceMapSupportInstalled)
-    return;
-  sourceMapSupportInstalled = true;
-
+export function installSourceMapSupport() {
   Error.stackTraceLimit = 200;
 
   sourceMapSupport.install({
     environment: 'node',
     handleUncaughtExceptions: false,
     retrieveSourceMap(source) {
+      if (!process.env.PWDEBUGIMPL && isUnderTest() && source.includes(devSourceInfix))
+        return { map: identitySourceMap(source), url: source };
       if (!sourceMaps.has(source))
         return null;
       const sourceMapPath = sourceMaps.get(source)!;
@@ -90,6 +93,15 @@ export function installSourceMapSupportIfNeeded() {
       }
     }
   });
+}
+
+function identitySourceMap(source: string) {
+  const lineCount = fs.readFileSync(source, 'utf8').split('\n').length;
+  return {
+    version: 3,
+    sources: [source],
+    mappings: lineCount ? 'AAAA' + ';AACA'.repeat(lineCount - 1) : '',
+  };
 }
 
 function _innerAddToCompilationCacheAndSerialize(filename: string, entry: MemoryCache) {
@@ -109,7 +121,7 @@ type CompilationCacheLookupResult = {
   addToCache?: (code: string, map: any | undefined | null, data: Map<string, any>) => { serializedCache?: any };
 };
 
-export function getFromCompilationCache(filename: string, hash: string, moduleUrl?: string): CompilationCacheLookupResult {
+export function getFromCompilationCache(filename: string, contentHash: string, moduleUrl?: string): CompilationCacheLookupResult {
   // First check the memory cache by filename, this cache will always work in the worker,
   // because we just compiled this file in the loader.
   const cache = memoryCache.get(filename);
@@ -122,7 +134,10 @@ export function getFromCompilationCache(filename: string, hash: string, moduleUr
   }
 
   // Then do the disk cache, this cache works between the Playwright Test runs.
-  const cachePath = calculateCachePath(filename, hash);
+  const filePathHash = calculateFilePathHash(filename);
+  const hashPrefix = filePathHash + '_' + contentHash.substring(0, 7);
+  const cacheFolderName = filePathHash.substring(0, 2);
+  const cachePath = calculateCachePath(filename, cacheFolderName, hashPrefix);
   const codePath = cachePath + '.js';
   const sourceMapPath = cachePath + '.map';
   const dataPath = cachePath + '.data';
@@ -137,6 +152,8 @@ export function getFromCompilationCache(filename: string, hash: string, moduleUr
     addToCache: (code: string, map: any | undefined | null, data: Map<string, any>) => {
       if (isWorkerProcess())
         return {};
+      // Trim cache. This won't help with deleted files, but it will remove storing multiple copies of the same file
+      clearOldCacheEntries(cacheFolderName, filePathHash);
       fs.mkdirSync(path.dirname(cachePath), { recursive: true });
       if (map)
         fs.writeFileSync(sourceMapPath, JSON.stringify(map), 'utf8');
@@ -173,9 +190,24 @@ export function addToCompilationCache(payload: SerializedCompilationCache) {
   }
 }
 
-function calculateCachePath(filePath: string, hash: string): string {
-  const fileName = path.basename(filePath, path.extname(filePath)).replace(/\W/g, '') + '_' + hash;
-  return path.join(cacheDir, hash[0] + hash[1], fileName);
+function calculateFilePathHash(filePath: string): string {
+  // Larger file path hash allows for fewer collisions compared to content, as we only check file path collision for deleting files
+  return calculateSha1(filePath).substring(0, 10);
+}
+
+function calculateCachePath(filePath: string, cacheFolderName: string, hashPrefix: string): string {
+  const fileName = hashPrefix + '_' + path.basename(filePath, path.extname(filePath)).replace(/\W/g, '');
+  return path.join(cacheDir, cacheFolderName, fileName);
+}
+
+function clearOldCacheEntries(cacheFolderName: string, filePathHash: string) {
+  const cachePath = path.join(cacheDir, cacheFolderName);
+  try {
+    const cachedRelevantFiles = fs.readdirSync(cachePath).filter(file => file.startsWith(filePathHash));
+    for (const file of cachedRelevantFiles)
+      fs.rmSync(path.join(cachePath, file), { force: true });
+  } catch {
+  }
 }
 
 // Since ESM and CJS collect dependencies differently,
@@ -208,19 +240,32 @@ export function setExternalDependencies(filename: string, deps: string[]) {
 }
 
 export function fileDependenciesForTest() {
-  return fileDependencies;
+  return Object.fromEntries([...fileDependencies.entries()].map(entry => (
+    [path.basename(entry[0]), [...entry[1]].map(f => path.basename(f)).sort()]
+  )));
 }
 
-export function collectAffectedTestFiles(dependency: string, testFileCollector: Set<string>) {
-  if (fileDependencies.has(dependency))
-    testFileCollector.add(dependency);
+export function collectAffectedTestFiles(changedFile: string, testFileCollector: Set<string>) {
+  const isTestFile = (file: string) => fileDependencies.has(file);
+
+  if (isTestFile(changedFile))
+    testFileCollector.add(changedFile);
+
   for (const [testFile, deps] of fileDependencies) {
-    if (deps.has(dependency))
+    if (deps.has(changedFile))
       testFileCollector.add(testFile);
   }
-  for (const [testFile, deps] of externalDependencies) {
-    if (deps.has(dependency))
-      testFileCollector.add(testFile);
+
+  for (const [importingFile, depsOfImportingFile] of externalDependencies) {
+    if (depsOfImportingFile.has(changedFile)) {
+      if (isTestFile(importingFile))
+        testFileCollector.add(importingFile);
+
+      for (const [testFile, depsOfTestFile] of fileDependencies) {
+        if (depsOfTestFile.has(importingFile))
+          testFileCollector.add(testFile);
+      }
+    }
   }
 }
 
@@ -237,8 +282,11 @@ export function internalDependenciesForTestFile(filename: string): Set<string> |
 
 export function dependenciesForTestFile(filename: string): Set<string> {
   const result = new Set<string>();
-  for (const dep of fileDependencies.get(filename) || [])
-    result.add(dep);
+  for (const testDependency of fileDependencies.get(filename) || []) {
+    result.add(testDependency);
+    for (const externalDependency of externalDependencies.get(testDependency) || [])
+      result.add(externalDependency);
+  }
   for (const dep of externalDependencies.get(filename) || [])
     result.add(dep);
   return result;
@@ -247,7 +295,7 @@ export function dependenciesForTestFile(filename: string): Set<string> {
 // This is only used in the dev mode, specifically excluding
 // files from packages/playwright*. In production mode, node_modules covers
 // that.
-const kPlaywrightInternalPrefix = path.resolve(__dirname, '../../../playwright');
+const kPlaywrightInternalPrefix = packageRoot;
 
 export function belongsToNodeModules(file: string) {
   if (file.includes(`${path.sep}node_modules${path.sep}`))

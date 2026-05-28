@@ -22,6 +22,8 @@ Traces can be recorded using the [`property: BrowserContext.tracing`] API as fol
   values={[
     {label: 'MSTest', value: 'mstest'},
     {label: 'NUnit', value: 'nunit'},
+    {label: 'xUnit', value: 'xunit'},
+    {label: 'xUnit v3', value: 'xunit-v3'},
   ]
 }>
 <TabItem value="nunit">
@@ -113,6 +115,132 @@ public class ExampleTest : PageTest
 ```
 
 </TabItem>
+<TabItem value="xunit">
+
+```csharp
+using System.Reflection;
+using Microsoft.Playwright;
+using Microsoft.Playwright.Xunit;
+using Xunit.Sdk;
+
+namespace PlaywrightTests;
+
+[WithTestName]
+public class UnitTest1 : PageTest
+{
+    public override async Task InitializeAsync()
+    {
+        await base.InitializeAsync().ConfigureAwait(false);
+        await Context.Tracing.StartAsync(new()
+        {
+            Title = $"{WithTestNameAttribute.CurrentClassName}.{WithTestNameAttribute.CurrentTestName}",
+            Screenshots = true,
+            Snapshots = true,
+            Sources = true
+        });
+    }
+
+    public override async Task DisposeAsync()
+    {
+        await Context.Tracing.StopAsync(new()
+        {
+            Path = Path.Combine(
+                Environment.CurrentDirectory,
+                "playwright-traces",
+               $"{WithTestNameAttribute.CurrentClassName}.{WithTestNameAttribute.CurrentTestName}.zip"
+            )
+        });
+        await base.DisposeAsync().ConfigureAwait(false);
+    }
+
+    [Fact]
+    public async Task GetStartedLink()
+    {
+        // ...
+        await Page.GotoAsync("https://playwright.dev/dotnet/docs/intro");
+    }
+}
+
+public class WithTestNameAttribute : BeforeAfterTestAttribute
+{
+    public static string CurrentTestName = string.Empty;
+    public static string CurrentClassName = string.Empty;
+
+    public override void Before(MethodInfo methodInfo)
+    {
+        CurrentTestName = methodInfo.Name;
+        CurrentClassName = methodInfo.DeclaringType!.Name;
+    }
+
+    public override void After(MethodInfo methodInfo)
+    {
+    }
+}
+```
+</TabItem>
+<TabItem value="xunit-v3">
+
+```csharp
+using System.Reflection;
+using Microsoft.Playwright;
+using Microsoft.Playwright.Xunit.v3;
+using Xunit.Sdk;
+
+namespace PlaywrightTests;
+
+[WithTestName]
+public class UnitTest1 : PageTest
+{
+    public override async Task InitializeAsync()
+    {
+        await base.InitializeAsync().ConfigureAwait(false);
+        await Context.Tracing.StartAsync(new()
+        {
+            Title = $"{WithTestNameAttribute.CurrentClassName}.{WithTestNameAttribute.CurrentTestName}",
+            Screenshots = true,
+            Snapshots = true,
+            Sources = true
+        });
+    }
+
+    public override async Task DisposeAsync()
+    {
+        await Context.Tracing.StopAsync(new()
+        {
+            Path = Path.Combine(
+                Environment.CurrentDirectory,
+                "playwright-traces",
+               $"{WithTestNameAttribute.CurrentClassName}.{WithTestNameAttribute.CurrentTestName}.zip"
+            )
+        });
+        await base.DisposeAsync().ConfigureAwait(false);
+    }
+
+    [Fact]
+    public async Task GetStartedLink()
+    {
+        // ...
+        await Page.GotoAsync("https://playwright.dev/dotnet/docs/intro");
+    }
+}
+
+public class WithTestNameAttribute : BeforeAfterTestAttribute
+{
+    public static string CurrentTestName = string.Empty;
+    public static string CurrentClassName = string.Empty;
+
+    public override void Before(MethodInfo methodInfo)
+    {
+        CurrentTestName = methodInfo.Name;
+        CurrentClassName = methodInfo.DeclaringType!.Name;
+    }
+
+    public override void After(MethodInfo methodInfo)
+    {
+    }
+}
+```
+</TabItem>
 </Tabs>
 
 This will record a zip file for each test, e.g. `PlaywrightTests.ExampleTest.GetStartedLink.zip` and place it into the `bin/Debug/net8.0/playwright-traces/` directory.
@@ -126,7 +254,7 @@ You can open the saved trace using the Playwright CLI or in your browser on [`tr
 pwsh bin/Debug/net8.0/playwright.ps1 show-trace bin/Debug/net8.0/playwright-traces/PlaywrightTests.ExampleTest.GetStartedLink.zip
 ```
 
-![playwright trace viewer dotnet](https://github.com/microsoft/playwright/assets/13063165/4372d661-5bfa-4e1f-be65-0d2fe165a75c)
+<img src="https://github.com/microsoft/playwright/assets/13063165/4372d661-5bfa-4e1f-be65-0d2fe165a75c" alt="playwright trace viewer dotnet" width="3436" height="2106" />
 
 
 Check out our detailed guide on [Trace Viewer](/trace-viewer.md) to learn more about the trace viewer and how to setup your tests to record a trace only when the test fails.
@@ -134,4 +262,4 @@ Check out our detailed guide on [Trace Viewer](/trace-viewer.md) to learn more a
 ## What's next
 
 - [Run tests on CI with GitHub Actions](/ci-intro.md)
-- [Learn more about the MSTest and NUnit base classes](./test-runners.md)
+- [Learn more about the MSTest, NUnit, xUnit, and xUnit v3 base classes](./test-runners.md)

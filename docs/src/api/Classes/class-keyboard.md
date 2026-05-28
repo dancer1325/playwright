@@ -104,38 +104,23 @@ await page.Keyboard.PressAsync("Shift+A");
 An example to trigger select-all with the keyboard
 
 ```js
-// on Windows and Linux
-await page.keyboard.press('Control+A');
-// on macOS
-await page.keyboard.press('Meta+A');
+await page.keyboard.press('ControlOrMeta+A');
 ```
 
 ```java
-// on Windows and Linux
-page.keyboard().press("Control+A");
-// on macOS
-page.keyboard().press("Meta+A");
+page.keyboard().press("ControlOrMeta+A");
 ```
 
 ```python async
-# on windows and linux
-await page.keyboard.press("Control+A")
-# on mac_os
-await page.keyboard.press("Meta+A")
+await page.keyboard.press("ControlOrMeta+A")
 ```
 
 ```python sync
-# on windows and linux
-page.keyboard.press("Control+A")
-# on mac_os
-page.keyboard.press("Meta+A")
+page.keyboard.press("ControlOrMeta+A")
 ```
 
 ```csharp
-// on Windows and Linux
-await page.Keyboard.PressAsync("Control+A");
-// on macOS
-await page.Keyboard.PressAsync("Meta+A");
+await page.Keyboard.PressAsync("ControlOrMeta+A");
 ```
 
 ## async method: Keyboard.down
@@ -257,7 +242,7 @@ await browser.close();
 Page page = browser.newPage();
 page.navigate("https://keycode.info");
 page.keyboard().press("A");
-page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get("A.png"));
+page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get("A.png")));
 page.keyboard().press("ArrowLeft");
 page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get("ArrowLeft.png")));
 page.keyboard().press("Shift+O");
@@ -323,6 +308,8 @@ In most cases, you should use [`method: Locator.fill`] instead. You only need to
 
 Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.
 
+When [`option: namedKeys`] is `true`, anything inside `{}` is treated as a key name (same format as [`method: Keyboard.press`]).
+
 To press a special key, like `Control` or `ArrowDown`, use [`method: Keyboard.press`].
 
 **Usage**
@@ -330,6 +317,9 @@ To press a special key, like `Control` or `ArrowDown`, use [`method: Keyboard.pr
 ```js
 await page.keyboard.type('Hello'); // Types instantly
 await page.keyboard.type('World', { delay: 100 }); // Types slower, like a user
+
+// Mix text and special keys
+await page.keyboard.type('Hello{Enter}World', { namedKeys: true });
 ```
 
 ```java
@@ -337,21 +327,33 @@ await page.keyboard.type('World', { delay: 100 }); // Types slower, like a user
 page.keyboard().type("Hello");
 // Types slower, like a user
 page.keyboard().type("World", new Keyboard.TypeOptions().setDelay(100));
+
+// Mix text and special keys
+page.keyboard().type("Hello{Enter}World", new Keyboard.TypeOptions().setNamedKeys(true));
 ```
 
 ```python async
 await page.keyboard.type("Hello") # types instantly
 await page.keyboard.type("World", delay=100) # types slower, like a user
+
+# Mix text and special keys
+await page.keyboard.type("Hello{Enter}World", named_keys=True)
 ```
 
 ```python sync
 page.keyboard.type("Hello") # types instantly
 page.keyboard.type("World", delay=100) # types slower, like a user
+
+# Mix text and special keys
+page.keyboard.type("Hello{Enter}World", named_keys=True)
 ```
 
 ```csharp
 await page.Keyboard.TypeAsync("Hello"); // types instantly
 await page.Keyboard.TypeAsync("World", new() { Delay = 100 }); // types slower, like a user
+
+// Mix text and special keys
+await page.Keyboard.TypeAsync("Hello{Enter}World", new() { NamedKeys = true });
 ```
 
 :::note
@@ -373,6 +375,13 @@ A text to type into a focused element.
 - `delay` <[float]>
 
 Time to wait between key presses in milliseconds. Defaults to 0.
+
+### option: Keyboard.type.namedKeys
+* since: v1.61
+- `namedKeys` <[boolean]>
+
+When [`option: namedKeys`] is `true`, anything inside `{}` is treated as a key name (same format as [`method: Keyboard.press`]).
+Use `{{` to type a literal brace character. Defaults to `false`.
 
 ## async method: Keyboard.up
 * since: v1.8

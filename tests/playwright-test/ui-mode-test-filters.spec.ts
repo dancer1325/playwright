@@ -37,7 +37,7 @@ const basicTestTree = {
 
 test('should filter by title', async ({ runUITest }) => {
   const { page } = await runUITest(basicTestTree);
-  await page.getByPlaceholder('Filter').fill('inner');
+  await page.getByPlaceholder('Filter (e.g. text, @tag)').fill('inner');
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts
       ▼ ◯ suite
@@ -48,7 +48,7 @@ test('should filter by title', async ({ runUITest }) => {
 
 test('should filter by explicit tags', async ({ runUITest }) => {
   const { page } = await runUITest(basicTestTree);
-  await page.getByPlaceholder('Filter').fill('@smoke inner');
+  await page.getByPlaceholder('Filter (e.g. text, @tag)').fill('@smoke inner');
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts
       ▼ ◯ suite
@@ -64,8 +64,8 @@ test('should display native tags and filter by them on click', async ({ runUITes
       test('pwt', { tag: '@smoke' }, () => {});
   `,
   });
-  await page.locator('.ui-mode-list-item-title').getByText('smoke').click();
-  await expect(page.getByPlaceholder('Filter')).toHaveValue('@smoke');
+  await page.locator('.ui-mode-tree-item-title').getByText('smoke').click();
+  await expect(page.getByPlaceholder('Filter (e.g. text, @tag)')).toHaveValue('@smoke');
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts
         ◯ pwt
@@ -228,4 +228,50 @@ test('should filter skipped', async ({ runUITest, createLatch }) => {
     ▼ ⊘ a.test.ts
         ⊘ fails
   `);
+});
+
+test('should only show tests selected with --grep', async ({ runUITest }) => {
+  const { page } = await runUITest(basicTestTree, undefined, {
+    additionalArgs: ['--grep', 'fails'],
+  });
+  await expect.poll(dumpTestTree(page)).toContain('fails');
+  await expect.poll(dumpTestTree(page)).not.toContain('passes');
+});
+
+test('should not show tests filtered with --grep-invert', async ({ runUITest }) => {
+  const { page } = await runUITest(basicTestTree, undefined, {
+    additionalArgs: ['--grep-invert', 'fails'],
+  });
+  await expect.poll(dumpTestTree(page)).toContain('passes');
+  await expect.poll(dumpTestTree(page)).not.toContain('fails');
+});
+
+test('should filter by only changed files', async ({ runUITest, git, writeFiles }) => {
+  const committedFiles = {
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('committed test', () => {});
+    `,
+  };
+
+  await writeFiles(committedFiles);
+  git(`add .`);
+  git(`commit -m init`);
+
+  const { page } = await runUITest({
+    ...committedFiles,
+    'b.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('new untracked test', () => {});
+    `,
+  });
+
+  await expect.poll(dumpTestTree(page)).toContain('a.test.ts');
+  await expect.poll(dumpTestTree(page)).toContain('b.test.ts');
+
+  await page.getByText('Status:').click();
+  await page.getByLabel('Show only changed files').setChecked(true);
+
+  await expect.poll(dumpTestTree(page)).toContain('b.test.ts');
+  await expect.poll(dumpTestTree(page)).not.toContain('a.test.ts');
 });

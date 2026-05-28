@@ -15,26 +15,33 @@
  */
 
 import util from 'util';
-import { type SerializedCompilationCache, serializeCompilationCache } from '../transform/compilationCache';
+
+import { serializeCompilationCache } from '../transform/compilationCache';
+
 import type { ConfigLocation, FullConfigInternal } from './config';
 import type { ReporterDescription, TestInfoError, TestStatus } from '../../types/test';
+import type { SerializedCompilationCache  } from '../transform/compilationCache';
 
 export type ConfigCLIOverrides = {
+  argv?: string[];
+  debug?: 'inspector' | 'cli';
+  failOnFlakyTests?: boolean;
   forbidOnly?: boolean;
   fullyParallel?: boolean;
   globalTimeout?: number;
   maxFailures?: number;
   outputDir?: string;
-  preserveOutputDir?: boolean;
+  pause?: boolean;
   quiet?: boolean;
   repeatEach?: number;
   retries?: number;
   reporter?: ReporterDescription[];
-  additionalReporters?: ReporterDescription[];
   shard?: { current: number, total: number };
   timeout?: number;
+  tsconfig?: string;
   ignoreSnapshots?: boolean;
-  updateSnapshots?: 'all'|'none'|'missing';
+  updateSnapshots?: 'all' | 'changed' | 'missing' | 'none';
+  updateSourceMethod?: 'overwrite' | 'patch' | '3way';
   workers?: number | string;
   projects?: { name: string, use?: any }[],
   use?: any;
@@ -44,9 +51,11 @@ export type SerializedConfig = {
   location: ConfigLocation;
   configCLIOverrides: ConfigCLIOverrides;
   compilationCache?: SerializedCompilationCache;
+  metadata?: string;
 };
 
 export type ProcessInitParams = {
+  timeOrigin: number;
   processName: string;
 };
 
@@ -57,6 +66,8 @@ export type WorkerInitParams = {
   projectId: string;
   config: SerializedConfig;
   artifactsDir: string;
+  pauseOnError: boolean;
+  pauseAtEnd: boolean;
 };
 
 export type TestBeginPayload = {
@@ -70,13 +81,39 @@ export type AttachmentPayload = {
   path?: string;
   body?: string;
   contentType: string;
+  stepId?: string;
+};
+
+export type TestInfoErrorPayload = {
+  message?: string;
+  stack?: string;
+  value?: string;
+  cause?: TestInfoErrorPayload;
+};
+
+export type TestPausedPayload = {
+  testId: string;
+  errors: TestInfoErrorPayload[];
+  status: TestStatus;
+};
+
+export type ResumePayload = {};
+
+export type CustomMessageRequestPayload = {
+  testId: string;
+  request: any;
+};
+
+export type CustomMessageResponsePayload = {
+  response: any;
+  error?: TestInfoErrorPayload;
 };
 
 export type TestEndPayload = {
   testId: string;
   duration: number;
   status: TestStatus;
-  errors: TestInfoError[];
+  errors: TestInfoErrorPayload[];
   hasNonRetriableError: boolean;
   expectedStatus: TestStatus;
   annotations: { type: string, description?: string }[];
@@ -97,7 +134,9 @@ export type StepEndPayload = {
   testId: string;
   stepId: string;
   wallTime: number;  // milliseconds since unix epoch
-  error?: TestInfoError;
+  error?: TestInfoErrorPayload;
+  suggestedRebaseline?: string;
+  annotations: { type: string, description?: string }[];
 };
 
 export type TestEntry = {
@@ -111,9 +150,10 @@ export type RunPayload = {
 };
 
 export type DonePayload = {
-  fatalErrors: TestInfoError[];
+  fatalErrors: TestInfoErrorPayload[];
   skipTestsDueToSetupFailure: string[];  // test ids
   fatalUnknownTestIds?: string[];
+  stoppedDueToUnhandledErrorInTestFail?: boolean;
 };
 
 export type TestOutputPayload = {
@@ -122,7 +162,7 @@ export type TestOutputPayload = {
 };
 
 export type TeardownErrorsPayload = {
-  fatalErrors: TestInfoError[];
+  fatalErrors: TestInfoErrorPayload[];
 };
 
 export type EnvProducedPayload = [string, string | null][];
@@ -133,6 +173,11 @@ export function serializeConfig(config: FullConfigInternal, passCompilationCache
     configCLIOverrides: config.configCLIOverrides,
     compilationCache: passCompilationCache ? serializeCompilationCache() : undefined,
   };
+
+  try {
+    result.metadata = JSON.stringify(config.config.metadata);
+  } catch (error) {}
+
   return result;
 }
 
@@ -142,4 +187,17 @@ export function stdioChunkToParams(chunk: Uint8Array | string): TestOutputPayloa
   if (typeof chunk !== 'string')
     return { text: util.inspect(chunk) };
   return { text: chunk };
+}
+
+export function toTestInfoErrorPayload(error: TestInfoError): TestInfoErrorPayload {
+  const result: TestInfoErrorPayload = {};
+  if (error.message !== undefined)
+    result.message = error.message;
+  if (error.stack !== undefined)
+    result.stack = error.stack;
+  if (error.value !== undefined)
+    result.value = error.value;
+  if (error.cause !== undefined)
+    result.cause = toTestInfoErrorPayload(error.cause);
+  return result;
 }

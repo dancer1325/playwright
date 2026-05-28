@@ -15,12 +15,15 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+
+import { splitErrorMessage } from '@isomorphic/stackTrace';
+import { mkdirIfNeeded } from '@utils/fileUtils';
+
 import type { CRSession } from './crConnection';
 import type { Protocol } from './protocol';
-import fs from 'fs';
 import type * as types from '../types';
-import { mkdirIfNeeded } from '../../utils/fileUtils';
-import { splitErrorMessage } from '../../utils/stackTrace';
+
 
 export function getExceptionMessage(exceptionDetails: Protocol.Runtime.ExceptionDetails): string {
   if (exceptionDetails.exception)
@@ -37,20 +40,23 @@ export function getExceptionMessage(exceptionDetails: Protocol.Runtime.Exception
 }
 
 export async function releaseObject(client: CRSession, objectId: string) {
-  await client.send('Runtime.releaseObject', { objectId }).catch(error => {});
+  await client.send('Runtime.releaseObject', { objectId }).catch(error => { });
 }
 
 export async function saveProtocolStream(client: CRSession, handle: string, path: string) {
   let eof = false;
   await mkdirIfNeeded(path);
   const fd = await fs.promises.open(path, 'w');
-  while (!eof) {
-    const response = await client.send('IO.read', { handle });
-    eof = response.eof;
-    const buf = Buffer.from(response.data, response.base64Encoded ? 'base64' : undefined);
-    await fd.write(buf);
+  try {
+    while (!eof) {
+      const response = await client.send('IO.read', { handle });
+      eof = response.eof;
+      const buf = Buffer.from(response.data, response.base64Encoded ? 'base64' : undefined);
+      await fd.write(buf);
+    }
+  } finally {
+    await fd.close().catch(() => {});
   }
-  await fd.close();
   await client.send('IO.close', { handle });
 }
 
@@ -67,7 +73,7 @@ export async function readProtocolStream(client: CRSession, handle: string): Pro
   return Buffer.concat(chunks);
 }
 
-export function toConsoleMessageLocation(stackTrace: Protocol.Runtime.StackTrace | undefined): types.ConsoleMessageLocation {
+export function stackTraceToLocation(stackTrace: Protocol.Runtime.StackTrace | undefined): types.ConsoleMessageLocation {
   return stackTrace && stackTrace.callFrames.length ? {
     url: stackTrace.callFrames[0].url,
     lineNumber: stackTrace.callFrames[0].lineNumber,
@@ -91,7 +97,8 @@ export function exceptionToError(exceptionDetails: Protocol.Runtime.ExceptionDet
 
   const err = new Error(message);
   err.stack = stack;
-  err.name = name;
+  const nameOverride = exceptionDetails.exception?.preview?.properties.find(o => o.name === 'name');
+  err.name = nameOverride ? nameOverride.value ?? 'Error' : name;
   return err;
 }
 

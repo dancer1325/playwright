@@ -18,13 +18,17 @@
   position: relative;
   display: flex;
   color: var(--vscode-sideBarTitle-foreground);
-  min-height: 35px;
+  min-height: 30px;
   align-items: center;
   flex: none;
   padding-right: 4px;
 }
 
-.toolbar:after {
+.toolbar.toolbar-sidebar-background {
+  background-color: var(--vscode-sideBar-background);
+}
+
+.toolbar:not(.no-shadow):after {
   content: '';
   display: block;
   position: absolute;
@@ -35,10 +39,6 @@
   right: -2px;
   box-shadow: var(--vscode-scrollbar-shadow) 0 6px 6px -6px;
   z-index: 100;
-}
-
-.toolbar.no-shadow:after {
-  box-shadow: none;
 }
 
 .toolbar.no-min-height {
@@ -57,6 +57,10 @@
   outline: none;
   padding: 3px;
   margin: 2px;
+}
+
+.toolbar option {
+  background-color: var(--vscode-tab-activeBackground)
 }
 
 .toolbar input, .toolbar select {

@@ -35,28 +35,6 @@ test('should load nested as esm when package.json has type module', async ({ run
   expect(result.passed).toBe(1);
 });
 
-test('should support import assertions', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'playwright.config.ts': `
-      import packageJSON from './package.json' assert { type: 'json' };
-      console.log('imported value: ' + packageJSON.foo);
-      export default { };
-    `,
-    'package.json': JSON.stringify({ type: 'module', foo: 'bar' }),
-    'a.esm.test.ts': `
-      import { test, expect } from '@playwright/test';
-
-      test('check project name', ({}, testInfo) => {
-        expect(1).toBe(1);
-      });
-    `
-  });
-
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
-  expect(result.stdout).toContain('imported value: bar');
-});
-
 test('should support import attributes', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
@@ -67,9 +45,15 @@ test('should support import attributes', async ({ runInlineTest }) => {
     'package.json': JSON.stringify({ type: 'module', foo: 'bar' }),
     'a.test.ts': `
       import config from './package.json' with { type: 'json' };
+      import configFooFromUtils from './utils.js'
       console.log('imported value (test): ' + config.foo);
       import { test, expect } from '@playwright/test';
+      expect(configFooFromUtils.foo).toBe('bar');
       test('pass', async () => {});
+    `,
+    'utils.js': `
+      import config from './package.json' with { type: 'json' };
+      export default config;
     `
   });
   expect(result.exitCode).toBe(0);
@@ -78,7 +62,7 @@ test('should support import attributes', async ({ runInlineTest }) => {
   expect(result.stdout).toContain('imported value (test): bar');
 });
 
-test('should import esm from ts when package.json has type module in experimental mode', async ({ runInlineTest }) => {
+test('should import esm from ts when package.json has type module', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       import * as fs from 'fs';
@@ -89,8 +73,10 @@ test('should import esm from ts when package.json has type module in experimenta
       import { foo } from './b.ts';
       import { bar } from './c.js';
       import { qux } from './d.js';
-      import { test, expect } from '@playwright/test';
+      // Make sure to import a type-only Locator below to check that our babel strips it out.
+      import { test, expect, Locator } from '@playwright/test';
       test('check project name', ({}, testInfo) => {
+        const locator: Locator = null!;
         expect(testInfo.project.name).toBe('foo');
         expect(bar).toBe('bar');
         expect(qux).toBe('qux');
@@ -128,8 +114,10 @@ test('should respect path resolver in experimental mode', async ({ runInlineTest
   const result = await runInlineTest({
     'package.json': JSON.stringify({ type: 'module' }),
     'playwright.config.ts': `
+      // Make sure that config can use the path mapping.
+      import { foo } from 'util/b.js';
       export default {
-        projects: [{name: 'foo'}],
+        projects: [{ name: foo }],
       };
     `,
     'tsconfig.json': `{
@@ -147,7 +135,8 @@ test('should respect path resolver in experimental mode', async ({ runInlineTest
       import { foo } from 'util/b.js';
       import { test, expect } from '@playwright/test';
       test('check project name', ({}, testInfo) => {
-        expect(testInfo.project.name).toBe(foo);
+        expect(testInfo.project.name).toBe('foo');
+        expect(foo).toBe('foo');
       });
     `,
     'foo/bar/util/b.ts': `
@@ -194,6 +183,32 @@ test('should use source maps when importing a file throws an error', async ({ ru
       throw new Error('Oh my!');
     `
   });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`Error: Oh my!
+
+   at a.test.ts:4
+
+  2 |       import { test, expect } from '@playwright/test';
+  3 |
+> 4 |       throw new Error('Oh my!');
+    |             ^
+  `);
+});
+
+test('should use source maps when importing a file throws an error in legacy mode', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35706' },
+}, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'package.json': `{ "type": "module" }`,
+    'playwright.config.ts': `
+      export default {};
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+
+      throw new Error('Oh my!');
+    `
+  }, {}, { 'PLAYWRIGHT_WAIT_FOR_SOURCE_MAPS': '1' });
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain(`Error: Oh my!
 
@@ -695,9 +710,6 @@ test('should be able to use use execSync with a Node.js file inside a spec', asy
     'global-setup import level',
     'execSync: hello from hello.js',
     'spawnSync: hello from hello.js',
-    'global-teardown import level',
-    'execSync: hello from hello.js',
-    'spawnSync: hello from hello.js',
     'global-setup export level',
     'execSync: hello from hello.js',
     'spawnSync: hello from hello.js',
@@ -712,6 +724,9 @@ test('should be able to use use execSync with a Node.js file inside a spec', asy
     'execSync: hello from hello.js',
     'spawnSync: hello from hello.js',
     'fork: hello from hellofork.js',
+    'global-teardown import level',
+    'execSync: hello from hello.js',
+    'spawnSync: hello from hello.js',
     'global-teardown export level',
     'execSync: hello from hello.js',
     'spawnSync: hello from hello.js',
@@ -774,4 +789,70 @@ test('should exit after merge-reports', async ({ runInlineTest, mergeReports }) 
   expect(result.exitCode).toBe(0);
   const { exitCode } = await mergeReports(test.info().outputPath('blob-report'), undefined, { additionalArgs: ['-c', 'merge.config.ts'] });
   expect(exitCode).toBe(0);
+});
+
+test('should load esm -> cjs -> cjs require tree without stalling', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35706' },
+}, async ({ runInlineTest }) => {
+  test.setTimeout(10000);
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      export default { projects: [{name: 'foo'}] };
+    `,
+    'package.json': JSON.stringify({ type: 'module' }),
+    'a.esm.test.js': `
+      import { test, expect } from '@playwright/test';
+      import * as root from './nested/root_require.js';
+      test('check project name', ({}, testInfo) => {
+        console.log('root', root);
+        expect(testInfo.project.name).toBe('foo');
+      });
+    `,
+    'nested/package.json': JSON.stringify({ type: 'commonjs' }),
+    'nested/root_require.js': `
+      const nested = require('./nested_require.js');
+      console.log(nested);
+    `,
+    'nested/nested_require.js': `
+      console.log('nested require');
+    `,
+  });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('should have source maps when throwing during nested module import', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35706' },
+}, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'package.json': JSON.stringify({ type: 'module' }),
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      import { foo } from './import1.ts';
+      test('dummy', () => {
+        expect(foo).toBe('foo');
+      });
+    `,
+    'import1.ts': `
+      export { foo } from './import2.ts';
+    `,
+    'import2.ts': `
+      type Foo = { bar: string };
+      const fs = require('fs');
+      throw new Error('Oh no!');
+      export const foo: Foo = { bar: 'foo' };
+      console.log(fs.existsSync('does-not-exist.txt'));
+    `,
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`require is not defined in ES module scope`);
+  expect(result.output).toContain([
+    `  2 |       type Foo = { bar: string };`,
+    `> 3 |       const fs = require('fs');`,
+    `    |                  ^`,
+  ].join('\n'));
+
+  expect(result.output).toContain(`at import2.ts:3`);
 });

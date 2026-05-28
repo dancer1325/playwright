@@ -27,17 +27,15 @@ export class RunServer implements PlaywrightServer {
   private _process!: TestChildProcess;
   _wsEndpoint!: string;
 
-  async start(childProcess: CommonFixtures['childProcess'], mode?: 'extension' | 'default', env?: NodeJS.ProcessEnv) {
+  async start(childProcess: CommonFixtures['childProcess'], options?: { mode?: 'extension' | 'default', env?: NodeJS.ProcessEnv, artifactsDir?: string }) {
     const command = ['node', path.join(__dirname, '..', '..', 'packages', 'playwright-core', 'cli.js'), 'run-server'];
-    if (mode === 'extension')
+    if (options?.mode === 'extension')
       command.push('--mode=extension');
+    if (options?.artifactsDir)
+      command.push(`--artifacts-dir=${options.artifactsDir}`);
     this._process = childProcess({
       command,
-      env: {
-        ...process.env,
-        PWTEST_UNDER_TEST: '1',
-        ...env,
-      },
+      env: { NODE_OPTIONS: process.env.NODE_OPTIONS, ...options?.env },
     });
 
     let wsEndpointCallback: (value: string) => void;
@@ -69,6 +67,8 @@ export type RemoteServerOptions = {
   inCluster?: boolean;
   url?: string;
   startStopAndRunHttp?: boolean;
+  sharedBrowser?: boolean;
+  artifactsDir?: string;
 };
 
 export class RemoteServer implements PlaywrightServer {
@@ -80,29 +80,34 @@ export class RemoteServer implements PlaywrightServer {
   _browser: Browser | undefined;
   _wsEndpoint!: string;
 
-  async _start(childProcess: CommonFixtures['childProcess'], browserType: BrowserType, remoteServerOptions: RemoteServerOptions = {}) {
+  async _start(childProcess: CommonFixtures['childProcess'], browserType: BrowserType, channel: string, remoteServerOptions: RemoteServerOptions = {}) {
     this._browserType = browserType;
-    const browserOptions = (browserType as any)._defaultLaunchOptions;
+    const browserOptions = (browserType as any)._playwright._defaultLaunchOptions;
     // Copy options to prevent a large JSON string when launching subprocess.
     // Otherwise, we get `Error: spawn ENAMETOOLONG` on Windows.
     const launchOptions: Parameters<BrowserType['launchServer']>[0] = {
       args: browserOptions.args,
       headless: browserOptions.headless,
       channel: browserOptions.channel,
+      executablePath: browserOptions.executablePath,
       handleSIGINT: true,
       handleSIGTERM: true,
       handleSIGHUP: true,
-      executablePath: browserOptions.channel ? undefined : browserOptions.executablePath || browserType.executablePath(),
       logger: undefined,
     };
+    if (remoteServerOptions.sharedBrowser)
+      (launchOptions as any)._sharedBrowser = true;
+    if (remoteServerOptions.artifactsDir)
+      launchOptions.artifactsDir = remoteServerOptions.artifactsDir;
     const options = {
       browserTypeName: browserType.name(),
+      channel,
       launchOptions,
       ...remoteServerOptions,
     };
     this._process = childProcess({
       command: ['node', path.join(__dirname, 'remote-server-impl.js'), JSON.stringify(options)],
-      env: { ...process.env, PWTEST_UNDER_TEST: '1' },
+      env: { NODE_OPTIONS: process.env.NODE_OPTIONS },
     });
 
     let index = 0;
@@ -119,7 +124,7 @@ export class RemoteServer implements PlaywrightServer {
     this._wsEndpoint = await this.out('wsEndpoint');
 
     if (remoteServerOptions.url) {
-      this._browser = await this._browserType.connect({ wsEndpoint: this._wsEndpoint });
+      this._browser = await this._browserType.connect(this._wsEndpoint);
       const page = await this._browser.newPage();
       await page.goto(remoteServerOptions.url);
     }

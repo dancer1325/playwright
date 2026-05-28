@@ -35,8 +35,12 @@ const __testHookLookup = (hostname: string): LookupAddress[] => {
 
 let interceptedHostnameLookup: string | undefined;
 
-it.beforeEach(() => {
+it.beforeEach(({ server }) => {
   interceptedHostnameLookup = undefined;
+  // Force a new connection every time, so that we can intercept the hostname lookup.
+  server.setExtraHeaders('/simple.json', {
+    'Connection': 'close',
+  });
 });
 
 it('get should work', async ({ context, server }) => {
@@ -54,8 +58,10 @@ it('get should work on request fixture', async ({ request, server }) => {
 });
 
 it('https post should work with ignoreHTTPSErrors option', async ({ context, httpsServer }) => {
-  const response = await context.request.post(httpsServer.EMPTY_PAGE,
-    { ignoreHTTPSErrors: true, __testHookLookup } as any);
+  const response = await context.request.post(httpsServer.EMPTY_PAGE, {
+    ignoreHTTPSErrors: true,
+    __testHookLookup
+  } as any);
   expect(response.status()).toBe(200);
   expect(interceptedHostnameLookup).toBe('localhost');
 });

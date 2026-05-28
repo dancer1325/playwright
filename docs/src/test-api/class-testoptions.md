@@ -138,6 +138,27 @@ export default defineConfig({
   ]
 });
 ```
+
+## property: TestOptions.clientCertificates = %%-context-option-clientCertificates-%%
+* since: 1.46
+
+**Usage**
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  use: {
+    clientCertificates: [{
+      origin: 'https://example.com',
+      certPath: './cert.pem',
+      keyPath: './key.pem',
+      passphrase: 'mysecretpassword',
+    }],
+  },
+});
+```
+
 ## property: TestOptions.colorScheme = %%-context-option-colorscheme-%%
 * since: v1.10
 
@@ -371,8 +392,11 @@ export default defineConfig({
 });
 ```
 
-## property: TestOptions.locale = %%-context-option-locale-%%
+## property: TestOptions.locale
 * since: v1.10
+- type: <[string]>
+
+Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value, `Accept-Language` request header value as well as number and date formatting rules. Defaults to `en-US`. Learn more about emulation in our [emulation guide](../emulation.md#locale--timezone).
 
 **Usage**
 
@@ -458,8 +482,8 @@ export default defineConfig({
 
 ## property: TestOptions.screenshot
 * since: v1.10
-- type: <[Object]|[ScreenshotMode]<"off"|"on"|"only-on-failure">>
-  - `mode` <[ScreenshotMode]<"off"|"on"|"only-on-failure">> Automatic screenshot mode.
+- type: <[Object]|[ScreenshotMode]<"off"|"on"|"only-on-failure"|"on-first-failure">>
+  - `mode` <[ScreenshotMode]<"off"|"on"|"only-on-failure"|"on-first-failure">> Automatic screenshot mode.
   - `fullPage` ?<[boolean]> When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport. Defaults to `false`.
   - `omitBackground` ?<[boolean]> Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images. Defaults to `false`.
 
@@ -467,6 +491,7 @@ Whether to automatically capture a screenshot after each test. Defaults to `'off
 * `'off'`: Do not capture screenshots.
 * `'on'`: Capture screenshot after each test.
 * `'only-on-failure'`: Capture screenshot after each test failure.
+* `'on-first-failure'`: Capture screenshot after each test's first failure.
 
 **Usage**
 
@@ -515,7 +540,8 @@ test('not signed in test', async ({ page }) => {
 ## property: TestOptions.testIdAttribute
 * since: v1.27
 
-Custom attribute to be used in [`method: Page.getByTestId`]. `data-testid` is used by default.
+Custom attribute to be used in [`method: Page.getByTestId`]. `data-testid` is used by default. To match
+elements with any of several attributes, pass them as a comma-separated list.
 
 **Usage**
 
@@ -525,6 +551,18 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   use: {
     testIdAttribute: 'pw-test-id',
+  },
+});
+```
+
+Multiple attributes:
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  use: {
+    testIdAttribute: 'data-pw,data-ti',
   },
 });
 ```
@@ -546,8 +584,8 @@ export default defineConfig({
 
 ## property: TestOptions.trace
 * since: v1.10
-- type: <[Object]|[TraceMode]<"off"|"on"|"retain-on-failure"|"on-first-retry"|"retain-on-first-failure">>
-  - `mode` <[TraceMode]<"off"|"on"|"retain-on-failure"|"on-first-retry"|"on-all-retries"|"retain-on-first-failure">> Trace recording mode.
+- type: <[Object]|[TraceMode]<"off"|"on"|"retain-on-failure"|"on-first-retry"|"retain-on-first-failure"|"retain-on-failure-and-retries"|"retain-all-failures">>
+  - `mode` <[TraceMode]<"off"|"on"|"retain-on-failure"|"on-first-retry"|"on-all-retries"|"retain-on-first-failure"|"retain-on-failure-and-retries"|"retain-all-failures">> Trace recording mode.
   - `attachments` ?<[boolean]> Whether to include test attachments. Defaults to true. Optional.
   - `screenshots` ?<[boolean]> Whether to capture screenshots during tracing. Screenshots are used to build a timeline preview. Defaults to true. Optional.
   - `snapshots` ?<[boolean]> Whether to capture DOM snapshot on every action. Defaults to true. Optional.
@@ -560,6 +598,8 @@ Whether to record trace for each test. Defaults to `'off'`.
 * `'on-all-retries'`: Record trace only when retrying a test.
 * `'retain-on-failure'`: Record trace for each test. When test run passes, remove the recorded trace.
 * `'retain-on-first-failure'`: Record trace for the first run of each test, but not for retries. When test run passes, remove the recorded trace.
+* `'retain-on-failure-and-retries'`: Record trace for each test run. Retains all traces when an attempt fails.
+* `'retain-all-failures'`: Record trace for each test run. Retains the trace only for attempts that failed, regardless of the final test outcome.
 
 For more control, pass an object that specifies `mode` and trace features to enable.
 
@@ -599,6 +639,15 @@ export default defineConfig({
   - `size` ?<[Object]> Size of the recorded video. Optional.
     - `width` <[int]>
     - `height` <[int]>
+  - `show` ?<[Object]> If specified, visually annotates the video with test information and action highlights.
+    - `actions` ?<[Object]> Controls visual annotations on interacted elements.
+      - `duration` ?<[float]> How long each annotation is displayed in milliseconds. Defaults to `500`.
+      - `position` ?<[AnnotatePosition]<"top-left"|"top"|"top-right"|"bottom-left"|"bottom"|"bottom-right">> Position of the action title overlay. Defaults to `"top-right"`.
+      - `fontSize` ?<[int]> Font size of the action title in pixels. Defaults to `24`.
+    - `test` ?<[Object]> Controls test information displayed as a status overlay in the video.
+      - `level` ?<[TestAnnotationLevel]<"file"|"test"|"step">> Level of the detail to include about the current test.
+      - `position` ?<[AnnotatePosition]<"top-left"|"top"|"top-right"|"bottom-left"|"bottom"|"bottom-right">> Position of the test information overlay. Defaults to `"top-left"`.
+      - `fontSize` ?<[int]> Font size of the test information in pixels. Defaults to `14`.
 
 Whether to record video for each test. Defaults to `'off'`.
 * `'off'`: Do not record video.
@@ -607,6 +656,8 @@ Whether to record video for each test. Defaults to `'off'`.
 * `'on-first-retry'`: Record video only when retrying a test for the first time.
 
 To control video size, pass an object with `mode` and `size` properties. If video size is not specified, it will be equal to [`property: TestOptions.viewport`] scaled down to fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of each page will be scaled down if necessary to fit the specified size.
+
+To annotate actions in the video, pass `show` with `action` and/or `test` sub-options. The `action` option controls visual highlights on interacted elements with an optional `delay` in milliseconds (defaults to `500`). The `test` option controls which test information is displayed as a status overlay.
 
 **Usage**
 

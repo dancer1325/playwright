@@ -17,7 +17,7 @@
 import { browserTest as it, expect } from '../config/browserTest';
 import fs from 'fs';
 import path from 'path';
-import extractZip from '../../packages/playwright-core/bundles/zip/node_modules/extract-zip';
+import { extractZip } from '../../packages/utils/third_party/extractZip';
 
 it('should context.routeFromHAR, matching the method and following redirects', async ({ context, asset }) => {
   const path = asset('har-fulfill.har');
@@ -412,6 +412,99 @@ it('should update har.zip for context', async ({ contextFactory, server }, testI
   await expect(page2.locator('body')).toHaveCSS('background-color', 'rgb(255, 192, 203)');
 });
 
+it('should ignore boundary when matching multipart/form-data body', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31495' }
+}, async ({ contextFactory, server }, testInfo) => {
+  server.setRoute('/empty.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.end(`
+      <form id="form" action="form.html" enctype="multipart/form-data" method="POST">
+      <input id="file" type="file" multiple />
+      <button type="submit">Upload</button>
+      </form>`);
+  });
+  server.setRoute('/form.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.end('<div>done</div>');
+  });
+
+  const harPath = testInfo.outputPath('har.zip');
+  const context1 = await contextFactory();
+  await context1.routeFromHAR(harPath, { update: true });
+  const page1 = await context1.newPage();
+  await page1.goto(server.PREFIX + '/empty.html');
+  const reqPromise = server.waitForRequest('/form.html');
+  await page1.locator('button').click();
+  await expect(page1.locator('div')).toHaveText('done');
+  const req = await reqPromise;
+  expect((await req.postBody).toString()).toContain('---');
+  await context1.close();
+
+  const context2 = await contextFactory();
+  await context2.routeFromHAR(harPath, { notFound: 'abort' });
+  const page2 = await context2.newPage();
+  await page2.goto(server.PREFIX + '/empty.html');
+  const requestPromise = page2.waitForRequest(/.*form.html/);
+  await page2.locator('button').click();
+  const request = await requestPromise;
+  expect.soft(await request.response()).toBeTruthy();
+  expect(request.failure()).toBe(null);
+  await expect(page2.locator('div')).toHaveText('done');
+});
+
+it('should record single set-cookie headers', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31495' }
+}, async ({ contextFactory, server }, testInfo) => {
+  server.setRoute('/empty.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.setHeader('set-cookie', ['first=foo']);
+    res.end();
+  });
+
+  const harPath = testInfo.outputPath('har.zip');
+  const context1 = await contextFactory();
+  await context1.routeFromHAR(harPath, { update: true });
+  const page1 = await context1.newPage();
+  await page1.goto(server.EMPTY_PAGE);
+  const cookie1 = await page1.evaluate(() => document.cookie);
+  expect(cookie1).toBe('first=foo');
+  await context1.close();
+
+  const context2 = await contextFactory();
+  await context2.routeFromHAR(harPath, { notFound: 'abort' });
+  const page2 = await context2.newPage();
+  await page2.goto(server.EMPTY_PAGE);
+  const cookie2 = await page2.evaluate(() => document.cookie);
+  expect(cookie2).toBe('first=foo');
+});
+
+it('should record multiple set-cookie headers', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31495' }
+}, async ({ contextFactory, server }, testInfo) => {
+  server.setRoute('/empty.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.setHeader('set-cookie', ['first=foo', 'second=bar']);
+    res.end();
+  });
+
+  const harPath = testInfo.outputPath('har.zip');
+  const context1 = await contextFactory();
+  await context1.routeFromHAR(harPath, { update: true });
+  const page1 = await context1.newPage();
+  await page1.goto(server.EMPTY_PAGE);
+  const cookie1 = await page1.evaluate(() => document.cookie);
+  expect(cookie1.split('; ').sort().join('; ')).toBe('first=foo; second=bar');
+  await context1.close();
+
+  const context2 = await contextFactory();
+  await context2.routeFromHAR(harPath, { notFound: 'abort' });
+  const page2 = await context2.newPage();
+  await page2.goto(server.EMPTY_PAGE);
+  const cookie2 = await page2.evaluate(() => document.cookie);
+  expect(cookie2.split('; ').sort().join('; ')).toBe('first=foo; second=bar');
+});
+
+
 it('should update har.zip for page', async ({ contextFactory, server }, testInfo) => {
   const harPath = testInfo.outputPath('har.zip');
   const context1 = await contextFactory();
@@ -427,7 +520,6 @@ it('should update har.zip for page', async ({ contextFactory, server }, testInfo
   expect(await page2.content()).toContain('hello, world!');
   await expect(page2.locator('body')).toHaveCSS('background-color', 'rgb(255, 192, 203)');
 });
-
 
 it('should update har.zip for page with different options', async ({ contextFactory, server }, testInfo) => {
   const harPath = testInfo.outputPath('har.zip');

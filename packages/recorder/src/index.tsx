@@ -17,11 +17,10 @@
 import '@web/common.css';
 import { applyTheme } from '@web/theme';
 import '@web/third_party/vscode/codicon.css';
-import * as React from 'react';
-import * as ReactDOM from 'react-dom';
-import { Main } from './main';
+import * as ReactDOM from 'react-dom/client';
+import { Recorder } from './recorder';
 
 (async () => {
   applyTheme();
-  ReactDOM.render(<Main/>, document.querySelector('#root'));
+  ReactDOM.createRoot(document.querySelector('#root')!).render(<Recorder/>);
 })();

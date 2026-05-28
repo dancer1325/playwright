@@ -80,6 +80,9 @@ test('tokens should expand property', async ({ runInlineTest }, testInfo) => {
       name: 'testFileName',
       snapshotPathTemplate: '{testFileName}',
     }, {
+      name: 'testFileBaseName',
+      snapshotPathTemplate: '{testFileBaseName}',
+    }, {
       name: 'snapshotDir',
       snapshotDir: './a-snapshot-dir',
       snapshotPathTemplate: '{snapshotDir}.png',
@@ -101,6 +104,7 @@ test('tokens should expand property', async ({ runInlineTest }, testInfo) => {
   expect.soft(snapshotPath['testFileDir']).toBe(path.join('a', 'b', 'c'));
   expect.soft(snapshotPath['testFilePath']).toBe(path.join('a', 'b', 'c', 'd.spec.ts'));
   expect.soft(snapshotPath['testFileName']).toBe('d.spec.ts');
+  expect.soft(snapshotPath['testFileBaseName']).toBe('d.spec');
   expect.soft(snapshotPath['snapshotDir']).toBe('a-snapshot-dir.png');
   expect.soft(snapshotPath['snapshotSuffix']).toBe('-' + process.platform);
   expect.soft(snapshotPath['testName']).toBe('suite-test-should-work');
@@ -138,3 +142,17 @@ test('arg should receive default arg', async ({ runInlineTest }, testInfo) => {
   expect(fs.existsSync(snapshotOutputPath)).toBe(true);
 });
 
+test('should throw for unknown snapshot kind', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('is a test', async ({}) => {
+        test.info().snapshotPath('foo', { kind: 'bar' });
+      });
+    `
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.output).toContain(`testInfo.snapshotPath: unknown kind "bar"`);
+});

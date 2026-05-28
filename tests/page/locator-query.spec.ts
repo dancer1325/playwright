@@ -246,9 +246,9 @@ it('should allow some, but not all nested frameLocators', async ({ page }) => {
   await expect(page.frameLocator('iframe').locator('article').or(page.frameLocator('iframe').locator('span'))).toHaveText('world');
   await expect(page.frameLocator('iframe').locator('span').and(page.frameLocator('iframe').locator('#target'))).toHaveText('world');
   const error1 = await expect(page.frameLocator('iframe').locator('div').or(page.frameLocator('#iframe').locator('span'))).toHaveText('world').catch(e => e);
-  expect(error1.message).toContain(`Frame locators are not allowed inside composite locators, while querying "frameLocator('iframe').locator('div').or(frameLocator('#iframe').locator('span'))`);
+  expect(error1.message).toContain(`Frame locators are not allowed inside composite locators, while querying "locator('iframe').contentFrame().locator('div').or(locator('#iframe').contentFrame().locator('span'))`);
   const error2 = await expect(page.frameLocator('iframe').locator('div').and(page.frameLocator('#iframe').locator('span'))).toHaveText('world').catch(e => e);
-  expect(error2.message).toContain(`Frame locators are not allowed inside composite locators, while querying "frameLocator('iframe').locator('div').and(frameLocator('#iframe').locator('span'))`);
+  expect(error2.message).toContain(`Frame locators are not allowed inside composite locators, while querying "locator('iframe').contentFrame().locator('div').and(locator('#iframe').contentFrame().locator('span'))`);
 });
 
 it('should enforce same frame for has/leftOf/rightOf/above/below/near', async ({ page, server }) => {
@@ -271,4 +271,12 @@ it('alias methods coverage', async ({ page }) => {
   await expect(page.locator('div').locator('button')).toHaveCount(1);
   await expect(page.locator('div').getByRole('button')).toHaveCount(1);
   await expect(page.mainFrame().locator('button')).toHaveCount(1);
+});
+
+it('count() should not throw during navigation', async ({ page, mode }) => {
+  it.skip(mode !== 'default', 'No test hooks');
+  await page.setContent(`<div>A</div>`);
+  const __testHookBeforeQuery = () => page.goto('data:text/html,<div>A</div><div>B</div>');
+  // @ts-expect-error
+  expect(await page.locator('div').count({ __testHookBeforeQuery })).toBe(0);
 });

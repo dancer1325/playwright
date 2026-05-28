@@ -14,44 +14,67 @@
  * limitations under the License.
  */
 
-import type { EventEmitter } from 'events';
-import { rewriteErrorMessage } from '../utils/stackTrace';
+import { rewriteErrorMessage } from '@isomorphic/stackTrace';
 import { TimeoutError } from './errors';
-import { createGuid } from '../utils';
-import type * as channels from '@protocol/channels';
+
 import type { ChannelOwner } from './channelOwner';
+import type * as channels from '@protocol/channels';
+import type { EventEmitter } from 'events';
+import type { Zone } from '@isomorphic/platform';
 
 export class Waiter {
   private _dispose: (() => void)[];
   private _failures: Promise<any>[] = [];
   private _immediateError?: Error;
   private _logs: string[] = [];
-  private _channelOwner: ChannelOwner<channels.EventTargetChannel>;
+  private _channelOwner: ChannelOwner;
   private _waitId: string;
   private _error: string | undefined;
+  private _savedZone: Zone;
 
-  constructor(channelOwner: ChannelOwner<channels.EventTargetChannel>, event: string) {
-    this._waitId = createGuid();
+  constructor(channelOwner: ChannelOwner, event: string) {
+    this._waitId = channelOwner._platform.createGuid();
     this._channelOwner = channelOwner;
-    this._channelOwner._channel.waitForEventInfo({ info: { waitId: this._waitId, phase: 'before', event } }).catch(() => {});
+    this._savedZone = channelOwner._platform.zones.current().pop();
+
+    const title = `Wait for event "${event}"`;
+    this._sendWaitInfo({ waitId: this._waitId, phase: 'before', event }, { title });
     this._dispose = [
-      () => this._channelOwner._wrapApiCall(async () => {
-        await this._channelOwner._channel.waitForEventInfo({ info: { waitId: this._waitId, phase: 'after', error: this._error } });
-      }, true).catch(() => {}),
+      () => this._sendWaitInfo({ waitId: this._waitId, phase: 'after', error: this._error }, { internal: true }),
     ];
   }
 
-  static createForEvent(channelOwner: ChannelOwner<channels.EventTargetChannel>, event: string) {
+  static createForEvent(channelOwner: ChannelOwner, event: string) {
     return new Waiter(channelOwner, event);
   }
 
+  private _sendWaitInfo(info: channels.WaitInfo, options: { title?: string, internal?: boolean }): void {
+    // Fire-and-forget: server intentionally never replies, and we never throw to the caller.
+    const owner = this._channelOwner;
+    owner._wrapApiCall(async apiZone => {
+      if (apiZone.internal || apiZone.reported) {
+        void owner._connection.sendMessageToServer(owner, '__waitInfo__', info, { internal: true });
+        return;
+      }
+      apiZone.reported = true;
+      // An outer `_wrapApiCall` may have set its own title (e.g. "Wait for navigation");
+      // fall back to ours only when the outer zone left it blank. The title is read both by
+      // `onApiCallBegin` (drives the test runner step title) and by `sendMessageToServer`
+      // (drives the trace viewer action title), so set it on the zone itself.
+      if (!apiZone.title)
+        apiZone.title = options.title;
+      owner._instrumentation.onApiCallBegin(apiZone, { type: owner._type, method: '__waitInfo__', params: info });
+      void owner._connection.sendMessageToServer(owner, '__waitInfo__', info, apiZone);
+    }, options).catch(() => {});
+  }
+
   async waitForEvent<T = void>(emitter: EventEmitter, event: string, predicate?: (arg: T) => boolean | Promise<boolean>): Promise<T> {
-    const { promise, dispose } = waitForEvent(emitter, event, predicate);
+    const { promise, dispose } = waitForEvent(emitter, event, this._savedZone, predicate);
     return await this.waitForPromise(promise, dispose);
   }
 
   rejectOnEvent<T = void>(emitter: EventEmitter, event: string, error: Error | (() => Error), predicate?: (arg: T) => boolean | Promise<boolean>) {
-    const { promise, dispose } = waitForEvent(emitter, event, predicate);
+    const { promise, dispose } = waitForEvent(emitter, event, this._savedZone, predicate);
     this._rejectOn(promise.then(() => { throw (typeof error === 'function' ? error() : error); }), dispose);
   }
 
@@ -91,9 +114,7 @@ export class Waiter {
 
   log(s: string) {
     this._logs.push(s);
-    this._channelOwner._wrapApiCall(async () => {
-      await this._channelOwner._channel.waitForEventInfo({ info: { waitId: this._waitId, phase: 'log', message: s } }).catch(() => {});
-    }, true);
+    this._sendWaitInfo({ waitId: this._waitId, phase: 'log', message: s }, { internal: true });
   }
 
   private _rejectOn(promise: Promise<any>, dispose?: () => void) {
@@ -103,19 +124,21 @@ export class Waiter {
   }
 }
 
-function waitForEvent<T = void>(emitter: EventEmitter, event: string, predicate?: (arg: T) => boolean | Promise<boolean>): { promise: Promise<T>, dispose: () => void } {
+function waitForEvent<T = void>(emitter: EventEmitter, event: string, savedZone: Zone, predicate?: (arg: T) => boolean | Promise<boolean>): { promise: Promise<T>, dispose: () => void } {
   let listener: (eventArg: any) => void;
   const promise = new Promise<T>((resolve, reject) => {
     listener = async (eventArg: any) => {
-      try {
-        if (predicate && !(await predicate(eventArg)))
-          return;
-        emitter.removeListener(event, listener);
-        resolve(eventArg);
-      } catch (e) {
-        emitter.removeListener(event, listener);
-        reject(e);
-      }
+      await savedZone.run(async () => {
+        try {
+          if (predicate && !(await predicate(eventArg)))
+            return;
+          emitter.removeListener(event, listener);
+          resolve(eventArg);
+        } catch (e) {
+          emitter.removeListener(event, listener);
+          reject(e);
+        }
+      });
     };
     emitter.addListener(event, listener);
   });

@@ -104,9 +104,9 @@ it('should fire events in proper order', async ({ context, server }) => {
   ]);
 });
 
-it('should not fire events for favicon or favicon redirects', async ({ context, page, server, browserName, channel, headless }) => {
+it('should not fire events for favicon or favicon redirects', async ({ context, page, server, browserName, headless, channel }) => {
   it.skip(headless && browserName !== 'firefox', 'headless browsers, except firefox, do not request favicons');
-  it.skip(!headless && browserName === 'webkit' && !channel, 'headed webkit does not have a favicon feature');
+  it.skip(!headless && browserName === 'webkit', 'headed webkit does not have a favicon feature');
   const favicon = `/no-cache/favicon.ico`;
   const hashedFaviconUrl = `/favicon-hashed.ico`;
   const imagePath = `/fakeimage.png`;
@@ -143,4 +143,24 @@ it('should not fire events for favicon or favicon redirects', async ({ context, 
   expect(events).toEqual(expect.arrayContaining([expect.stringContaining(imagePath)]));
   expect(events).not.toEqual(expect.arrayContaining([expect.stringContaining(favicon)]));
   expect(events).not.toEqual(expect.arrayContaining([expect.stringContaining(hashedFaviconUrl)]));
+});
+
+it('should reject response.finished if context closes', async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  server.setRoute('/get', (req, res) => {
+    // In Firefox, |fetch| will be hanging until it receives |Content-Type| header
+    // from server.
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.write('hello ');
+  });
+  // send request and wait for server response
+  const [pageResponse] = await Promise.all([
+    page.waitForEvent('response'),
+    page.evaluate(() => fetch('./get', { method: 'GET' })),
+  ]);
+
+  const finishPromise = pageResponse.finished().catch(e => e);
+  await page.context().close();
+  const error = await finishPromise;
+  expect(error.message).toContain('closed');
 });

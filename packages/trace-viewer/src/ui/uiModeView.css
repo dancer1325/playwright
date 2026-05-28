@@ -18,8 +18,13 @@
   background-color: var(--vscode-sideBar-background);
 }
 
-.ui-mode-sidebar input[type=search] {
-  flex: auto;
+.ui-mode-sidebar > .settings-toolbar {
+  border-top: 1px solid var(--vscode-panel-border);
+  cursor: pointer;
+}
+
+.ui-mode-sidebar > .settings-view {
+  margin: 0 0 8px 23px;
 }
 
 .ui-mode-sidebar .toolbar-button:not([disabled]) .codicon-play {
@@ -28,6 +33,10 @@
 
 .ui-mode-sidebar .toolbar-button:not([disabled]) .codicon-debug-stop {
   color: var(--vscode-debugIcon-stopForeground);
+}
+
+.ui-mode .section-toolbar {
+  border-top: 1px solid var(--vscode-panel-border);
 }
 
 .ui-mode .section-title {
@@ -89,12 +98,27 @@
   text-overflow: ellipsis;
 }
 
+.status-line .status-line-failed {
+  color: var(--vscode-testing-iconFailed);
+}
+
 .ui-mode-sidebar input[type=search] {
   flex: auto;
   padding: 0 5px;
   line-height: 24px;
   outline: none;
   margin: 0 4px;
+  border: none;
+  color: var(--vscode-input-foreground);
+  background-color: var(--vscode-input-background);
+}
+
+.ui-mode-sidebar select {
+  flex: auto;
+  padding: 0 5px;
+  height: 24px;
+  line-height: 24px;
+  outline: none;
   border: none;
   color: var(--vscode-input-foreground);
   background-color: var(--vscode-input-background);

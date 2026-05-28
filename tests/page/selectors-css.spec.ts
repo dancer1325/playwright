@@ -275,7 +275,6 @@ it('should work with :nth-child', async ({ page, server }) => {
 });
 
 it('should work with :nth-child(of) notation with nested functions', async ({ page, browserName, browserMajorVersion }) => {
-  it.fixme(browserName === 'firefox', 'Should enable once Firefox supports this syntax');
   it.skip(browserName === 'chromium' && browserMajorVersion < 111, 'https://caniuse.com/css-nth-child-of');
 
   await page.setContent(`
@@ -468,4 +467,17 @@ it('css on the handle should be relative', async ({ page }) => {
   const div = await page.$('div') as ElementHandle;
   expect(await div.$eval(`.find-me`, e => e.id)).toBe('target2');
   expect(await page.$eval(`div >> .find-me`, e => e.id)).toBe('target2');
+});
+
+it('should use light DOM structure for child combinator with slotted content', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37768' } }, async ({ page }) => {
+  await page.setContent(`
+    <my-button>
+      <template shadowrootmode="open">
+        <button><slot></slot></button>
+      </template>
+      <div class="content">Foo</div>
+    </my-button>
+  `);
+  expect(await page.$eval(`my-button > div`, e => e.className)).toBe('content');
+  expect(await page.$eval(`my-button > .content`, e => e.textContent)).toBe('Foo');
 });

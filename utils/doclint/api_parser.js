@@ -92,12 +92,16 @@ class ApiParser {
     const match = spec.text.match(/(event|method|property|async method|optional method|optional async method): ([^.]+)\.(.*)/);
     if (!match)
       throw new Error('Invalid member: ' + spec.text);
+    const metainfo = extractMetainfo(spec);
+    if (metainfo.hidden)
+      return;
+
     const name = match[3];
     let returnType = null;
     let optional = false;
     for (const item of spec.children || []) {
       if (item.type === 'li' && item.liType === 'default') {
-        const parsed = this.parseType(item);
+        const parsed = this.parseType(item, metainfo.since ?? 'v1.0');
         returnType = parsed.type;
         optional = parsed.optional;
       }
@@ -106,7 +110,6 @@ class ApiParser {
       returnType = new docs.Type('void');
 
     const comments = extractComments(spec);
-    const metainfo = extractMetainfo(spec);
     let member;
     if (match[1] === 'event')
       member = docs.Member.createEvent(metainfo, name, returnType, comments);
@@ -125,8 +128,6 @@ class ApiParser {
     const clazz = /** @type {docs.Class} */(this.classes.get(match[2]));
     if (!clazz)
       throw new Error(`Unknown class ${match[2]} for member: ` + spec.text);
-    if (metainfo.hidden)
-      return;
 
     const existingMember = clazz.membersArray.find(m => m.name === name && m.kind === member.kind);
     if (existingMember && isTypeOverride(existingMember, member)) {
@@ -146,6 +147,9 @@ class ApiParser {
     const match = spec.text.match(/(param|option): (.*)/);
     if (!match)
       throw `Something went wrong with matching ${spec.text}`;
+    const metainfo = extractMetainfo(spec);
+    if (metainfo.hidden)
+      return null;
 
     // For "test.describe.only.title":
     // - className is "test"
@@ -165,7 +169,7 @@ class ApiParser {
     if (!name)
       throw new Error('Invalid member name ' + spec.text);
     if (match[1] === 'param') {
-      const arg = this.parseProperty(spec);
+      const arg = this.parseProperty(spec, match[2]);
       if (!arg)
         return;
       arg.name = name;
@@ -182,54 +186,65 @@ class ApiParser {
       }
     } else {
       // match[1] === 'option'
-      const p = this.parseProperty(spec);
+      const p = this.parseProperty(spec, match[2]);
       if (!p)
         return;
       let options = method.argsArray.find(o => o.name === 'options');
       if (!options) {
         const type = new docs.Type('Object', []);
-        options = docs.Member.createProperty({ langs: {}, since: 'v1.0', deprecated: undefined, discouraged: undefined }, 'options', type, undefined, false);
+        options = docs.Member.createProperty({ langs: {}, since: method.since, deprecated: undefined, discouraged: undefined }, 'options', type, undefined, false);
         method.argsArray.push(options);
       }
       p.required = false;
-      // @ts-ignore
-      options.type.properties.push(p);
+      options.type?.properties?.push(p);
     }
   }
 
   /**
    * @param {MarkdownHeaderNode} spec
+   * @param {string} memberName
    * @returns {docs.Member | null}
    */
-  parseProperty(spec) {
+  parseProperty(spec, memberName) {
     const param = childrenWithoutProperties(spec)[0];
     const text = /** @type {string}*/(param.text);
+    if (text.substring(text.lastIndexOf('>') + 1).trim())
+      throw new Error(`Extra information after type while processing "${memberName}".\nYou probably need an extra empty line before the description.\n================\n${text}`);
     let typeStart = text.indexOf('<');
     while ('?e'.includes(text[typeStart - 1]))
       typeStart--;
     const name = text.substring(0, typeStart).replace(/\`/g, '').trim();
     const comments = extractComments(spec);
-    const { type, optional } = this.parseType(/** @type {MarkdownLiNode} */(param));
     const metainfo = extractMetainfo(spec);
     if (metainfo.hidden)
       return null;
+    const { type, optional } = this.parseType(/** @type {MarkdownLiNode} */(param), metainfo.since ?? 'v1.0');
     return docs.Member.createProperty(metainfo, name, type, comments, !optional);
   }
 
   /**
    * @param {MarkdownLiNode} spec
+   * @param {string} since
    * @return {{ type: docs.Type, optional: boolean }}
    */
-  parseType(spec) {
+  parseType(spec, since) {
     const arg = parseVariable(spec.text);
     const properties = [];
+    /** @type {Object<string, string>} */
+    const langAliases = {};
     for (const child of /** @type {MarkdownLiNode[]} */ (spec.children) || []) {
-      const { name, text } = parseVariable(/** @type {string} */(child.text));
+      const childText = /** @type {string} */(child.text);
+      const aliasMatch = childText.match(/^alias(?:-(\w+))?\s*:\s*(.*)$/);
+      if (aliasMatch) {
+        langAliases[aliasMatch[1] || 'default'] = aliasMatch[2].trim();
+        continue;
+      }
+      const { name, text } = parseVariable(childText);
       const comments = /** @type {MarkdownNode[]} */ ([{ type: 'text', text }]);
-      const childType = this.parseType(child);
-      properties.push(docs.Member.createProperty({ langs: {}, since: 'v1.0', deprecated: undefined, discouraged: undefined }, name, childType.type, comments, !childType.optional));
+      const childType = this.parseType(child, since);
+      properties.push(docs.Member.createProperty({ langs: {}, since, deprecated: undefined, discouraged: undefined }, name, childType.type, comments, !childType.optional));
     }
-    const type = docs.Type.parse(arg.type, properties);
+    const type = docs.Type.parse(arg.type, properties, langAliases);
     return { type, optional: arg.optional };
   }
 }

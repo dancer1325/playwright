@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-import type { ElementHandle, Route } from 'playwright-core';
+import type { ElementHandle, Page, Route } from 'playwright-core';
 import { test as it, expect } from './pageTest';
 import { attachFrame } from '../config/utils';
 
-it.describe('Drag and drop', () => {
-  it.skip(({ browserName, browserMajorVersion }) => browserName === 'chromium' && browserMajorVersion < 91);
-  it.skip(({ isAndroid }) => isAndroid, 'No drag&drop on Android.');
-  it.fixme(({ headless, isLinux }) => isLinux && !headless, 'Stray mouse events on Linux headed mess up the tests.');
+it.skip(({ browserName, browserMajorVersion }) => browserName === 'chromium' && browserMajorVersion < 91);
+it.skip(({ isAndroid }) => isAndroid, 'No drag&drop on Android.');
+it.fixme(({ headless }) => !headless, 'Stray mouse events mess up the tests.');
 
+it.describe('Drag and drop', () => {
   it('should work @smoke', async ({ page, server }) => {
     await page.goto(server.PREFIX + '/drag-n-drop.html');
     await page.hover('#source');
@@ -258,9 +258,7 @@ it.describe('Drag and drop', () => {
     expect(await page.$eval('#target', target => target.contains(document.querySelector('#source')))).toBe(true);
   });
 
-  it('should be able to drag the mouse in a frame', async ({ page, server, isAndroid }) => {
-    it.fixme(isAndroid);
-
+  it('should be able to drag the mouse in a frame', async ({ page, server }) => {
     await page.goto(server.PREFIX + '/frames/one-frame.html');
     const eventsHandle = await trackEvents(await page.frames()[1].$('html'));
     await page.mouse.move(30, 30);
@@ -291,6 +289,60 @@ it.describe('Drag and drop', () => {
     await page.goto(server.PREFIX + '/drag-n-drop.html');
     await page.dragAndDrop('#source', '#target');
     expect(await page.$eval('#target', target => target.contains(document.querySelector('#source')))).toBe(true); // could not find source in target
+  });
+
+  [{
+    title: 'dragAndDrop',
+    drag: (page: Page, steps?: number) => page.dragAndDrop('#red', '#blue', { steps }),
+  }, {
+    title: 'dragTo',
+    drag: (page: Page, steps?: number) => page.locator('#red').dragTo(page.locator('#blue'), { steps }),
+  }].forEach(({ title, drag }) => {
+    it(`should ${title} with tweened mouse movement`, async ({ page, headless }) => {
+      it.skip(!headless, 'actual mouse interferes with the exact mousemove events');
+
+      await page.setContent(`
+        <body style="margin: 0; padding: 0;">
+          <div style="width:100px;height:100px;background:red;" id="red"></div>
+          <div style="width:300px;height:100px;background:blue;" id="blue"></div>
+        </body>
+      `);
+      const eventsHandle = await page.evaluateHandle(() => {
+        const events = [];
+        document.addEventListener('mousedown', event => {
+          events.push({
+            type: 'mousedown',
+            x: event.pageX,
+            y: event.pageY,
+          });
+        });
+        document.addEventListener('mouseup', event => {
+          events.push({
+            type: 'mouseup',
+            x: event.pageX,
+            y: event.pageY,
+          });
+        });
+        document.addEventListener('mousemove', event => {
+          events.push({
+            type: 'mousemove',
+            x: event.pageX,
+            y: event.pageY,
+          });
+        });
+        return events;
+      });
+      await drag(page, 4);
+      await expect.poll(() => eventsHandle.jsonValue()).toEqual([
+        { type: 'mousemove', x: 50, y: 50 },
+        { type: 'mousedown', x: 50, y: 50 },
+        { type: 'mousemove', x: 75, y: 75 },
+        { type: 'mousemove', x: 100, y: 100 },
+        { type: 'mousemove', x: 125, y: 125 },
+        { type: 'mousemove', x: 150, y: 150 },
+        { type: 'mouseup', x: 150, y: 150 },
+      ]);
+    });
   });
 
   it('should allow specifying the position', async ({ page, server }) => {
@@ -336,7 +388,6 @@ it.describe('Drag and drop', () => {
 });
 
 it('should work if not doing a drag', async ({ page, isLinux, headless }) => {
-  it.fixme(isLinux && !headless, 'Stray mouse events on Linux headed mess up the tests.');
   const eventsHandle = await trackEvents(await page.$('html'));
   await page.mouse.move(50, 50);
   await page.mouse.down();
@@ -359,7 +410,7 @@ it('should report event.buttons', async ({ page, browserName }) => {
     function onEvent(event) {
       logs.push({ type: event.type, buttons: event.buttons });
     }
-    await new Promise(window.builtinRequestAnimationFrame);
+    await new Promise(window.builtins.requestAnimationFrame);
     return logs;
   });
   await page.mouse.move(20, 20);
@@ -383,12 +434,13 @@ async function trackEvents(target: ElementHandle) {
       'dragstart', 'dragend', 'dragover', 'dragenter', 'dragleave', 'dragexit',
       'drop'
     ]) {
-      target.addEventListener(event, (e: PointerEvent) => {
+      target.addEventListener(event, e => {
+        const pe = e as PointerEvent;
         // Browsers are all over the place with dragend position.
         if (event === 'dragend')
           events.push('dragend');
         else
-          events.push(`${event} at ${e.clientX};${e.clientY}`);
+          events.push(`${event} at ${pe.clientX};${pe.clientY}`);
       }, false);
     }
     return events;

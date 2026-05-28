@@ -14,24 +14,26 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-import { gracefullyProcessExitDoNotHang, isRegExp } from 'playwright-core/lib/utils';
-import type { ConfigCLIOverrides, SerializedConfig } from './ipc';
-import { requireOrImport } from '../transform/transform';
-import type { Config, Project } from '../../types/test';
-import { errorWithFile, fileIsModule } from '../util';
-import type { ConfigLocation } from './config';
+import fs from 'fs';
+import path from 'path';
+
+import { isRegExp } from '@isomorphic/rtti';
+
+import { requireOrImport, setSingleTSConfig, setTransformConfig } from '../transform/transform';
+import { errorWithFile } from '../util';
 import { FullConfigInternal } from './config';
 import { addToCompilationCache } from '../transform/compilationCache';
-import { initializeEsmLoader, registerESMLoader } from './esmLoaderHost';
-import { execArgvWithExperimentalLoaderOptions, execArgvWithoutExperimentalLoaderOptions } from '../transform/esmUtils';
+
+import type { ConfigLocation } from './config';
+import type { ConfigCLIOverrides, SerializedConfig } from './ipc';
+import type { Config, Project } from '../../types/test';
 
 const kDefineConfigWasUsed = Symbol('defineConfigWasUsed');
 export const defineConfig = (...configs: any[]) => {
   let result = configs[0];
   for (let i = 1; i < configs.length; ++i) {
     const config = configs[i];
+    const prevProjects = result.projects;
     result = {
       ...result,
       ...config,
@@ -61,7 +63,7 @@ export const defineConfig = (...configs: any[]) => {
       projectOverrides.set(project.name, project);
 
     const projects = [];
-    for (const project of result.projects || []) {
+    for (const project of prevProjects || []) {
       const projectOverride = projectOverrides.get(project.name);
       if (projectOverride) {
         projects.push({
@@ -87,10 +89,7 @@ export const defineConfig = (...configs: any[]) => {
 export async function deserializeConfig(data: SerializedConfig): Promise<FullConfigInternal> {
   if (data.compilationCache)
     addToCompilationCache(data.compilationCache);
-
-  const config = await loadConfig(data.location, data.configCLIOverrides);
-  await initializeEsmLoader();
-  return config;
+  return await loadConfig(data.location, data.configCLIOverrides, undefined, data.metadata ? JSON.parse(data.metadata) : undefined);
 }
 
 async function loadUserConfig(location: ConfigLocation): Promise<Config> {
@@ -100,10 +99,14 @@ async function loadUserConfig(location: ConfigLocation): Promise<Config> {
   return object as Config;
 }
 
-export async function loadConfig(location: ConfigLocation, overrides?: ConfigCLIOverrides, ignoreProjectDependencies = false): Promise<FullConfigInternal> {
+export async function loadConfig(location: ConfigLocation, overrides?: ConfigCLIOverrides, ignoreProjectDependencies = false, metadata?: Config['metadata']): Promise<FullConfigInternal> {
+  // 1. Set the initial tsconfig before loading the config file.
+  await setSingleTSConfig(overrides?.tsconfig);
+
+  // 2. Load and validate playwright config.
   const userConfig = await loadUserConfig(location);
   validateConfig(location.resolvedConfigFile || '<default config>', userConfig);
-  const fullConfig = new FullConfigInternal(location, userConfig, overrides || {});
+  const fullConfig = new FullConfigInternal(location, userConfig, overrides || {}, metadata);
   fullConfig.defineConfigWasUsed = !!(userConfig as any)[kDefineConfigWasUsed];
   if (ignoreProjectDependencies) {
     for (const project of fullConfig.projects) {
@@ -111,6 +114,15 @@ export async function loadConfig(location: ConfigLocation, overrides?: ConfigCLI
       project.teardown = undefined;
     }
   }
+
+  // 3. Load transform options from the playwright config.
+  const babelPlugins = (userConfig as any)['@playwright/test']?.babelPlugins || [];
+  const external = userConfig.build?.external || [];
+  const jsxImportSource = path.dirname(require.resolve('playwright'));
+  await setTransformConfig({ babelPlugins, external, jsxImportSource });
+  if (!overrides?.tsconfig)
+    await setSingleTSConfig(fullConfig?.singleTSConfigPath);
+
   return fullConfig;
 }
 
@@ -126,13 +138,25 @@ function validateConfig(file: string, config: Config) {
   }
 
   if ('globalSetup' in config && config.globalSetup !== undefined) {
-    if (typeof config.globalSetup !== 'string')
+    if (Array.isArray(config.globalSetup)) {
+      config.globalSetup.forEach((item, index) => {
+        if (typeof item !== 'string')
+          throw errorWithFile(file, `config.globalSetup[${index}] must be a string`);
+      });
+    } else if (typeof config.globalSetup !== 'string') {
       throw errorWithFile(file, `config.globalSetup must be a string`);
+    }
   }
 
   if ('globalTeardown' in config && config.globalTeardown !== undefined) {
-    if (typeof config.globalTeardown !== 'string')
+    if (Array.isArray(config.globalTeardown)) {
+      config.globalTeardown.forEach((item, index) => {
+        if (typeof item !== 'string')
+          throw errorWithFile(file, `config.globalTeardown[${index}] must be a string`);
+      });
+    } else if (typeof config.globalTeardown !== 'string') {
       throw errorWithFile(file, `config.globalTeardown must be a string`);
+    }
   }
 
   if ('globalTimeout' in config && config.globalTimeout !== undefined) {
@@ -215,15 +239,15 @@ function validateConfig(file: string, config: Config) {
   }
 
   if ('updateSnapshots' in config && config.updateSnapshots !== undefined) {
-    if (typeof config.updateSnapshots !== 'string' || !['all', 'none', 'missing'].includes(config.updateSnapshots))
-      throw errorWithFile(file, `config.updateSnapshots must be one of "all", "none" or "missing"`);
+    if (typeof config.updateSnapshots !== 'string' || !['all', 'changed', 'missing', 'none'].includes(config.updateSnapshots))
+      throw errorWithFile(file, `config.updateSnapshots must be one of "all", "changed", "missing" or "none"`);
   }
 
-  if ('workers' in config && config.workers !== undefined) {
-    if (typeof config.workers === 'number' && config.workers <= 0)
-      throw errorWithFile(file, `config.workers must be a positive number`);
-    else if (typeof config.workers === 'string' && !config.workers.endsWith('%'))
-      throw errorWithFile(file, `config.workers must be a number or percentage`);
+  if ('tsconfig' in config && config.tsconfig !== undefined) {
+    if (typeof config.tsconfig !== 'string')
+      throw errorWithFile(file, `config.tsconfig must be a string`);
+    if (!fs.existsSync(path.resolve(file, '..', config.tsconfig)))
+      throw errorWithFile(file, `config.tsconfig does not exist`);
   }
 }
 
@@ -284,6 +308,26 @@ function validateProject(file: string, project: Project, title: string) {
     if (typeof project.ignoreSnapshots !== 'boolean')
       throw errorWithFile(file, `${title}.ignoreSnapshots must be a boolean`);
   }
+
+  if ('workers' in project && project.workers !== undefined) {
+    if (typeof project.workers === 'number' && project.workers <= 0)
+      throw errorWithFile(file, `${title}.workers must be a positive number`);
+    else if (typeof project.workers === 'string' && !project.workers.endsWith('%'))
+      throw errorWithFile(file, `${title}.workers must be a number or percentage`);
+  }
+
+  if ('webServer' in project && project.webServer !== undefined) {
+    const webServer = project.webServer;
+    const isArray = Array.isArray(webServer);
+    const items = isArray ? webServer : [webServer];
+    items.forEach((item, index) => {
+      const itemTitle = isArray ? `${title}.webServer[${index}]` : `${title}.webServer`;
+      if (!item || typeof item !== 'object')
+        throw errorWithFile(file, `${itemTitle} must be an object`);
+      if (item.command !== undefined && (typeof item.command !== 'string' || !item.command))
+        throw errorWithFile(file, `${itemTitle}.command must be a non-empty string`);
+    });
+  }
 }
 
 export function resolveConfigLocation(configFile: string | undefined): ConfigLocation {
@@ -323,62 +367,11 @@ function resolveConfigFile(configFileOrDirectory: string): string | undefined {
   return configFileOrDirectory!;
 }
 
-export async function loadConfigFromFileRestartIfNeeded(configFile: string | undefined, overrides?: ConfigCLIOverrides, ignoreDeps?: boolean): Promise<FullConfigInternal | null> {
-  const location = resolveConfigLocation(configFile);
-  if (restartWithExperimentalTsEsm(location.resolvedConfigFile))
-    return null;
-  return await loadConfig(location, overrides, ignoreDeps);
+export async function loadConfigFromFile(configFile: string | undefined, overrides?: ConfigCLIOverrides, ignoreDeps?: boolean): Promise<FullConfigInternal> {
+  return await loadConfig(resolveConfigLocation(configFile), overrides, ignoreDeps);
 }
 
 export async function loadEmptyConfigForMergeReports() {
   // Merge reports is "different" for no good reason. It should not pick up local config from the cwd.
   return await loadConfig({ configDir: process.cwd() });
-}
-
-export function restartWithExperimentalTsEsm(configFile: string | undefined, force: boolean = false): boolean {
-  // Opt-out switch.
-  if (process.env.PW_DISABLE_TS_ESM)
-    return false;
-
-  // There are two esm loader APIs:
-  // - Older API that needs a process restart. Available in Node 16, 17, and non-latest 18, 19 and 20.
-  // - Newer API that works in-process. Available in Node 21+ and latest 18, 19 and 20.
-
-  // First check whether we have already restarted with the ESM loader from the older API.
-  if ((globalThis as any).__esmLoaderPortPreV20) {
-    // clear execArgv after restart, so that childProcess.fork in user code does not inherit our loader.
-    process.execArgv = execArgvWithoutExperimentalLoaderOptions();
-    return false;
-  }
-
-  // Now check for the newer API presence.
-  if (!require('node:module').register) {
-    // Older API is experimental, only supported on Node 16+.
-    const nodeVersion = +process.versions.node.split('.')[0];
-    if (nodeVersion < 16)
-      return false;
-
-    // With older API requiring a process restart, do so conditionally on the config.
-    const configIsModule = !!configFile && fileIsModule(configFile);
-    if (!force && !configIsModule)
-      return false;
-
-    const innerProcess = (require('child_process') as typeof import('child_process')).fork(require.resolve('../../cli'), process.argv.slice(2), {
-      env: {
-        ...process.env,
-        PW_TS_ESM_LEGACY_LOADER_ON: '1',
-      },
-      execArgv: execArgvWithExperimentalLoaderOptions(),
-    });
-
-    innerProcess.on('close', (code: number | null) => {
-      if (code !== 0 && code !== null)
-        gracefullyProcessExitDoNotHang(code);
-    });
-    return true;
-  }
-
-  // With the newer API, always enable the ESM loader, because it does not need a restart.
-  registerESMLoader();
-  return false;
 }

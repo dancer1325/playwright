@@ -2,7 +2,7 @@
 
 # Copyright (c) Microsoft Corporation.
 #
-# Licensed under the Apache License, Version 2.0 (the 'License");
+# Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
@@ -83,6 +83,8 @@ node -e "${EMBED_METADATA_SCRIPT}" "$1" > "${REPORT_NAME}"
 gzip "${REPORT_NAME}"
 
 AZ_STORAGE_ACCOUNT="folioflakinessdashboard"
+
+echo "Uploading ${REPORT_NAME}.gz"
 
 az storage blob upload --auth-mode login --account-name "${AZ_STORAGE_ACCOUNT}" -c uploads -f "${REPORT_NAME}.gz" -n "${REPORT_NAME}.gz"
 

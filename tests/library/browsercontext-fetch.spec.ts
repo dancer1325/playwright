@@ -22,7 +22,7 @@ import { pipeline } from 'stream';
 import zlib from 'zlib';
 import { contextTest as it, expect } from '../config/browserTest';
 import { suppressCertificateWarning } from '../config/utils';
-import { kTargetClosedErrorMessage } from 'tests/config/errors';
+import { kTargetClosedErrorMessage } from '../config/errors';
 
 it.skip(({ mode }) => mode !== 'default');
 
@@ -121,23 +121,99 @@ it('should add session cookies to request', async ({ context, server }) => {
   expect(req.headers.cookie).toEqual('username=John Doe');
 });
 
+it('should filter cookies by domain', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36069' }
+}, async ({ context, server }) => {
+  await context.addCookies([{
+    name: 'first',
+    value: '1',
+    domain: 'playwright.dev',
+    path: '/',
+    expires: -1,
+    httpOnly: false,
+    secure: false,
+    sameSite: 'Lax',
+  }, {
+    name: 'second',
+    value: '2',
+    domain: '.playwright.dev',
+    path: '/',
+    expires: -1,
+    httpOnly: false,
+    secure: false,
+    sameSite: 'Lax',
+  }]);
+  const [req] = await Promise.all([
+    server.waitForRequest('/simple.json'),
+    context.request.get(`http://my.playwright.dev:${server.PORT}/simple.json`, {
+      __testHookLookup
+    } as any),
+  ]);
+  expect(req.headers.cookie).toEqual('second=2');
+});
+
 for (const method of ['fetch', 'delete', 'get', 'head', 'patch', 'post', 'put'] as const) {
-  it(`${method} should support queryParams`, async ({ context, server }) => {
+  it(`${method} should support params passed as object`, async ({ context, server }) => {
     const url = new URL(server.EMPTY_PAGE);
-    url.searchParams.set('p1', 'v1');
+    url.searchParams.set('param1', 'value1');
     url.searchParams.set('парам2', 'знач2');
-    const [request] = await Promise.all([
+
+    const [request, response] = await Promise.all([
       server.waitForRequest(url.pathname + url.search),
-      context.request[method](server.EMPTY_PAGE + '?p1=foo', {
+      context.request[method](server.EMPTY_PAGE, {
         params: {
-          'p1': 'v1',
+          'param1': 'value1',
           'парам2': 'знач2',
         }
       }),
     ]);
-    const params = new URLSearchParams(request.url!.substr(request.url!.indexOf('?')));
-    expect(params.get('p1')).toEqual('v1');
-    expect(params.get('парам2')).toEqual('знач2');
+
+    const requestParams = new URLSearchParams(request.url.slice(request.url.indexOf('?')));
+    expect(requestParams.get('param1')).toEqual('value1');
+    expect(requestParams.get('парам2')).toBe('знач2');
+
+    const responseParams = new URL(response.url()).searchParams;
+    expect(responseParams.get('param1')).toEqual('value1');
+    expect(responseParams.get('парам2')).toBe('знач2');
+  });
+
+  it(`${method} should support params passed as URLSearchParams`, async ({ context, server }) => {
+    const url = new URL(server.EMPTY_PAGE);
+    const searchParams = new URLSearchParams();
+    searchParams.append('param1', 'value1');
+    searchParams.append('param1', 'value2');
+    searchParams.set('парам2', 'знач2');
+
+    const [request, response] = await Promise.all([
+      server.waitForRequest(url.pathname + '?' + searchParams),
+      context.request[method](server.EMPTY_PAGE, { params: searchParams }),
+    ]);
+
+    const requestParams = new URLSearchParams(request.url.slice(request.url.indexOf('?')));
+    expect(requestParams.getAll('param1')).toEqual(['value1', 'value2']);
+    expect(requestParams.get('парам2')).toBe('знач2');
+
+    const responseParams = new URL(response.url()).searchParams;
+    expect(responseParams.getAll('param1')).toEqual(['value1', 'value2']);
+    expect(responseParams.get('парам2')).toBe('знач2');
+  });
+
+  it(`${method} should support params passed as string`, async ({ context, server }) => {
+    const url = new URL(server.EMPTY_PAGE);
+    const params = '?param1=value1&param1=value2&парам2=знач2';
+
+    const [request, response] = await Promise.all([
+      server.waitForRequest(url.pathname + encodeURI(params)),
+      context.request[method](server.EMPTY_PAGE, { params }),
+    ]);
+
+    const requestParams = new URLSearchParams(request.url.slice(request.url.indexOf('?')));
+    expect(requestParams.getAll('param1')).toEqual(['value1', 'value2']);
+    expect(requestParams.get('парам2')).toBe('знач2');
+
+    const responseParams = new URL(response.url()).searchParams;
+    expect(responseParams.getAll('param1')).toEqual(['value1', 'value2']);
+    expect(responseParams.get('парам2')).toBe('знач2');
   });
 
   it(`${method} should support failOnStatusCode`, async ({ context, server }) => {
@@ -145,6 +221,8 @@ for (const method of ['fetch', 'delete', 'get', 'head', 'patch', 'post', 'put'] 
       failOnStatusCode: true
     }).catch(e => e);
     expect(error.message).toContain('404 Not Found');
+    if (method !== 'head')
+      expect(error.message).toContain('Response text:\nFile not found:');
   });
 
   it(`${method}should support ignoreHTTPSErrors option`, async ({ context, httpsServer }) => {
@@ -233,7 +311,7 @@ it('should add cookies from Set-Cookie header', async ({ context, page, server }
   expect((await page.evaluate(() => document.cookie)).split(';').map(s => s.trim()).sort()).toEqual(['foo=bar', 'session=value']);
 });
 
-it('should preserve cookie order from Set-Cookie header', async ({ context, page, server }) => {
+it('should preserve cookie order from Set-Cookie header', async ({ context, page, server, browserName, isLinux }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23390' });
   server.setRoute('/setcookie.html', (req, res) => {
     res.setHeader('Set-Cookie', ['cookie.0=foo', 'cookie.1=bar']);
@@ -322,7 +400,7 @@ it('should remove cookie with expires far in the past', async ({ page, server })
   expect(serverRequest.headers.cookie).toBeFalsy();
 });
 
-it('should handle cookies on redirects', async ({ context, server, browserName, isWindows }) => {
+it('should handle cookies on redirects', async ({ context, server, browserName, isWindows, channel }) => {
   server.setRoute('/redirect1', (req, res) => {
     res.setHeader('Set-Cookie', 'r1=v1;SameSite=Lax');
     res.writeHead(301, { location: '/a/b/redirect2' });
@@ -358,20 +436,20 @@ it('should handle cookies on redirects', async ({ context, server, browserName, 
   const cookies = await context.cookies();
   expect(new Set(cookies)).toEqual(new Set([
     {
-      'sameSite': (browserName === 'webkit' && isWindows) ? 'None' : 'Lax',
+      'sameSite': (browserName === 'webkit' && isWindows && channel !== 'webkit-wsl') ? 'None' : 'Lax',
       'name': 'r2',
       'value': 'v2',
-      'domain': 'localhost',
+      'domain': server.HOSTNAME,
       'path': '/a/b',
       'expires': -1,
       'httpOnly': false,
       'secure': false
     },
     {
-      'sameSite': (browserName === 'webkit' && isWindows) ? 'None' : 'Lax',
+      'sameSite': (browserName === 'webkit' && isWindows && channel !== 'webkit-wsl') ? 'None' : 'Lax',
       'name': 'r1',
       'value': 'v1',
-      'domain': 'localhost',
+      'domain': server.HOSTNAME,
       'path': '/',
       'expires': -1,
       'httpOnly': false,
@@ -435,7 +513,7 @@ it('should return error with wrong credentials', async ({ context, server }) => 
   expect(response2.status()).toBe(401);
 });
 
-it('should support HTTPCredentials.sendImmediately for newContext', async ({ contextFactory, server }) => {
+it('should support HTTPCredentials.send for newContext', async ({ contextFactory, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30534' });
   const context = await contextFactory({
     httpCredentials: { username: 'user', password: 'pass', origin: server.PREFIX.toUpperCase(), send: 'always' }
@@ -459,7 +537,7 @@ it('should support HTTPCredentials.sendImmediately for newContext', async ({ con
   }
 });
 
-it('should support HTTPCredentials.sendImmediately for browser.newPage', async ({ contextFactory, server, browser }) => {
+it('should support HTTPCredentials.send for browser.newPage', async ({ contextFactory, server, browser }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30534' });
   const page = await browser.newPage({
     httpCredentials: { username: 'user', password: 'pass', origin: server.PREFIX.toUpperCase(), send: 'always' }
@@ -799,7 +877,7 @@ it('should support timeout option', async function({ context, server }) {
   });
 
   const error = await context.request.get(server.PREFIX + '/slow', { timeout: 10 }).catch(e => e);
-  expect(error.message).toContain(`Request timed out after 10ms`);
+  expect(error.message).toContain(`apiRequestContext.get: Timeout 10ms exceeded`);
 });
 
 it('should support a timeout of 0', async function({ context, server }) {
@@ -830,12 +908,12 @@ it('should respect timeout after redirects', async function({ context, server })
 
   context.setDefaultTimeout(100);
   const error = await context.request.get(server.PREFIX + '/redirect').catch(e => e);
-  expect(error.message).toContain(`Request timed out after 100ms`);
+  expect(error.message).toContain(`apiRequestContext.get: Timeout 100ms exceeded`);
 });
 
-it('should not hang on a brotli encoded Range request', async ({ context, server }) => {
+it('should not hang on a brotli encoded Range request', async ({ context, server, nodeVersion }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/18190' });
-  it.skip(+process.versions.node.split('.')[0] < 18);
+  it.skip(nodeVersion.major < 18);
 
   const encodedRequestPayload = zlib.brotliCompressSync(Buffer.from('A'));
   server.setRoute('/brotli', (req, res) => {
@@ -853,7 +931,7 @@ it('should not hang on a brotli encoded Range request', async ({ context, server
     headers: {
       range: 'bytes=0-2',
     },
-  })).rejects.toThrow(/(failed to decompress 'br' encoding: Error: unexpected end of file|Parse Error: Data after \`Connection: close\`)/);
+  })).rejects.toThrow(/Parse Error: Expected HTTP/);
 });
 
 it('should dispose', async function({ context, server }) {
@@ -911,6 +989,22 @@ it('should support application/x-www-form-urlencoded', async function({ context,
   expect(params.get('firstName')).toBe('John');
   expect(params.get('lastName')).toBe('Doe');
   expect(params.get('file')).toBe('f.js');
+});
+
+it('should support application/x-www-form-urlencoded with param lists', async function({ context, page, server }) {
+  const form = new FormData();
+  form.append('foo', '1');
+  form.append('foo', '2');
+  const [req] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    context.request.post(server.EMPTY_PAGE, { form })
+  ]);
+  expect(req.method).toBe('POST');
+  expect(req.headers['content-type']).toBe('application/x-www-form-urlencoded');
+  const body = (await req.postBody).toString('utf8');
+  const params = new URLSearchParams(body);
+  expect(req.headers['content-length']).toBe(String(params.toString().length));
+  expect(params.getAll('foo')).toEqual(['1', '2']);
 });
 
 it('should encode to application/json by default', async function({ context, page, server }) {
@@ -1031,10 +1125,9 @@ it('should support multipart/form-data and keep the order', async function({ con
   expect(response.status()).toBe(200);
 });
 
-it('should support repeating names in multipart/form-data', async function({ context, server }) {
+it('should support repeating names in multipart/form-data', async function({ context, server, nodeVersion }) {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28070' });
-  const nodeVersion = +process.versions.node.split('.')[0];
-  it.skip(nodeVersion < 20, 'File is not available in Node.js < 20. FormData is not available in Node.js < 18');
+  it.skip(nodeVersion.major < 20, 'File is not available in Node.js < 20. FormData is not available in Node.js < 18');
   const postBodyPromise = new Promise<string>(resolve => {
     server.setRoute('/empty.html', async (req, res) => {
       resolve((await req.postBody).toString('utf-8'));
@@ -1108,7 +1201,8 @@ it('context request should export same storage state as context', async ({ conte
   expect(pageState).toEqual(contextState);
 });
 
-it('should send secure cookie over http for localhost', async ({ page, server }) => {
+it('should send secure cookie over http for localhost', async ({ page, server, channel }) => {
+  it.skip(channel === 'webkit-wsl');
   server.setRoute('/setcookie.html', (req, res) => {
     res.setHeader('Set-Cookie', ['a=v; secure']);
     res.end();
@@ -1121,7 +1215,7 @@ it('should send secure cookie over http for localhost', async ({ page, server })
   expect(serverRequest.headers.cookie).toBe('a=v');
 });
 
-it('should accept bool and numeric params', async ({ page, server }) => {
+it('should accept bool and numeric params and filter out undefined', async ({ page, server }) => {
   let request;
   const url = new URL(server.EMPTY_PAGE);
   url.searchParams.set('str', 's');
@@ -1138,6 +1232,7 @@ it('should accept bool and numeric params', async ({ page, server }) => {
       'num': 10,
       'bool': true,
       'bool2': false,
+      'none': undefined,
     }
   });
   const params = new URLSearchParams(request!.url.substr(request!.url.indexOf('?')));
@@ -1145,6 +1240,7 @@ it('should accept bool and numeric params', async ({ page, server }) => {
   expect(params.get('num')).toEqual('10');
   expect(params.get('bool')).toEqual('true');
   expect(params.get('bool2')).toEqual('false');
+  expect(params.has('none')).toBe(false);
 });
 
 it('should abort requests when browser context closes', async ({ contextFactory, server }) => {
@@ -1160,7 +1256,7 @@ it('should abort requests when browser context closes', async ({ contextFactory,
     server.waitForRequest('/empty.html').then(() => context.close())
   ]);
   expect(error instanceof Error).toBeTruthy();
-  expect(error.message).toContain(kTargetClosedErrorMessage);
+  expect(error.message).toMatch(/Request context disposed|Target page, context or browser has been closed/);
   await connectionClosed;
 });
 
@@ -1182,7 +1278,7 @@ it('should work with connectOverCDP', async ({ browserName, browserType, server 
   }
 });
 
-it('should support SameSite cookie attribute over https', async ({ contextFactory, httpsServer, browserName, isWindows }) => {
+it('should support SameSite cookie attribute over https', async ({ contextFactory, httpsServer, browserName, isWindows, channel }) => {
   // Cookies with SameSite=None must also specify the Secure attribute. WebKit navigation
   // to HTTP url will fail if the response contains a cookie with Secure attribute, so
   // we do HTTPS navigation.
@@ -1196,7 +1292,7 @@ it('should support SameSite cookie attribute over https', async ({ contextFactor
       });
       await page.request.get(httpsServer.EMPTY_PAGE);
       const [cookie] = await page.context().cookies();
-      if (browserName === 'webkit' && isWindows)
+      if (browserName === 'webkit' && isWindows && channel !== 'webkit-wsl')
         expect(cookie.sameSite).toBe('None');
       else
         expect(cookie.sameSite).toBe(value);
@@ -1206,7 +1302,7 @@ it('should support SameSite cookie attribute over https', async ({ contextFactor
 
 it('should set domain=localhost cookie', async ({ context, server, browserName, isWindows }) => {
   server.setRoute('/empty.html', (req, res) => {
-    res.setHeader('Set-Cookie', `name=val; Domain=localhost; Path=/;`);
+    res.setHeader('Set-Cookie', `name=val; Domain=${server.HOSTNAME}; Path=/;`);
     res.end();
   });
   await context.request.get(server.EMPTY_PAGE);
@@ -1227,7 +1323,7 @@ it('fetch should not throw on long set-cookie value', async ({ context, server }
   expect(cookies.map(c => c.name)).toContain('bar');
 });
 
-it('should support set-cookie with SameSite and without Secure attribute over HTTP', async ({ page, server, browserName, isWindows, isLinux }) => {
+it('should support set-cookie with SameSite and without Secure attribute over HTTP', async ({ page, server, browserName, isWindows, isLinux, channel, isBidi }) => {
   for (const value of ['None', 'Lax', 'Strict']) {
     await it.step(`SameSite=${value}`, async () => {
       server.setRoute('/empty.html', (req, res) => {
@@ -1236,11 +1332,11 @@ it('should support set-cookie with SameSite and without Secure attribute over HT
       });
       await page.request.get(server.EMPTY_PAGE);
       const [cookie] = await page.context().cookies();
-      if (browserName === 'chromium' && value === 'None')
+      if ((browserName === 'chromium' || isBidi) && value === 'None')
         expect(cookie).toBeFalsy();
-      else if (browserName === 'webkit' && isLinux && value === 'None')
+      else if (browserName === 'webkit' && (isLinux || channel === 'webkit-wsl') && value === 'None')
         expect(cookie).toBeFalsy();
-      else if (browserName === 'webkit' && isWindows)
+      else if (browserName === 'webkit' && isWindows && channel !== 'webkit-wsl')
         expect(cookie.sameSite).toBe('None');
       else
         expect(cookie.sameSite).toBe(value);
@@ -1286,4 +1382,81 @@ it('should not work after dispose', async ({ context, server }) => {
 it('should not work after context dispose', async ({ context, server }) => {
   await context.close({ reason: 'Test ended.' });
   expect(await context.request.get(server.EMPTY_PAGE).catch(e => e.message)).toContain('Test ended.');
+});
+
+it('should retry on ECONNRESET', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30978' }
+}, async ({ context, server }) => {
+  let requestCount = 0;
+  server.setRoute('/test', (req, res) => {
+    if (requestCount++ < 3) {
+      req.socket.destroy();
+      return;
+    }
+    res.writeHead(200, { 'content-type': 'text/plain' });
+    res.end('Hello!');
+  });
+  const response = await context.request.get(server.PREFIX + '/test', { maxRetries: 3 });
+  expect(response.status()).toBe(200);
+  expect(await response.text()).toBe('Hello!');
+  expect(requestCount).toBe(4);
+});
+
+it('should retry ECONNRESET on compressed response', async ({ context, server }) => {
+  let requestCount = 0;
+  server.setRoute('/test-gzip', (req, res) => {
+    if (requestCount++ < 2) {
+      req.socket.destroy();
+      return;
+    }
+    res.writeHead(200, {
+      'Content-Encoding': 'gzip',
+      'Content-Type': 'text/plain',
+    });
+    const gzipStream = zlib.createGzip();
+    pipeline(gzipStream, res, err => {
+      if (err)
+        console.log(`Server error: ${err}`);
+    });
+    gzipStream.write('compressed-retry-ok');
+    gzipStream.end();
+  });
+  const response = await context.request.get(server.PREFIX + '/test-gzip', { maxRetries: 3 });
+  expect(response.status()).toBe(200);
+  expect(await response.text()).toBe('compressed-retry-ok');
+  expect(requestCount).toBe(3);
+});
+
+it('should retry ECONNRESET mid-stream during gzip decompression', async ({ context, server }) => {
+  let requestCount = 0;
+  server.setRoute('/test-gzip-midstream', (req, res) => {
+    requestCount++;
+    if (requestCount <= 2) {
+      // Send response headers to make client enter the decompression pipeline,
+      // then destroy the socket. This exercises the fix: without it, the
+      // pipeline error callback wraps the error, stripping .code for retry.
+      res.writeHead(200, {
+        'Content-Encoding': 'gzip',
+        'Content-Type': 'text/plain',
+      });
+      res.flushHeaders();
+      req.socket.destroy();
+      return;
+    }
+    res.writeHead(200, {
+      'Content-Encoding': 'gzip',
+      'Content-Type': 'text/plain',
+    });
+    const gzipStream = zlib.createGzip();
+    pipeline(gzipStream, res, err => {
+      if (err)
+        console.log(`Server error: ${err}`);
+    });
+    gzipStream.write('midstream-retry-ok');
+    gzipStream.end();
+  });
+  const response = await context.request.get(server.PREFIX + '/test-gzip-midstream', { maxRetries: 3 });
+  expect(response.status()).toBe(200);
+  expect(await response.text()).toBe('midstream-retry-ok');
+  expect(requestCount).toBe(3);
 });

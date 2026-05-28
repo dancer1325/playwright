@@ -16,63 +16,84 @@
 
 import type { SerializedValue } from '@protocol/channels';
 import type { ActionTraceEvent } from '@trace/trace';
-import { msToString } from '@web/uiUtils';
+import { clsx } from '@web/uiUtils';
+import { msToString } from '@isomorphic/formatUtils';
 import * as React from 'react';
 import './callTab.css';
 import { CopyToClipboard } from './copyToClipboard';
 import { asLocator } from '@isomorphic/locatorGenerators';
 import type { Language } from '@isomorphic/locatorGenerators';
 import { PlaceholderPanel } from './placeholderPanel';
-import type { ActionTraceEventInContext } from './modelUtil';
+import type { ActionTraceEventInContext } from '@isomorphic/trace/traceModel';
+import { renderTitleForCall } from './actionList';
 
 export const CallTab: React.FunctionComponent<{
   action: ActionTraceEventInContext | undefined,
+  startTimeOffset: number,
   sdkLanguage: Language | undefined,
-}> = ({ action, sdkLanguage }) => {
+}> = ({ action, startTimeOffset, sdkLanguage }) => {
+  // We never need the waitForEventInfo (`info`).
+  const paramKeys = React.useMemo(() => Object.keys(action?.params ?? {}).filter(name => name !== 'info'), [action]);
+
   if (!action)
     return <PlaceholderPanel text='No action selected' />;
-  const params = { ...action.params };
-  // Strip down the waitForEventInfo data, we never need it.
-  delete params.info;
-  const paramKeys = Object.keys(params);
-  const timeMillis = action.startTime + (action.context.wallTime - action.context.startTime);
-  const wallTime = new Date(timeMillis).toLocaleString();
-  const duration = action.endTime ? msToString(action.endTime - action.startTime) : 'Timed Out';
 
-  return <div className='call-tab'>
-    <div className='call-line'>{action.apiName}</div>
-    {<>
+  // Calculate execution time relative to the test runner's start time
+  const startTimeMillis = action.startTime - startTimeOffset;
+  const startTime = msToString(startTimeMillis);
+
+  const { title } = renderTitleForCall(action);
+
+  return (
+    <div className='call-tab'>
+      <div className='call-line'>{title}</div>
       <div className='call-section'>Time</div>
-      {wallTime && <div className='call-line'>wall time:<span className='call-value datetime' title={wallTime}>{wallTime}</span></div>}
-      <div className='call-line'>duration:<span className='call-value datetime' title={duration}>{duration}</span></div>
-    </>}
-    { !!paramKeys.length && <div className='call-section'>Parameters</div> }
-    {
-      !!paramKeys.length && paramKeys.map((name, index) => renderProperty(propertyToString(action, name, params[name], sdkLanguage), 'param-' + index))
-    }
-    { !!action.result && <div className='call-section'>Return value</div> }
-    {
-      !!action.result && Object.keys(action.result).map((name, index) =>
-        renderProperty(propertyToString(action, name, action.result[name], sdkLanguage), 'result-' + index)
-      )
-    }
-  </div>;
+      {renderProperty({ name: 'start', type: 'literal', text: startTime })}
+      {renderProperty({ name: 'duration', type: 'literal', text: renderDuration(action) })}
+      {
+        !!paramKeys.length && <>
+          <div className='call-section'>Parameters</div>
+          {paramKeys.map(name => renderProperty(propertyToString(action, name, action.params[name], sdkLanguage)))}
+        </>
+      }
+      {
+        !!action.result && <>
+          <div className='call-section'>Return value</div>
+          {Object.keys(action.result).map(name =>
+            renderProperty(propertyToString(action, name, action.result[name], sdkLanguage))
+          )}
+        </>
+      }
+    </div>
+  );
 };
 
 type Property = {
   name: string;
-  type: 'string' | 'number' | 'object' | 'locator' | 'handle' | 'bigint' | 'boolean' | 'symbol' | 'undefined' | 'function';
+  type: 'literal' | 'string' | 'number' | 'object' | 'locator' | 'handle' | 'bigint' | 'boolean' | 'symbol' | 'undefined' | 'function';
   text: string;
 };
 
-function renderProperty(property: Property, key: string) {
-  let text = property.text.replace(/\n/g, '↵');
+function renderDuration(action: ActionTraceEventInContext): string {
+  if (action.endTime)
+    return msToString(action.endTime - action.startTime);
+  else if (!!action.error)
+    return 'Timed Out';
+  else
+    return 'Running';
+}
+
+function renderProperty(property: Property) {
+  let text = property.text;
+  if (text.length > 1000)
+    text = text.slice(0, 1000) + '…';
+  text = text.replace(/\n/g, '↵');
   if (property.type === 'string')
     text = `"${text}"`;
   return (
-    <div key={key} className='call-line'>
-      {property.name}:<span className={`call-value ${property.type}`} title={property.text}>{text}</span>
-      { ['string', 'number', 'object', 'locator'].includes(property.type) &&
+    <div key={property.name} className='call-line'>
+      {property.name}:<span className={clsx('call-value', property.type)} title={text}>{text}</span>
+      { ['literal', 'string', 'number', 'object', 'locator'].includes(property.type) &&
         <CopyToClipboard value={property.text} />
       }
     </div>
@@ -85,8 +106,17 @@ function propertyToString(event: ActionTraceEvent, name: string, value: any, sdk
     return { text: '<files>', type: 'string', name };
   if (name === 'eventInit' || name === 'expectedValue' || (name === 'arg' && isEval))
     value = parseSerializedValue(value.value, new Array(10).fill({ handle: '<handle>' }));
-  if ((name === 'value' && isEval) || (name === 'received' && event.method === 'expect'))
+  if (name === 'value' && isEval)
     value = parseSerializedValue(value, new Array(10).fill({ handle: '<handle>' }));
+  if (name === 'received' && event.method === 'expect') {
+    // Older traces store received as a raw SerializedValue; newer traces wrap it
+    // as { value?: SerializedValue, ariaSnapshot?: string }. Support both.
+    const wrapped = value && typeof value === 'object' && ('value' in value || 'ariaSnapshot' in value);
+    const serialized = wrapped ? value.value : value;
+    value = serialized !== undefined
+      ? parseSerializedValue(serialized, new Array(10).fill({ handle: '<handle>' }))
+      : undefined;
+  }
   if (name === 'selector')
     return { text: asLocator(sdkLanguage || 'javascript', event.params.selector), type: 'locator', name: 'locator' };
   const type = typeof value;
@@ -94,7 +124,7 @@ function propertyToString(event: ActionTraceEvent, name: string, value: any, sdk
     return { text: String(value), type, name };
   if (value.guid)
     return { text: '<handle>', type: 'handle', name };
-  return { text: JSON.stringify(value).slice(0, 1000), type: 'object', name };
+  return { text: JSON.stringify(value), type: 'object', name };
 }
 
 function parseSerializedValue(value: SerializedValue, handles: any[] | undefined): any {

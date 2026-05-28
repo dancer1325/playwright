@@ -1,5 +1,6 @@
 [*]
 ../
-../../common/
-../../utils/
+../../package.ts
+@utils/**
+@isomorphic/**
 ../chromium/

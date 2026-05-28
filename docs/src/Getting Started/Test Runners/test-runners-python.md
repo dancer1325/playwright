@@ -31,11 +31,11 @@ If you create a browser, a context or a page with the API call like [`method: Br
 
 - `--headed`: Run tests in headed mode (default: headless).
 - `--browser`: Run tests in a different browser `chromium`, `firefox`, or `webkit`. It can be specified multiple times (default: `chromium`).
-- `--browser-channel` [Browser channel](../../browsers.md) to be used.
+- `--browser-channel` [Browser channel](./browsers.md) to be used.
 - `--slowmo` Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on (default: 0).
-- `--device` [Device](../../Playwright%20Test/emulation.md) to be emulated.
+- `--device` [Device](./emulation.md) to be emulated.
 - `--output` Directory for artifacts produced by tests (default: `test-results`).
-- `--tracing` Whether to record a [trace](../../trace-viewer.md) for each test. `on`, `off`, or `retain-on-failure` (default: `off`).
+- `--tracing` Whether to record a [trace](./trace-viewer.md) for each test. `on`, `off`, or `retain-on-failure` (default: `off`).
 - `--video` Whether to record video for each test. `on`, `off`, or `retain-on-failure` (default: `off`).
 - `--screenshot` Whether to automatically capture a screenshot after each test. `on`, `off`, or `only-on-failure` (default: `off`).
 - `--full-page-screenshot` Whether to take a full page screenshot on failure. By default, only the viewport is captured. Requires `--screenshot` to be enabled (default: `off`).
@@ -70,6 +70,7 @@ def test_my_app_is_working(fixture_name):
 
 - `browser_type_launch_args`: Override launch arguments for [`method: BrowserType.launch`]. It should return a Dict.
 - `browser_context_args`: Override the options for [`method: Browser.newContext`]. It should return a Dict.
+- `connect_options`: Connect to an existing browser via WebSocket endpoint. It should return a Dict with [`method: BrowserType.connect`] options.
 
 Its also possible to override the context options ([`method: Browser.newContext`]) for a single test by using the `browser_context_args` marker:
 
@@ -99,7 +100,7 @@ See [Running Tests](./running-tests.md) for general information on `pytest` opti
 
 ## Examples
 
-### Configure Mypy typings for auto-completion
+### Configure typings for auto-completion
 
 ```py title="test_my_application.py"
 from playwright.sync_api import Page
@@ -109,15 +110,22 @@ def test_visit_admin_dashboard(page: Page):
     # ...
 ```
 
-### Configure slow mo
+If you're using VSCode with Pylance, these types can be inferred by enabling the `python.testing.pytestEnabled` setting so you don't need the type annotation.
 
-Run tests with slow mo with the `--slowmo` argument.
+### Using multiple contexts
 
-```bash
-pytest --slowmo 100
+In order to simulate multiple users, you can create multiple [`BrowserContext`](./browser-contexts) instances.
+
+```py title="test_my_application.py"
+from playwright.sync_api import Page, BrowserContext
+from pytest_playwright.pytest_playwright import CreateContextCallback
+
+def test_foo(page: Page, new_context: CreateContextCallback) -> None:
+    page.goto("https://example.com")
+    context = new_context()
+    page2 = context.new_page()
+    # page and page2 are in different contexts
 ```
-
-Slows down Playwright operations by 100 milliseconds.
 
 ### Skip test by browser
 
@@ -196,7 +204,7 @@ def browser_context_args(browser_context_args):
     }
 ```
 
-### Device emulation
+### Device emulation / BrowserContext option overrides
 
 ```py title="conftest.py"
 import pytest
@@ -211,6 +219,18 @@ def browser_context_args(browser_context_args, playwright):
 ```
 
 Or via the CLI `--device="iPhone 11 Pro"`
+
+### Connect to remote browsers
+
+```py title="conftest.py"
+import pytest
+
+@pytest.fixture(scope="session")
+def connect_options():
+    return {
+        "wsEndpoint": "ws://localhost:8080/ws"
+    }
+```
 
 ### Using with `unittest.TestCase`
 
@@ -251,4 +271,21 @@ def test_bing_is_working(page):
 
 ## Deploy to CI
 
-See the [guides for CI providers](../../ci.md) to deploy your tests to CI/CD.
+See the [guides for CI providers](./ci.md) to deploy your tests to CI/CD.
+
+## Async Fixtures
+
+To use async fixtures, install [`pytest-playwright-asyncio`](https://pypi.org/project/pytest-playwright-asyncio/).
+
+Ensure you are using `pytest-asyncio>=0.26.0` and set [`asyncio_default_test_loop_scope = session`](https://pytest-asyncio.readthedocs.io/en/v0.26.0/how-to-guides/change_default_test_loop.html) in your configuration (`pytest.ini/pyproject.toml/setup.cfg`).
+
+
+```python
+import pytest
+from playwright.async_api import Page
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_foo(page: Page):
+    await page.goto("https://github.com")
+    # ...
+```

@@ -62,11 +62,51 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       const xml = parseXML(result.output);
       expect(xml['testsuites']['$']['tests']).toBe('1');
       expect(xml['testsuites']['$']['failures']).toBe('1');
+      expect(xml['testsuites']['$']['errors']).toBe('0');
       const failure = xml['testsuites']['testsuite'][0]['testcase'][0]['failure'][0];
-      expect(failure['$']['message']).toContain('a.test.js');
-      expect(failure['$']['message']).toContain('one');
-      expect(failure['$']['type']).toBe('FAILURE');
+      expect(failure['$']['message']).toContain('expect(received).toBe(expected)');
+      expect(failure['$']['type']).toBe('expect.toBe');
       expect(failure['_']).toContain('expect(1).toBe(0)');
+      expect(result.exitCode).toBe(1);
+    });
+
+    test('should render thrown error as <error> element', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('one', async ({}) => {
+            throw new Error('Boom');
+          });
+        `,
+      }, { reporter: 'junit' });
+      const xml = parseXML(result.output);
+      expect(xml['testsuites']['$']['tests']).toBe('1');
+      expect(xml['testsuites']['$']['failures']).toBe('0');
+      expect(xml['testsuites']['$']['errors']).toBe('1');
+      expect(xml['testsuites']['testsuite'][0]['$']['failures']).toBe('0');
+      expect(xml['testsuites']['testsuite'][0]['$']['errors']).toBe('1');
+      const error = xml['testsuites']['testsuite'][0]['testcase'][0]['error'][0];
+      expect(error['$']['message']).toBe('Boom');
+      expect(error['$']['type']).toBe('Error');
+      expect(error['_']).toContain('Boom');
+      expect(result.exitCode).toBe(1);
+    });
+
+    test('should render TypeError as <error> element with correct type', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('one', async ({}) => {
+            const obj = null;
+            obj.foo();
+          });
+        `,
+      }, { reporter: 'junit' });
+      const xml = parseXML(result.output);
+      expect(xml['testsuites']['$']['errors']).toBe('1');
+      expect(xml['testsuites']['$']['failures']).toBe('0');
+      const error = xml['testsuites']['testsuite'][0]['testcase'][0]['error'][0];
+      expect(error['$']['type']).toBe('TypeError');
       expect(result.exitCode).toBe(1);
     });
 
@@ -487,10 +527,6 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       test('with env var should create relative to cwd', async ({ runInlineTest }, testInfo) => {
         const result = await runInlineTest({
           'foo/package.json': `{ "name": "foo" }`,
-          // unused config along "search path"
-          'foo/bar/playwright.config.js': `
-            module.exports = { projects: [ {} ] };
-          `,
           'foo/bar/baz/tests/a.spec.js': `
             import { test, expect } from '@playwright/test';
             const fs = require('fs');
@@ -508,10 +544,6 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       test('support PLAYWRIGHT_JUNIT_OUTPUT_FILE', async ({ runInlineTest }, testInfo) => {
         const result = await runInlineTest({
           'foo/package.json': `{ "name": "foo" }`,
-          // unused config along "search path"
-          'foo/bar/playwright.config.js': `
-            module.exports = { projects: [ {} ] };
-          `,
           'foo/bar/baz/tests/a.spec.js': `
             import { test, expect } from '@playwright/test';
             const fs = require('fs');
@@ -524,6 +556,27 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         expect(result.exitCode).toBe(0);
         expect(result.passed).toBe(1);
         expect(fs.existsSync(testInfo.outputPath('foo', 'bar', 'baz', 'my-report.xml'))).toBe(true);
+      });
+
+      test('PLAYWRIGHT_JUNIT_OUTPUT_FILE should take precedence over config', async ({ runInlineTest }, testInfo) => {
+        const result = await runInlineTest({
+          'package.json': `{ "name": "foo" }`,
+          'bar/playwright.config.js': `
+            module.exports = {
+              reporter: [['junit', { outputFile: 'results.xml' }], ['line', {}]],
+              projects: [ {} ]
+            };
+          `,
+          'bar/baz/tests/a.spec.js': `
+            import { test, expect } from '@playwright/test';
+            const fs = require('fs');
+            test('pass', ({}, testInfo) => {
+            });
+          `
+        }, { 'config': 'bar/playwright.config.js' }, { 'PLAYWRIGHT_JUNIT_OUTPUT_FILE': 'bar/my-report.xml' });
+        expect(result.exitCode).toBe(0);
+        expect(result.passed).toBe(1);
+        expect(fs.existsSync(testInfo.outputPath('bar', 'my-report.xml'))).toBe(true);
       });
 
       test('support PLAYWRIGHT_JUNIT_OUTPUT_DIR and PLAYWRIGHT_JUNIT_OUTPUT_NAME', async ({ runInlineTest }, testInfo) => {
@@ -542,6 +595,27 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         expect(result.passed).toBe(1);
         expect(fs.existsSync(testInfo.outputPath('foo', 'bar', 'baz', 'my-report.xml'))).toBe(true);
       });
+
+      test('PLAYWRIGHT_JUNIT_OUTPUT_NAME should take precedence over config', async ({ runInlineTest }, testInfo) => {
+        const result = await runInlineTest({
+          'package.json': `{ "name": "foo" }`,
+          'bar/playwright.config.js': `
+            module.exports = {
+              reporter: [['junit', {}], ['line', {}]],
+              projects: [ {} ]
+            };
+          `,
+          'bar/baz/tests/a.spec.js': `
+            import { test, expect } from '@playwright/test';
+            const fs = require('fs');
+            test('pass', ({}, testInfo) => {
+            });
+          `
+        }, { 'config': 'bar/playwright.config.js' }, { 'PLAYWRIGHT_JUNIT_OUTPUT_NAME': 'foo/my-report.xml' });
+        expect(result.exitCode).toBe(0);
+        expect(result.passed).toBe(1);
+        expect(fs.existsSync(testInfo.outputPath('bar', 'foo', 'my-report.xml'))).toBe(true);
+      });
     });
 
     test('testsuites time is test run wall time', async ({ runInlineTest }) => {
@@ -558,6 +632,88 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       const time = +xml['testsuites']['$']['time'];
       expect(time).toBe(result.report.stats.duration / 1000);
       expect(time).toBeGreaterThan(1);
+    });
+
+    test('should emit flakyFailure for flaky tests when includeRetries is enabled', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'playwright.config.ts': `
+          module.exports = {
+            retries: 2,
+            reporter: [['junit', { includeRetries: true }]]
+          };
+        `,
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('one', async ({}, testInfo) => {
+            expect(testInfo.retry).toBe(2);
+          });
+        `,
+      }, { reporter: '' });
+      const xml = parseXML(result.output);
+      // Single testcase for the test; flaky tests count as passed.
+      expect(xml['testsuites']['$']['tests']).toBe('1');
+      expect(xml['testsuites']['$']['failures']).toBe('0');
+      expect(xml['testsuites']['testsuite'][0]['$']['tests']).toBe('1');
+      expect(xml['testsuites']['testsuite'][0]['$']['failures']).toBe('0');
+      const testcase = xml['testsuites']['testsuite'][0]['testcase'][0];
+      expect(testcase['$']['name']).toBe('one');
+      // No <failure> element — test eventually passed.
+      expect(testcase['failure']).toBeFalsy();
+      // Two <flakyFailure> elements for the two failed attempts.
+      expect(testcase['flakyFailure'].length).toBe(2);
+      expect(testcase['flakyFailure'][0]['stackTrace']).toBeTruthy();
+      expect(testcase['flakyFailure'][1]['stackTrace']).toBeTruthy();
+      expect(result.exitCode).toBe(0);
+    });
+
+    test('should not include retries by default', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('one', async ({}, testInfo) => {
+            expect(testInfo.retry).toBe(1);
+          });
+        `,
+      }, { retries: 1, reporter: 'junit' });
+      const xml = parseXML(result.output);
+      // Default behavior: single testcase, no flakyFailure elements.
+      expect(xml['testsuites']['$']['tests']).toBe('1');
+      const testcases = xml['testsuites']['testsuite'][0]['testcase'];
+      expect(testcases.length).toBe(1);
+      expect(testcases[0]['$']['name']).toBe('one');
+      expect(testcases[0]['flakyFailure']).toBeFalsy();
+      expect(result.exitCode).toBe(0);
+    });
+
+    test('should emit rerunFailure for permanent failures when includeRetries is enabled', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'playwright.config.ts': `
+          module.exports = {
+            retries: 1,
+            reporter: [['junit', { includeRetries: true }]]
+          };
+        `,
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('one', async ({}) => {
+            expect(1).toBe(0);
+          });
+        `,
+      }, { reporter: '' });
+      const xml = parseXML(result.output);
+      // Single testcase; permanent failure counts as 1 test with 1 failure.
+      expect(xml['testsuites']['$']['tests']).toBe('1');
+      expect(xml['testsuites']['$']['failures']).toBe('1');
+      expect(xml['testsuites']['testsuite'][0]['$']['tests']).toBe('1');
+      expect(xml['testsuites']['testsuite'][0]['$']['failures']).toBe('1');
+      const testcase = xml['testsuites']['testsuite'][0]['testcase'][0];
+      expect(testcase['$']['name']).toBe('one');
+      // <failure> for the first attempt.
+      expect(testcase['failure']).toBeTruthy();
+      // <rerunFailure> for the retry.
+      expect(testcase['rerunFailure'].length).toBe(1);
+      expect(testcase['rerunFailure'][0]['stackTrace']).toBeTruthy();
+      expect(result.exitCode).toBe(1);
     });
   });
 }

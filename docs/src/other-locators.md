@@ -175,7 +175,7 @@ Consider a page with two buttons, first invisible and second visible.
 
 ### CSS: elements that contain other elements
 
-The `:has()` pseudo-class is an [experimental CSS pseudo-class](https://developer.mozilla.org/en-US/docs/Web/CSS/:has). It returns an element if any of the selectors passed as parameters
+The `:has()` pseudo-class is a [CSS pseudo-class](https://developer.mozilla.org/en-US/docs/Web/CSS/:has). It returns an element if any of the selectors passed as parameters
 relative to the `:scope` of the given element match at least one element.
 
 Following snippet returns text content of an `<article>` element that has a `<div class=promo>` inside.
@@ -230,14 +230,16 @@ page.locator('button:has-text("Log in"), button:has-text("Sign in")').click()
 await page.Locator("button:has-text(\"Log in\"), button:has-text(\"Sign in\")").ClickAsync();
 ```
 
-The `:is()` pseudo-class is an [experimental CSS pseudo-class](https://developer.mozilla.org/en-US/docs/Web/CSS/:is) that
+The `:is()` pseudo-class is a [CSS pseudo-class](https://developer.mozilla.org/en-US/docs/Web/CSS/:is) that
 may be useful for specifying a list of extra conditions on an element.
 
 
 ### CSS: matching elements based on layout
 
-:::note
-Matching based on layout may produce unexpected results. For example, a different element could be matched when layout changes by one pixel.
+:::warning
+Layout selectors are deprecated and may be removed in the future. Matching based on layout may produce unexpected results. For example, a different element could be matched when layout changes by one pixel.
+
+We recommend prioritizing [user-visible locators](./locators.md#quick-guide) instead.
 :::
 
 Sometimes, it is hard to come up with a good selector to the target element when it lacks distinctive features. In this case, using Playwright layout CSS pseudo-classes could help. These can be combined with regular CSS to pinpoint one of the multiple choices.
@@ -323,9 +325,19 @@ It is usually possible to distinguish elements by some attribute or text content
 Sometimes page contains a number of similar elements, and it is hard to select a particular one. For example:
 
 ```html
-<section> <button>Buy</button> </section>
-<article><div> <button>Buy</button> </div></article>
-<div><div> <button>Buy</button> </div></div>
+<section>
+  <button>Buy</button>
+</section>
+<article>
+  <div>
+    <button>Buy</button>
+  </div>
+</article>
+<div>
+  <div>
+    <button>Buy</button>
+  </div>
+</div>
 ```
 
 In this case, `:nth-match(:text("Buy"), 3)` will select the third button from the snippet above. Note that index is one-based.
@@ -490,110 +502,6 @@ parent = page.get_by_text("Hello").locator('xpath=..')
 var parent = page.GetByText("Hello").Locator("xpath=..");
 ```
 
-## React locator
-
-:::note
-React locator is experimental and prefixed with `_`. The functionality might change in future.
-:::
-
-React locator allows finding elements by their component name and property values. The syntax is very similar to [CSS attribute selectors](https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors) and supports all CSS attribute selector operators.
-
-In React locator, component names are transcribed with **CamelCase**.
-
-```js
-await page.locator('_react=BookItem').click();
-```
-```java
-page.locator("_react=BookItem").click();
-```
-```python async
-await page.locator("_react=BookItem").click()
-```
-```python sync
-page.locator("_react=BookItem").click()
-```
-```csharp
-await page.Locator("_react=BookItem").ClickAsync();
-```
-
-More examples:
-
-- match by **component**: `_react=BookItem`
-- match by component and **exact property value**, case-sensitive: `_react=BookItem[author = "Steven King"]`
-- match by property value only, **case-insensitive**: `_react=[author = "steven king" i]`
-- match by component and **truthy property value**: `_react=MyButton[enabled]`
-- match by component and **boolean value**: `_react=MyButton[enabled = false]`
-- match by property **value substring**: `_react=[author *= "King"]`
-- match by component and **multiple properties**: `_react=BookItem[author *= "king" i][year = 1990]`
-- match by **nested** property value: `_react=[some.nested.value = 12]`
-- match by component and property value **prefix**: `_react=BookItem[author ^= "Steven"]`
-- match by component and property value **suffix**: `_react=BookItem[author $= "Steven"]`
-- match by component and **key**: `_react=BookItem[key = '2']`
-- match by property value **regex**: `_react=[author = /Steven(\\s+King)?/i]`
-
-
-To find React element names in a tree use [React DevTools](https://chrome.google.com/webstore/detail/react-developer-tools/fmkadmapgofadopljbjfkapdkoienihi).
-
-
-:::note
-React locator supports React 15 and above.
-:::
-
-:::note
-React locator, as well as [React DevTools](https://chrome.google.com/webstore/detail/react-developer-tools/fmkadmapgofadopljbjfkapdkoienihi), only work against **unminified** application builds.
-:::
-
-## Vue locator
-
-:::note
-Vue locator is experimental and prefixed with `_`. The functionality might change in future.
-:::
-
-Vue locator allows finding elements by their component name and property values. The syntax is very similar to [CSS attribute selectors](https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors) and supports all CSS attribute selector operators.
-
-In Vue locator, component names are transcribed with **kebab-case**.
-
-```js
-await page.locator('_vue=book-item').click();
-```
-```java
-page.locator("_vue=book-item").click();
-```
-```python async
-await page.locator("_vue=book-item").click()
-```
-```python sync
-page.locator("_vue=book-item").click()
-```
-```csharp
-await page.Locator("_vue=book-item").ClickAsync();
-```
-
-More examples:
-
-- match by **component**: `_vue=book-item`
-- match by component and **exact property value**, case-sensitive: `_vue=book-item[author = "Steven King"]`
-- match by property value only, **case-insensitive**: `_vue=[author = "steven king" i]`
-- match by component and **truthy property value**: `_vue=my-button[enabled]`
-- match by component and **boolean value**: `_vue=my-button[enabled = false]`
-- match by property **value substring**: `_vue=[author *= "King"]`
-- match by component and **multiple properties**: `_vue=book-item[author *= "king" i][year = 1990]`
-- match by **nested** property value: `_vue=[some.nested.value = 12]`
-- match by component and property value **prefix**: `_vue=book-item[author ^= "Steven"]`
-- match by component and property value **suffix**: `_vue=book-item[author $= "Steven"]`
-- match by property value **regex**: `_vue=[author = /Steven(\\s+King)?/i]`
-
-To find Vue element names in a tree use [Vue DevTools](https://chrome.google.com/webstore/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd?hl=en).
-
-:::note
-Vue locator supports Vue2 and above.
-:::
-
-:::note
-Vue locator, as well as [Vue DevTools](https://chrome.google.com/webstore/detail/react-developer-tools/fmkadmapgofadopljbjfkapdkoienihi), only work against **unminified** application builds.
-:::
-
-
 ## XPath locator
 
 :::warning
@@ -668,7 +576,7 @@ We recommend [locating by label text](Guides/Locators/locators.md#locate-by-labe
 
 Targeted input actions in Playwright automatically distinguish between labels and controls, so you can target the label to perform an action on the associated control.
 
-For example, consider the following DOM structure: `<label for="password">Password:</label><input id="password" type="password">`. You can target the label by it's "Password" text using [`method: Page.getByText`]. However, the following actions will be performed on the input instead of the label:
+For example, consider the following DOM structure: `<label for="password">Password:</label><input id="password" type="password">`. You can target the label by its "Password" text using [`method: Page.getByText`]. However, the following actions will be performed on the input instead of the label:
 - [`method: Locator.click`] will click the label and automatically focus the input field;
 - [`method: Locator.fill`] will fill the input field;
 - [`method: Locator.inputValue`] will return the value of the input field;
@@ -881,7 +789,7 @@ await page.Locator("data-test-id=submit").ClickAsync();
 ```
 
 :::note
-Attribute selectors are not CSS selectors, so anything CSS-specific like `:enabled` is not supported. For more features, use a proper [css] selector, e.g. `css=[data-test="login"]:enabled`.
+Attribute selectors are not CSS selectors, so anything CSS-specific like `:enabled` is not supported. For more features, use a proper [css](#css-locator) selector, e.g. `css=[data-test="login"]:enabled`.
 :::
 
 ## Chaining selectors
@@ -918,11 +826,3 @@ We recommend [filtering by another locator](Guides/Locators/locators.md#filter-b
 By default, chained selectors resolve to an element queried by the last selector. A selector can be prefixed with `*` to capture elements that are queried by an intermediate selector.
 
 For example, `css=article >> text=Hello` captures the element with the text `Hello`, and `*css=article >> text=Hello` (note the `*`) captures the `article` element that contains some element with the text `Hello`.
-
-
-[text]: #text-selector
-[css]: #css-selector
-[xpath]: #xpath-selectors
-[react]: #react-selectors
-[vue]: #vue-selectors
-[id]: #id-data-testid-data-test-id-data-test-selectors

@@ -14,17 +14,22 @@
  * limitations under the License.
  */
 
-import { ms as milliseconds } from 'playwright-core/lib/utilsBundle';
-import { colors, BaseReporter, formatError, formatTestTitle, isTTY, stepSuffix, stripAnsiEscapes, ttyWidth } from './base';
+import { msToString } from '@isomorphic/formatUtils';
+import { getAsBooleanFromENV } from '@utils/env';
+
+import { markErrorsAsReported, TerminalReporter, stepSuffix } from './base';
+import { stripAnsiEscapes } from '../util';
+
+import type { ListReporterOptions } from '../../types/test';
 import type { FullResult, Suite, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
-import { getAsBooleanFromENV } from 'playwright-core/lib/utils';
+import type { CommonReporterOptions, TerminalReporterOptions } from './base';
 
 // Allow it in the Visual Studio Code Terminal and the new Windows Terminal
 const DOES_NOT_SUPPORT_UTF8_IN_TERMINAL = process.platform === 'win32' && process.env.TERM_PROGRAM !== 'vscode' && !process.env.WT_SESSION;
 const POSITIVE_STATUS_MARK = DOES_NOT_SUPPORT_UTF8_IN_TERMINAL ? 'ok' : '✓';
 const NEGATIVE_STATUS_MARK = DOES_NOT_SUPPORT_UTF8_IN_TERMINAL ? 'x' : '✘';
 
-class ListReporter extends BaseReporter {
+class ListReporter extends TerminalReporter {
   private _lastRow = 0;
   private _lastColumn = 0;
   private _testRows = new Map<TestCase, number>();
@@ -33,108 +38,114 @@ class ListReporter extends BaseReporter {
   private _stepIndex = new Map<TestStep, string>();
   private _needNewLine = false;
   private _printSteps: boolean;
+  private _printFailuresInline: boolean;
+  private _failureIndex = 0;
+  private _paused = new Set<TestResult>();
 
-  constructor(options: { printSteps?: boolean } = {}) {
-    super();
-    this._printSteps = isTTY && getAsBooleanFromENV('PLAYWRIGHT_LIST_PRINT_STEPS', options.printSteps);
-  }
-
-  override printsToStdio() {
-    return true;
+  constructor(options?: ListReporterOptions & CommonReporterOptions & TerminalReporterOptions) {
+    super(options);
+    this._printSteps = getAsBooleanFromENV('PLAYWRIGHT_LIST_PRINT_STEPS', options?.printSteps);
+    this._printFailuresInline = getAsBooleanFromENV('PLAYWRIGHT_LIST_PRINT_FAILURES_INLINE', options?.printFailuresInline);
   }
 
   override onBegin(suite: Suite) {
     super.onBegin(suite);
     const startingMessage = this.generateStartingMessage();
     if (startingMessage) {
-      console.log(startingMessage);
-      console.log();
+      this.writeLine(startingMessage);
+      this.writeLine('');
     }
   }
 
-  override onTestBegin(test: TestCase, result: TestResult) {
-    super.onTestBegin(test, result);
-    if (!isTTY)
-      return;
-    this._maybeWriteNewLine();
+  onTestBegin(test: TestCase, result: TestResult) {
     const index = String(this._resultIndex.size + 1);
     this._resultIndex.set(result, index);
+
+    if (!this.screen.isTTY)
+      return;
+    this._maybeWriteNewLine();
     this._testRows.set(test, this._lastRow);
     const prefix = this._testPrefix(index, '');
-    const line = colors.dim(formatTestTitle(this.config, test)) + this._retrySuffix(result);
+    const line = this.screen.colors.dim(this.formatTestTitle(test)) + this._retrySuffix(result);
     this._appendLine(line, prefix);
   }
 
   override onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
     super.onStdOut(chunk, test, result);
-    this._dumpToStdio(test, chunk, process.stdout);
+    this._dumpToStdio(test, chunk, this.screen.stdout, 'out');
   }
 
   override onStdErr(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
     super.onStdErr(chunk, test, result);
-    this._dumpToStdio(test, chunk, process.stderr);
+    this._dumpToStdio(test, chunk, this.screen.stderr, 'err');
   }
 
-  override onStepBegin(test: TestCase, result: TestResult, step: TestStep) {
-    super.onStepBegin(test, result, step);
-    if (step.category !== 'test.step')
-      return;
-    const testIndex = this._resultIndex.get(result) || '';
-    if (!this._printSteps) {
-      if (isTTY)
-        this._updateLine(this._testRows.get(test)!, colors.dim(formatTestTitle(this.config, test, step)) + this._retrySuffix(result), this._testPrefix(testIndex, ''));
-      return;
-    }
+  private getStepIndex(testIndex: string, result: TestResult, step: TestStep): string {
+    if (this._stepIndex.has(step))
+      return this._stepIndex.get(step)!;
 
     const ordinal = ((result as any)[lastStepOrdinalSymbol] || 0) + 1;
     (result as any)[lastStepOrdinalSymbol] = ordinal;
     const stepIndex = `${testIndex}.${ordinal}`;
     this._stepIndex.set(step, stepIndex);
+    return stepIndex;
+  }
 
-    if (isTTY) {
+  onStepBegin(test: TestCase, result: TestResult, step: TestStep) {
+    if (step.category !== 'test.step')
+      return;
+    const testIndex = this._resultIndex.get(result) || '';
+
+    if (!this.screen.isTTY)
+      return;
+
+    if (this._printSteps) {
       this._maybeWriteNewLine();
       this._stepRows.set(step, this._lastRow);
-      const prefix = this._testPrefix(stepIndex, '');
-      const line = test.title + colors.dim(stepSuffix(step));
+      const prefix = this._testPrefix(this.getStepIndex(testIndex, result, step), '');
+      const line = test.title + this.screen.colors.dim(stepSuffix(step));
       this._appendLine(line, prefix);
+    } else {
+      this._updateOrAppendLine(this._testRows, test, this.screen.colors.dim(this.formatTestTitle(test, step)) + this._retrySuffix(result), this._testPrefix(testIndex, ''));
     }
   }
 
-  override onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
-    super.onStepEnd(test, result, step);
+  onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
     if (step.category !== 'test.step')
       return;
 
     const testIndex = this._resultIndex.get(result) || '';
     if (!this._printSteps) {
-      if (isTTY)
-        this._updateLine(this._testRows.get(test)!, colors.dim(formatTestTitle(this.config, test, step.parent)) + this._retrySuffix(result), this._testPrefix(testIndex, ''));
+      if (this.screen.isTTY)
+        this._updateOrAppendLine(this._testRows, test, this.screen.colors.dim(this.formatTestTitle(test, step.parent)) + this._retrySuffix(result), this._testPrefix(testIndex, ''));
       return;
     }
 
-    const index = this._stepIndex.get(step)!;
-    const title = test.title + colors.dim(stepSuffix(step));
+    const index = this.getStepIndex(testIndex, result, step);
+    const title = this.screen.isTTY ? test.title + this.screen.colors.dim(stepSuffix(step)) : this.formatTestTitle(test, step);
     const prefix = this._testPrefix(index, '');
     let text = '';
     if (step.error)
-      text = colors.red(title);
+      text = this.screen.colors.red(title);
     else
       text = title;
-    text += colors.dim(` (${milliseconds(step.duration)})`);
+    text += this.screen.colors.dim(` (${msToString(step.duration)})`);
 
-    this._updateOrAppendLine(this._stepRows.get(step)!, text, prefix);
+    this._updateOrAppendLine(this._stepRows, step, text, prefix);
   }
 
   private _maybeWriteNewLine() {
     if (this._needNewLine) {
       this._needNewLine = false;
-      process.stdout.write('\n');
+      this.screen.stdout.write('\n');
+      ++this._lastRow;
+      this._lastColumn = 0;
     }
   }
 
   private _updateLineCountAndNewLineFlagForOutput(text: string) {
     this._needNewLine = text[text.length - 1] !== '\n';
-    if (!ttyWidth)
+    if (!this.screen.ttyWidth)
       return;
     for (const ch of text) {
       if (ch === '\n') {
@@ -143,14 +154,14 @@ class ListReporter extends BaseReporter {
         continue;
       }
       ++this._lastColumn;
-      if (this._lastColumn > ttyWidth) {
+      if (this._lastColumn > this.screen.ttyWidth) {
         this._lastColumn = 0;
         ++this._lastRow;
       }
     }
   }
 
-  private _dumpToStdio(test: TestCase | undefined, chunk: string | Buffer, stream: NodeJS.WriteStream) {
+  private _dumpToStdio(test: TestCase | undefined, chunk: string | Buffer, stream: NodeJS.WriteStream, stdio: 'out' | 'err') {
     if (this.config.quiet)
       return;
     const text = chunk.toString('utf-8');
@@ -158,10 +169,44 @@ class ListReporter extends BaseReporter {
     stream.write(chunk);
   }
 
+  async onTestPaused(test: TestCase, result: TestResult) {
+    // Without TTY, user cannot interrupt the pause. Let's skip it.
+    if (!process.stdin.isTTY && !process.env.PW_TEST_DEBUG_REPORTERS)
+      return;
+
+    this._paused.add(result);
+
+    this._updateTestLine(test, result);
+    this._maybeWriteNewLine();
+    if (test.outcome() === 'unexpected') {
+      const errors = this.formatResultErrors(test, result);
+      this.writeLine(errors);
+      this._updateLineCountAndNewLineFlagForOutput(errors);
+      markErrorsAsReported(result);
+    }
+    this._appendLine(this.screen.colors.yellow(`Paused ${test.outcome() === 'unexpected' ? 'on error' : 'at test end'}. Press Ctrl+C to end.`), this._testPrefix('', ''));
+
+    await new Promise<void>(() => {});
+  }
+
   override onTestEnd(test: TestCase, result: TestResult) {
     super.onTestEnd(test, result);
+    const wasPaused = this._paused.delete(result);
+    if (!wasPaused)
+      this._updateTestLine(test, result);
+    if (!wasPaused && this._printFailuresInline && !this.willRetry(test) && (test.outcome() === 'flaky' || test.outcome() === 'unexpected' || result.status === 'interrupted'))
+      this._printFailure(test);
+  }
 
-    const title = formatTestTitle(this.config, test);
+  private _printFailure(test: TestCase) {
+    this._maybeWriteNewLine();
+    const message = '\n' + this.formatFailure(test, ++this._failureIndex) + '\n';
+    this._updateLineCountAndNewLineFlagForOutput(message);
+    this.screen.stdout.write(message);
+  }
+
+  private _updateTestLine(test: TestCase, result: TestResult) {
+    const title = this.formatTestTitle(test);
     let prefix = '';
     let text = '';
 
@@ -174,29 +219,32 @@ class ListReporter extends BaseReporter {
     }
 
     if (result.status === 'skipped') {
-      prefix = this._testPrefix(index, colors.green('-'));
+      prefix = this._testPrefix(index, this.screen.colors.green('-'));
       // Do not show duration for skipped.
-      text = colors.cyan(title) + this._retrySuffix(result);
+      text = this.screen.colors.cyan(title) + this._retrySuffix(result);
     } else {
       const statusMark = result.status === 'passed' ? POSITIVE_STATUS_MARK : NEGATIVE_STATUS_MARK;
       if (result.status === test.expectedStatus) {
-        prefix = this._testPrefix(index, colors.green(statusMark));
+        prefix = this._testPrefix(index, this.screen.colors.green(statusMark));
         text = title;
       } else {
-        prefix = this._testPrefix(index, colors.red(statusMark));
-        text = colors.red(title);
+        prefix = this._testPrefix(index, this.screen.colors.red(statusMark));
+        text = this.screen.colors.red(title);
       }
-      text += this._retrySuffix(result) + colors.dim(` (${milliseconds(result.duration)})`);
+      text += this._retrySuffix(result) + this.screen.colors.dim(` (${msToString(result.duration)})`);
     }
 
-    this._updateOrAppendLine(this._testRows.get(test)!, text, prefix);
+    this._updateOrAppendLine(this._testRows, test, text, prefix);
   }
 
-  private _updateOrAppendLine(row: number, text: string, prefix: string) {
-    if (isTTY) {
+  private _updateOrAppendLine<T>(entityRowNumbers: Map<T, number>, entity: T, text: string, prefix: string) {
+    const row = entityRowNumbers.get(entity);
+    // Only update the line if we assume that the line is still on the screen
+    if (row !== undefined && this.screen.isTTY && this._lastRow - row < this.screen.ttyHeight) {
       this._updateLine(row, text, prefix);
     } else {
       this._maybeWriteNewLine();
+      entityRowNumbers.set(entity, this._lastRow);
       this._appendLine(text, prefix);
     }
   }
@@ -204,18 +252,19 @@ class ListReporter extends BaseReporter {
   private _appendLine(text: string, prefix: string) {
     const line = prefix + this.fitToScreen(text, prefix);
     if (process.env.PW_TEST_DEBUG_REPORTERS) {
-      process.stdout.write(this._lastRow + ' : ' + line + '\n');
+      this.screen.stdout.write('#' + this._lastRow + ' : ' + line + '\n');
     } else {
-      process.stdout.write(line);
-      process.stdout.write('\n');
+      this.screen.stdout.write(line);
+      this.screen.stdout.write('\n');
     }
     ++this._lastRow;
+    this._lastColumn = 0;
   }
 
   private _updateLine(row: number, text: string, prefix: string) {
     const line = prefix + this.fitToScreen(text, prefix);
     if (process.env.PW_TEST_DEBUG_REPORTERS)
-      process.stdout.write(row + ' : ' + line + '\n');
+      this.screen.stdout.write('#' + row + ' : ' + line + '\n');
     else
       this._updateLineForTTY(row, line);
   }
@@ -223,36 +272,37 @@ class ListReporter extends BaseReporter {
   private _updateLineForTTY(row: number, line: string) {
     // Go up if needed
     if (row !== this._lastRow)
-      process.stdout.write(`\u001B[${this._lastRow - row}A`);
+      this.screen.stdout.write(`\u001B[${this._lastRow - row}A`);
     // Erase line, go to the start
-    process.stdout.write('\u001B[2K\u001B[0G');
-    process.stdout.write(line);
+    this.screen.stdout.write('\u001B[2K\u001B[0G');
+    this.screen.stdout.write(line);
     // Go down if needed.
     if (row !== this._lastRow)
-      process.stdout.write(`\u001B[${this._lastRow - row}E`);
+      this.screen.stdout.write(`\u001B[${this._lastRow - row}E`);
   }
 
   private _testPrefix(index: string, statusMark: string) {
     const statusMarkLength = stripAnsiEscapes(statusMark).length;
-    return '  ' + statusMark + ' '.repeat(3 - statusMarkLength) + colors.dim(index + ' ');
+    const indexLength = Math.ceil(Math.log10(this.totalTestCount + 1));
+    return '  ' + statusMark + ' '.repeat(3 - statusMarkLength) + this.screen.colors.dim(index.padStart(indexLength) + ' ');
   }
 
   private _retrySuffix(result: TestResult) {
-    return (result.retry ? colors.yellow(` (retry #${result.retry})`) : '');
+    return (result.retry ? this.screen.colors.yellow(` (retry #${result.retry})`) : '');
   }
 
   override onError(error: TestError): void {
     super.onError(error);
     this._maybeWriteNewLine();
-    const message = formatError(error, colors.enabled).message + '\n';
+    const message = this.formatError(error).message + '\n';
     this._updateLineCountAndNewLineFlagForOutput(message);
-    process.stdout.write(message);
+    this.screen.stdout.write(message);
   }
 
   override async onEnd(result: FullResult) {
     await super.onEnd(result);
-    process.stdout.write('\n');
-    this.epilogue(true);
+    this.screen.stdout.write('\n');
+    this.epilogue(!this._printFailuresInline);
   }
 }
 

@@ -1,9 +1,8 @@
 [*]
+@isomorphic/**
+@utils/**
 ../
-../isomorphic/**
-../registry/**
-../../common/
-../../protocol/
-../../utils/**
-../../utilsBundle.ts
-../../zipBundle.ts
+../codegen/language.ts
+../codegen/languages.ts
+../../package.ts
+node_modules/mime

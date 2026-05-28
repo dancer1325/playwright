@@ -4,7 +4,7 @@
 Locators are the central piece of Playwright's auto-waiting and retry-ability. In a nutshell, locators represent
 a way to find element(s) on the page at any moment. A locator can be created with the [`method: Page.locator`] method.
 
-[Learn more about locators](../../Guides/Locators/locators.md).
+[Learn more about locators](../locators.md).
 
 ## async method: Locator.all
 * since: v1.29
@@ -38,7 +38,7 @@ for li in page.get_by_role('listitem').all():
 ```
 
 ```java
-for (Locator li : page.getByRole('listitem').all())
+for (Locator li : page.getByRole("listitem").all())
   li.click();
 ```
 
@@ -54,7 +54,7 @@ foreach (var li in await page.GetByRole("listitem").AllAsync())
 Returns an array of `node.innerText` values for all matching nodes.
 
 :::warning[Asserting text]
-If you need to assert text on the page, prefer [`method: LocatorAssertions.toHaveText`] with [`option: useInnerText`] option to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
+If you need to assert text on the page, prefer [`method: LocatorAssertions.toHaveText`] with [`option: LocatorAssertions.toHaveText.useInnerText`] option to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
 :::
 
 **Usage**
@@ -72,7 +72,7 @@ texts = page.get_by_role("link").all_inner_texts()
 ```
 
 ```java
-String[] texts = page.getByRole(AriaRole.LINK).allInnerTexts();
+List<String> texts = page.getByRole(AriaRole.LINK).allInnerTexts();
 ```
 
 ```csharp
@@ -104,7 +104,7 @@ texts = page.get_by_role("link").all_text_contents()
 ```
 
 ```java
-String[] texts = page.getByRole(AriaRole.LINK).allTextContents();
+List<String> texts = page.getByRole(AriaRole.LINK).allTextContents();
 ```
 
 ```csharp
@@ -133,11 +133,11 @@ Locator button = page.getByRole(AriaRole.BUTTON).and(page.getByTitle("Subscribe"
 ```
 
 ```python async
-button = page.get_by_role("button").and_(page.getByTitle("Subscribe"))
+button = page.get_by_role("button").and_(page.get_by_title("Subscribe"))
 ```
 
 ```python sync
-button = page.get_by_role("button").and_(page.getByTitle("Subscribe"))
+button = page.get_by_role("button").and_(page.get_by_title("Subscribe"))
 ```
 
 ```csharp
@@ -150,6 +150,92 @@ var button = page.GetByRole(AriaRole.Button).And(page.GetByTitle("Subscribe"));
 
 Additional locator to match.
 
+## async method: Locator.ariaSnapshot
+* since: v1.49
+- returns: <[string]>
+
+Captures the aria snapshot of the given element.
+Read more about [aria snapshots](../aria-snapshots.md) and [`method: LocatorAssertions.toMatchAriaSnapshot`] for the corresponding assertion.
+
+**Usage**
+
+```js
+await page.getByRole('link').ariaSnapshot();
+```
+
+```java
+page.getByRole(AriaRole.LINK).ariaSnapshot();
+```
+
+```python async
+await page.get_by_role("link").aria_snapshot()
+```
+
+```python sync
+page.get_by_role("link").aria_snapshot()
+```
+
+```csharp
+await page.GetByRole(AriaRole.Link).AriaSnapshotAsync();
+```
+
+**Details**
+
+This method captures the aria snapshot of the given element. The snapshot is a string that represents the state of the element and its children.
+The snapshot can be used to assert the state of the element in the test, or to compare it to state in the future.
+
+The ARIA snapshot is represented using [YAML](https://yaml.org/spec/1.2.2/) markup language:
+* The keys of the objects are the roles and optional accessible names of the elements.
+* The values are either text content or an array of child elements.
+* Generic static text can be represented with the `text` key.
+
+Below is the HTML markup and the respective ARIA snapshot:
+
+```html
+<ul aria-label="Links">
+  <li><a href="/">Home</a></li>
+  <li><a href="/about">About</a></li>
+<ul>
+```
+
+```yml
+- list "Links":
+  - listitem:
+    - link "Home"
+  - listitem:
+    - link "About"
+```
+
+An AI-optimized snapshot, controlled by [`option: Locator.ariaSnapshot.mode`], is different from a default snapshot:
+1. Includes element references `[ref=e2]`.
+2. Does not wait for an element matching the locator, and throws when no elements match.
+3. Includes snapshots of `<iframe>`s inside the target.
+
+### option: Locator.ariaSnapshot.mode
+* since: v1.59
+- `mode` <[AriaSnapshotMode]<"ai"|"default">>
+
+When set to `"ai"`, returns a snapshot optimized for AI consumption. Defaults to `"default"`. See details for more information.
+
+### option: Locator.ariaSnapshot.timeout = %%-input-timeout-%%
+* since: v1.49
+
+### option: Locator.ariaSnapshot.timeout = %%-input-timeout-js-%%
+* since: v1.49
+
+### option: Locator.ariaSnapshot.depth
+* since: v1.59
+- `depth` <[int]>
+
+When specified, limits the depth of the snapshot.
+
+### option: Locator.ariaSnapshot.boxes
+* since: v1.60
+- `boxes` <[boolean]>
+
+When `true`, appends each element's bounding box as `[box=x,y,width,height]` to the snapshot. Coordinates are
+relative to the viewport, in CSS pixels, as returned by [`Element.getBoundingClientRect()`](https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect).
+Defaults to `false`.
 
 ## async method: Locator.blur
 * since: v1.28
@@ -165,6 +251,8 @@ Calls [blur](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/blur) 
 ## async method: Locator.boundingBox
 * since: v1.14
 - returns: <[null]|[Object]>
+  * alias: BoundingBox
+  * alias-csharp: LocatorBoundingBoxResult
   - `x` <[float]> the x coordinate of the element in pixels.
   - `y` <[float]> the y coordinate of the element in pixels.
   - `width` <[float]> the width of the element in pixels.
@@ -228,10 +316,9 @@ Ensure that checkbox or radio element is checked.
 Performs the following steps:
 1. Ensure that element is a checkbox or a radio input. If not, this method throws. If the element is already
    checked, this method returns immediately.
-1. Wait for [actionability](../../Guides/Auto-waiting/actionability.md) checks on the element, unless [`option: force`] option is set.
+1. Wait for [actionability](../actionability.md) checks on the element, unless [`option: force`] option is set.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 1. Ensure that the element is now checked. If not, this method throws.
 
 If the element is detached from the DOM at any moment during the action, this method throws.
@@ -267,7 +354,7 @@ await page.GetByRole(AriaRole.Checkbox).CheckAsync();
 ### option: Locator.check.force = %%-input-force-%%
 * since: v1.14
 
-### option: Locator.check.noWaitAfter = %%-input-no-wait-after-%%
+### option: Locator.check.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.14
 
 ### option: Locator.check.timeout = %%-input-timeout-%%
@@ -286,7 +373,7 @@ Clear the input field.
 
 **Details**
 
-This method waits for [actionability](../../Guides/Auto-waiting/actionability.md) checks, focuses the element, clears it and triggers an `input` event after clearing.
+This method waits for [actionability](../actionability.md) checks, focuses the element, clears it and triggers an `input` event after clearing.
 
 If the target element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be cleared instead.
 
@@ -317,7 +404,7 @@ await page.GetByRole(AriaRole.Textbox).ClearAsync();
 ### option: Locator.clear.force = %%-input-force-%%
 * since: v1.28
 
-### option: Locator.clear.noWaitAfter = %%-input-no-wait-after-%%
+### option: Locator.clear.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.28
 
 ### option: Locator.clear.timeout = %%-input-timeout-%%
@@ -334,7 +421,7 @@ Click an element.
 **Details**
 
 This method clicks the element by performing the following steps:
-1. Wait for [actionability](../../Guides/Auto-waiting/actionability.md) checks on the element, unless [`option: force`] option is set.
+1. Wait for [actionability](../actionability.md) checks on the element, unless [`option: force`] option is set.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element, or the specified [`option: position`].
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
@@ -434,8 +521,11 @@ await page.Locator("canvas").ClickAsync(new() {
 ### option: Locator.click.timeout = %%-input-timeout-js-%%
 * since: v1.14
 
-### option: Locator.click.trial = %%-input-trial-%%
+### option: Locator.click.trial = %%-input-trial-with-modifiers-%%
 * since: v1.14
+
+### option: Locator.click.steps = %%-input-mousemove-steps-%%
+* since: v1.57
 
 ## async method: Locator.count
 * since: v1.14
@@ -480,11 +570,9 @@ Double-click an element.
 **Details**
 
 This method double clicks the element by performing the following steps:
-1. Wait for [actionability](../../Guides/Auto-waiting/actionability.md) checks on the element, unless [`option: force`] option is set.
+1. Wait for [actionability](../actionability.md) checks on the element, unless [`option: force`] option is set.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to double click in the center of the element, or the specified [`option: position`].
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set. Note that
-   if the first click of the `dblclick()` triggers a navigation event, this method will throw.
 
 If the element is detached from the DOM at any moment during the action, this method throws.
 
@@ -510,7 +598,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Locator.dblclick.force = %%-input-force-%%
 * since: v1.14
 
-### option: Locator.dblclick.noWaitAfter = %%-input-no-wait-after-%%
+### option: Locator.dblclick.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.14
 
 ### option: Locator.dblclick.timeout = %%-input-timeout-%%
@@ -519,8 +607,109 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Locator.dblclick.timeout = %%-input-timeout-js-%%
 * since: v1.14
 
-### option: Locator.dblclick.trial = %%-input-trial-%%
+### option: Locator.dblclick.trial = %%-input-trial-with-modifiers-%%
 * since: v1.14
+
+### option: Locator.dblclick.steps = %%-input-mousemove-steps-%%
+* since: v1.57
+
+## method: Locator.describe
+* since: v1.53
+- returns: <[Locator]>
+
+Describes the locator, description is used in the trace viewer and reports.
+Returns the locator pointing to the same element.
+
+**Usage**
+
+```js
+const button = page.getByTestId('btn-sub').describe('Subscribe button');
+await button.click();
+```
+
+```java
+Locator button = page.getByTestId("btn-sub").describe("Subscribe button");
+button.click();
+```
+
+```python async
+button = page.get_by_test_id("btn-sub").describe("Subscribe button")
+await button.click()
+```
+
+```python sync
+button = page.get_by_test_id("btn-sub").describe("Subscribe button")
+button.click()
+```
+
+```csharp
+var button = Page.GetByTestId("btn-sub").Describe("Subscribe button");
+await button.ClickAsync();
+```
+
+### param: Locator.describe.description
+* since: v1.53
+- `description` <[string]>
+
+Locator description.
+
+## method: Locator.description
+* since: v1.57
+* langs: python, java, csharp
+- returns: <[null]|[string]>
+
+Returns locator description previously set with [`method: Locator.describe`]. Returns `null` if no custom description has been set.
+
+**Usage**
+
+```python async
+button = page.get_by_role("button").describe("Subscribe button")
+print(button.description())  # "Subscribe button"
+
+input = page.get_by_role("textbox")
+print(input.description())  # None
+```
+
+```python sync
+button = page.get_by_role("button").describe("Subscribe button")
+print(button.description())  # "Subscribe button"
+
+input = page.get_by_role("textbox")
+print(input.description())  # None
+```
+
+```java
+Locator button = page.getByRole(AriaRole.BUTTON).describe("Subscribe button");
+System.out.println(button.description()); // "Subscribe button"
+
+Locator input = page.getByRole(AriaRole.TEXTBOX);
+System.out.println(input.description()); // null
+```
+
+```csharp
+var button = Page.GetByRole(AriaRole.Button).Describe("Subscribe button");
+Console.WriteLine(button.Description()); // "Subscribe button"
+
+var input = Page.GetByRole(AriaRole.Textbox);
+Console.WriteLine(input.Description()); // null
+```
+
+## method: Locator.description
+* since: v1.57
+* langs: js
+- returns: <[null]|[string]>
+
+Returns locator description previously set with [`method: Locator.describe`]. Returns `null` if no custom description has been set. Prefer [`method: Locator.toString`] for a human-readable representation, as it uses the description when available.
+
+**Usage**
+
+```js
+const button = page.getByRole('button').describe('Subscribe button');
+console.log(button.description()); // "Subscribe button"
+
+const input = page.getByRole('textbox');
+console.log(input.description()); // null
+```
 
 ## async method: Locator.dispatchEvent
 * since: v1.14
@@ -575,13 +764,11 @@ properties:
 You can also specify [JSHandle] as the property value if you want live objects to be passed into the event:
 
 ```js
-// Note you can only create DataTransfer in Chromium and Firefox
 const dataTransfer = await page.evaluateHandle(() => new DataTransfer());
 await locator.dispatchEvent('dragstart', { dataTransfer });
 ```
 
 ```java
-// Note you can only create DataTransfer in Chromium and Firefox
 JSHandle dataTransfer = page.evaluateHandle("() => new DataTransfer()");
 Map<String, Object> arg = new HashMap<>();
 arg.put("dataTransfer", dataTransfer);
@@ -589,13 +776,11 @@ locator.dispatchEvent("dragstart", arg);
 ```
 
 ```python async
-# note you can only create data_transfer in chromium and firefox
 data_transfer = await page.evaluate_handle("new DataTransfer()")
 await locator.dispatch_event("#source", "dragstart", {"dataTransfer": data_transfer})
 ```
 
 ```python sync
-# note you can only create data_transfer in chromium and firefox
 data_transfer = page.evaluate_handle("new DataTransfer()")
 locator.dispatch_event("#source", "dragstart", {"dataTransfer": data_transfer})
 ```
@@ -709,7 +894,7 @@ Locator of the element to drag to.
 ### option: Locator.dragTo.force = %%-input-force-%%
 * since: v1.18
 
-### option: Locator.dragTo.noWaitAfter = %%-input-no-wait-after-%%
+### option: Locator.dragTo.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.18
 
 ### option: Locator.dragTo.timeout = %%-input-timeout-%%
@@ -726,6 +911,57 @@ Locator of the element to drag to.
 
 ### option: Locator.dragTo.targetPosition = %%-input-target-position-%%
 * since: v1.18
+
+### option: Locator.dragTo.steps = %%-input-drag-steps-%%
+* since: v1.57
+
+## async method: Locator.drop
+* since: v1.60
+
+Simulate an external drag-and-drop of files or clipboard-like data onto this locator.
+
+**Details**
+
+Dispatches the native `dragenter`, `dragover`, and `drop` events at the center of the
+target element with a synthetic [DataTransfer] carrying the provided files and/or data
+entries. Works cross-browser by constructing the [DataTransfer] in the page context.
+
+If the target element's `dragover` listener does not call `preventDefault()`, the target
+is considered to have rejected the drop: Playwright dispatches `dragleave` and this
+method throws.
+
+**Usage**
+
+Drop a file buffer onto an upload area:
+
+```js
+await page.locator('#dropzone').drop({
+  files: { name: 'note.txt', mimeType: 'text/plain', buffer: Buffer.from('hello') },
+});
+```
+
+Drop plain text and a URL together:
+
+```js
+await page.locator('#dropzone').drop({
+  data: {
+    'text/plain': 'hello world',
+    'text/uri-list': 'https://example.com',
+  },
+});
+```
+
+### param: Locator.drop.payload = %%-drop-payload-%%
+* since: v1.60
+
+### option: Locator.drop.position = %%-input-position-%%
+* since: v1.60
+
+### option: Locator.drop.timeout = %%-input-timeout-%%
+* since: v1.60
+
+### option: Locator.drop.timeout = %%-input-timeout-js-%%
+* since: v1.60
 
 ## async method: Locator.elementHandle
 * since: v1.14
@@ -810,29 +1046,35 @@ If [`param: expression`] throws or rejects, this method throws.
 
 **Usage**
 
+Passing argument to [`param: expression`]:
+
 ```js
-const tweets = page.locator('.tweet .retweets');
-expect(await tweets.evaluate(node => node.innerText)).toBe('10 retweets');
+const result = await page.getByTestId('myId').evaluate((element, [x, y]) => {
+  return element.textContent + ' ' + x * y;
+}, [7, 8]);
+console.log(result); // prints "myId text 56"
 ```
 
 ```java
-Locator tweets = page.locator(".tweet .retweets");
-assertEquals("10 retweets", tweets.evaluate("node => node.innerText"));
+Object result = page.getByTestId("myId").evaluate("(element, [x, y]) => {\n" +
+  "  return element.textContent + ' ' + x * y;\n" +
+  "}", Arrays.asList(7, 8));
+System.out.println(result); // prints "myId text 56"
 ```
 
 ```python async
-tweets = page.locator(".tweet .retweets")
-assert await tweets.evaluate("node => node.innerText") == "10 retweets"
+result = await page.get_by_testid("myId").evaluate("(element, [x, y]) => element.textContent + ' ' + x * y", [7, 8])
+print(result) # prints "myId text 56"
 ```
 
 ```python sync
-tweets = page.locator(".tweet .retweets")
-assert tweets.evaluate("node => node.innerText") == "10 retweets"
+result = page.get_by_testid("myId").evaluate("(element, [x, y]) => element.textContent + ' ' + x * y", [7, 8])
+print(result) # prints "myId text 56"
 ```
 
 ```csharp
-var tweets = page.Locator(".tweet .retweets");
-Assert.AreEqual("10 retweets", await tweets.EvaluateAsync("node => node.innerText"));
+var result = await page.GetByTestId("myId").EvaluateAsync<string>("(element, [x, y]) => element.textContent + ' ' + x * y)", new[] { 7, 8 });
+Console.WriteLine(result); // prints "myId text 56"
 ```
 
 ### param: Locator.evaluate.expression = %%-evaluate-expression-%%
@@ -847,11 +1089,19 @@ Assert.AreEqual("10 retweets", await tweets.EvaluateAsync("node => node.innerTex
 
 Optional argument to pass to [`param: expression`].
 
-### option: Locator.evaluate.timeout = %%-input-timeout-%%
+### option: Locator.evaluate.timeout
 * since: v1.14
+* langs: python, java, csharp
+- `timeout` <[float]>
 
-### option: Locator.evaluate.timeout = %%-input-timeout-js-%%
+Maximum time in milliseconds to wait for the locator before evaluating. Note that after locator is resolved, evaluation itself is not limited by the timeout. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+
+### option: Locator.evaluate.timeout
 * since: v1.14
+* langs: js
+- `timeout` <[float]>
+
+Maximum time in milliseconds to wait for the locator before evaluating. Note that after locator is resolved, evaluation itself is not limited by the timeout. Defaults to `0` - no timeout.
 
 ## async method: Locator.evaluateAll
 * since: v1.14
@@ -936,11 +1186,19 @@ See [`method: Page.evaluateHandle`] for more details.
 
 Optional argument to pass to [`param: expression`].
 
-### option: Locator.evaluateHandle.timeout = %%-input-timeout-%%
+### option: Locator.evaluateHandle.timeout
 * since: v1.14
+* langs: python, java, csharp
+- `timeout` <[float]>
 
-### option: Locator.evaluateHandle.timeout = %%-input-timeout-js-%%
+Maximum time in milliseconds to wait for the locator before evaluating. Note that after locator is resolved, evaluation itself is not limited by the timeout. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+
+### option: Locator.evaluateHandle.timeout
 * since: v1.14
+* langs: js
+- `timeout` <[float]>
+
+Maximum time in milliseconds to wait for the locator before evaluating. Note that after locator is resolved, evaluation itself is not limited by the timeout. Defaults to `0` - no timeout.
 
 ## async method: Locator.fill
 * since: v1.14
@@ -971,7 +1229,7 @@ await page.GetByRole(AriaRole.Textbox).FillAsync("example value");
 
 **Details**
 
-This method waits for [actionability](../../Guides/Auto-waiting/actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling. Note that you can pass an empty string to clear the input field.
+This method waits for [actionability](../actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling. Note that you can pass an empty string to clear the input field.
 
 If the target element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be filled instead.
 
@@ -986,7 +1244,7 @@ Value to set for the `<input>`, `<textarea>` or `[contenteditable]` element.
 ### option: Locator.fill.force = %%-input-force-%%
 * since: v1.14
 
-### option: Locator.fill.noWaitAfter = %%-input-no-wait-after-%%
+### option: Locator.fill.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.14
 
 ### option: Locator.fill.timeout = %%-input-timeout-%%
@@ -1060,6 +1318,9 @@ await rowLocator
 
 ### option: Locator.filter.hasNotText = %%-locator-option-has-not-text-%%
 * since: v1.33
+
+### option: Locator.filter.visible = %%-locator-option-visible-%%
+* since: v1.51
 
 ## method: Locator.first
 * since: v1.14
@@ -1181,6 +1442,8 @@ Attribute name to get the value for.
 
 ### option: Locator.getByRole.exact = %%-locator-get-by-role-option-exact-%%
 
+### option: Locator.getByRole.description = %%-locator-get-by-role-option-description-%%
+
 ## method: Locator.getByTestId
 * since: v1.27
 - returns: <[Locator]>
@@ -1210,10 +1473,35 @@ Attribute name to get the value for.
 
 ### option: Locator.getByTitle.exact = %%-locator-get-by-text-exact-%%
 
+## async method: Locator.hideHighlight
+* since: v1.60
+
+Hides the element highlight previously added by [`method: Locator.highlight`].
+
 ## async method: Locator.highlight
 * since: v1.20
+- returns: <[Disposable]>
 
 Highlight the corresponding element(s) on the screen. Useful for debugging, don't commit the code that uses [`method: Locator.highlight`].
+
+### option: Locator.highlight.style
+* since: v1.60
+* langs: js
+- `style` <[string]|[Object]<[string], [string]|[number]>>
+
+Inline CSS applied to the highlight overlay, e.g.
+
+```js
+await locator.highlight({ style: 'outline: 2px dashed red' });
+await locator.highlight({ style: { color: 'red' } });
+```
+
+### option: Locator.highlight.style
+* since: v1.60
+* langs: java, python, csharp
+- `style` <[string]>
+
+Additional inline CSS applied to the highlight overlay, e.g. `"outline: 2px dashed red"`.
 
 ## async method: Locator.hover
 * since: v1.14
@@ -1245,10 +1533,9 @@ await page.GetByRole(AriaRole.Link).HoverAsync();
 **Details**
 
 This method hovers over the element by performing the following steps:
-1. Wait for [actionability](../../Guides/Auto-waiting/actionability.md) checks on the element, unless [`option: force`] option is set.
+1. Wait for [actionability](../actionability.md) checks on the element, unless [`option: force`] option is set.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to hover over the center of the element, or the specified [`option: position`].
-1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
 
 If the element is detached from the DOM at any moment during the action, this method throws.
 
@@ -1270,10 +1557,10 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Locator.hover.timeout = %%-input-timeout-js-%%
 * since: v1.14
 
-### option: Locator.hover.trial = %%-input-trial-%%
+### option: Locator.hover.trial = %%-input-trial-with-modifiers-%%
 * since: v1.14
 
-### option: Locator.hover.noWaitAfter = %%-input-no-wait-after-%%
+### option: Locator.hover.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.28
 
 ## async method: Locator.innerHTML
@@ -1295,7 +1582,7 @@ Returns the [`element.innerHTML`](https://developer.mozilla.org/en-US/docs/Web/A
 Returns the [`element.innerText`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/innerText).
 
 :::warning[Asserting text]
-If you need to assert text on the page, prefer [`method: LocatorAssertions.toHaveText`] with [`option: useInnerText`] option to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
+If you need to assert text on the page, prefer [`method: LocatorAssertions.toHaveText`] with [`option: LocatorAssertions.toHaveText.useInnerText`] option to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
 :::
 
 ### option: Locator.innerText.timeout = %%-input-timeout-%%
@@ -1388,7 +1675,7 @@ var isChecked = await page.GetByRole(AriaRole.Checkbox).IsCheckedAsync();
 * since: v1.14
 - returns: <[boolean]>
 
-Returns whether the element is disabled, the opposite of [enabled](../../Guides/Auto-waiting/actionability.md#enabled).
+Returns whether the element is disabled, the opposite of [enabled](../actionability.md#enabled).
 
 :::warning[Asserting disabled state]
 If you need to assert that an element is disabled, prefer [`method: LocatorAssertions.toBeDisabled`] to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
@@ -1426,7 +1713,7 @@ Boolean disabled = await page.GetByRole(AriaRole.Button).IsDisabledAsync();
 * since: v1.14
 - returns: <[boolean]>
 
-Returns whether the element is [editable](../../Guides/Auto-waiting/actionability.md#editable).
+Returns whether the element is [editable](../actionability.md#editable). If the target element is not an `<input>`, `<textarea>`, `<select>`, `[contenteditable]` and does not have a role allowing `[aria-readonly]`, this method throws an error.
 
 :::warning[Asserting editable state]
 If you need to assert that an element is editable, prefer [`method: LocatorAssertions.toBeEditable`] to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
@@ -1464,7 +1751,7 @@ Boolean editable = await page.GetByRole(AriaRole.Textbox).IsEditableAsync();
 * since: v1.14
 - returns: <[boolean]>
 
-Returns whether the element is [enabled](../../Guides/Auto-waiting/actionability.md#enabled).
+Returns whether the element is [enabled](../actionability.md#enabled).
 
 :::warning[Asserting enabled state]
 If you need to assert that an element is enabled, prefer [`method: LocatorAssertions.toBeEnabled`] to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
@@ -1502,7 +1789,7 @@ Boolean enabled = await page.GetByRole(AriaRole.Button).IsEnabledAsync();
 * since: v1.14
 - returns: <[boolean]>
 
-Returns whether the element is hidden, the opposite of [visible](../../Guides/Auto-waiting/actionability.md#visible).
+Returns whether the element is hidden, the opposite of [visible](../actionability.md#visible).
 
 :::warning[Asserting visibility]
 If you need to assert that element is hidden, prefer [`method: LocatorAssertions.toBeHidden`] to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
@@ -1539,7 +1826,7 @@ Boolean hidden = await page.GetByRole(AriaRole.Button).IsHiddenAsync();
 * since: v1.14
 - returns: <[boolean]>
 
-Returns whether the element is [visible](../../Guides/Auto-waiting/actionability.md#visible).
+Returns whether the element is [visible](../actionability.md#visible).
 
 :::warning[Asserting visibility]
 If you need to assert that element is visible, prefer [`method: LocatorAssertions.toBeVisible`] to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
@@ -1618,6 +1905,12 @@ var banana = await page.GetByRole(AriaRole.Listitem).Last(1);
 ### option: Locator.locator.hasNotText = %%-locator-option-has-not-text-%%
 * since: v1.33
 
+## async method: Locator.normalize
+* since: v1.59
+- returns: <[Locator]>
+
+Returns a new locator that uses best practices for referencing the matched element, prioritizing test ids,
+aria roles, and other user-facing attributes over CSS selectors. This is useful for converting implementation-detail selectors into more resilient, human-readable locators.
 
 ## method: Locator.nth
 * since: v1.14
@@ -1658,16 +1951,23 @@ var banana = await page.GetByRole(AriaRole.Listitem).Nth(2);
   - alias-python: or_
 - returns: <[Locator]>
 
-Creates a locator that matches either of the two locators.
+Creates a locator matching all elements that match one or both of the two locators.
+
+Note that when both locators match something, the resulting locator will have multiple matches, potentially causing a [locator strictness](../locators.md#strictness) violation.
 
 **Usage**
 
 Consider a scenario where you'd like to click on a "New email" button, but sometimes a security settings dialog shows up instead. In this case, you can wait for either a "New email" button, or a dialog and act accordingly.
 
+:::note
+If both "New email" button and security dialog appear on screen, the "or" locator will match both of them,
+possibly throwing the ["strict mode violation" error](../locators.md#strictness). In this case, you can use [`method: Locator.first`] to only match one of them.
+:::
+
 ```js
 const newEmail = page.getByRole('button', { name: 'New' });
 const dialog = page.getByText('Confirm security settings');
-await expect(newEmail.or(dialog)).toBeVisible();
+await expect(newEmail.or(dialog).first()).toBeVisible();
 if (await dialog.isVisible())
   await page.getByRole('button', { name: 'Dismiss' }).click();
 await newEmail.click();
@@ -1676,7 +1976,7 @@ await newEmail.click();
 ```java
 Locator newEmail = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("New"));
 Locator dialog = page.getByText("Confirm security settings");
-assertThat(newEmail.or(dialog)).isVisible();
+assertThat(newEmail.or(dialog).first()).isVisible();
 if (dialog.isVisible())
   page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Dismiss")).click();
 newEmail.click();
@@ -1685,7 +1985,7 @@ newEmail.click();
 ```python async
 new_email = page.get_by_role("button", name="New")
 dialog = page.get_by_text("Confirm security settings")
-await expect(new_email.or_(dialog)).to_be_visible()
+await expect(new_email.or_(dialog).first).to_be_visible()
 if (await dialog.is_visible()):
   await page.get_by_role("button", name="Dismiss").click()
 await new_email.click()
@@ -1694,7 +1994,7 @@ await new_email.click()
 ```python sync
 new_email = page.get_by_role("button", name="New")
 dialog = page.get_by_text("Confirm security settings")
-expect(new_email.or_(dialog)).to_be_visible()
+expect(new_email.or_(dialog).first).to_be_visible()
 if (dialog.is_visible()):
   page.get_by_role("button", name="Dismiss").click()
 new_email.click()
@@ -1703,7 +2003,7 @@ new_email.click()
 ```csharp
 var newEmail = page.GetByRole(AriaRole.Button, new() { Name = "New" });
 var dialog = page.GetByText("Confirm security settings");
-await Expect(newEmail.Or(dialog)).ToBeVisibleAsync();
+await Expect(newEmail.Or(dialog).First).ToBeVisibleAsync();
 if (await dialog.IsVisibleAsync())
   await page.GetByRole(AriaRole.Button, new() { Name = "Dismiss" }).ClickAsync();
 await newEmail.ClickAsync();
@@ -1803,6 +2103,8 @@ In most cases, you should use [`method: Locator.fill`] instead. You only need to
 
 Focuses the element, and then sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.
 
+When [`option: namedKeys`] is `true`, anything inside `{}` is treated as a key name (same format as [`method: Locator.press`]).
+
 To press a special key, like `Control` or `ArrowDown`, use [`method: Locator.press`].
 
 **Usage**
@@ -1810,26 +2112,43 @@ To press a special key, like `Control` or `ArrowDown`, use [`method: Locator.pre
 ```js
 await locator.pressSequentially('Hello'); // Types instantly
 await locator.pressSequentially('World', { delay: 100 }); // Types slower, like a user
+
+// Mix characters and named keys
+await locator.pressSequentially('Hello{Enter}World', { namedKeys: true });
+// Use modifier combos
+await locator.pressSequentially('{Control+A}{Delete}Hello', { namedKeys: true });
 ```
 
 ```java
 locator.pressSequentially("Hello"); // Types instantly
 locator.pressSequentially("World", new Locator.pressSequentiallyOptions().setDelay(100)); // Types slower, like a user
+
+// Mix characters and named keys
+locator.pressSequentially("Hello{Enter}World", new Locator.pressSequentiallyOptions().setNamedKeys(true));
 ```
 
 ```python async
 await locator.press_sequentially("hello") # types instantly
 await locator.press_sequentially("world", delay=100) # types slower, like a user
+
+# Mix characters and named keys
+await locator.press_sequentially("Hello{Enter}World", named_keys=True)
 ```
 
 ```python sync
 locator.press_sequentially("hello") # types instantly
 locator.press_sequentially("world", delay=100) # types slower, like a user
+
+# Mix characters and named keys
+locator.press_sequentially("Hello{Enter}World", named_keys=True)
 ```
 
 ```csharp
 await locator.PressSequentiallyAsync("Hello"); // Types instantly
 await locator.PressSequentiallyAsync("World", new() { Delay = 100 }); // Types slower, like a user
+
+// Mix characters and named keys
+await locator.PressSequentiallyAsync("Hello{Enter}World", new() { NamedKeys = true });
 ```
 
 An example of typing into a text field and then submitting the form:
@@ -1868,7 +2187,7 @@ await locator.PressAsync("Enter");
 * since: v1.38
 - `text` <[string]>
 
-String of characters to sequentially press into a focused element.
+String of characters to sequentially press into a focused element. When [`option: namedKeys`] is `true`, anything inside `{}` is treated as a key name (same format as [`method: Locator.press`]).
 
 ### option: Locator.pressSequentially.delay
 * since: v1.38
@@ -1876,7 +2195,14 @@ String of characters to sequentially press into a focused element.
 
 Time to wait between key presses in milliseconds. Defaults to 0.
 
-### option: Locator.pressSequentially.noWaitAfter = %%-input-no-wait-after-%%
+### option: Locator.pressSequentially.namedKeys
+* since: v1.61
+- `namedKeys` <[boolean]>
+
+When [`option: namedKeys`] is `true`, anything inside `{}` is treated as a key name (same format as [`method: Locator.press`]).
+Use `{{` to type a literal brace character. Defaults to `false`.
+
+### option: Locator.pressSequentially.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.38
 
 ### option: Locator.pressSequentially.timeout = %%-input-timeout-%%
@@ -1945,7 +2271,7 @@ await page.GetByRole(AriaRole.Link).ScreenshotAsync(new() {
 
 This method captures a screenshot of the page, clipped to the size and position of a particular element matching the locator. If the element is covered by other elements, it will not be actually visible on the screenshot. If the element is a scrollable container, only the currently scrolled content will be visible on the screenshot.
 
-This method waits for the [actionability](../../Guides/Auto-waiting/actionability.md) checks, then scrolls element into view before taking a
+This method waits for the [actionability](../actionability.md) checks, then scrolls element into view before taking a
 screenshot. If the element is detached from DOM, the method throws an error.
 
 Returns the buffer with the captured screenshot.
@@ -1968,11 +2294,11 @@ Returns the buffer with the captured screenshot.
 ## async method: Locator.scrollIntoViewIfNeeded
 * since: v1.14
 
-This method waits for [actionability](../../Guides/Auto-waiting/actionability.md) checks, then tries to scroll element into view, unless it is
+This method waits for [actionability](../actionability.md) checks, then tries to scroll element into view, unless it is
 completely visible as defined by
 [IntersectionObserver](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API)'s `ratio`.
 
-See [scrolling](../../Guides/Actions/input.md#scrolling) for alternative ways to scroll.
+See [scrolling](../input.md#scrolling) for alternative ways to scroll.
 
 ### option: Locator.scrollIntoViewIfNeeded.timeout = %%-input-timeout-%%
 * since: v1.14
@@ -1988,7 +2314,7 @@ Selects option or options in `<select>`.
 
 **Details**
 
-This method waits for [actionability](../../Guides/Auto-waiting/actionability.md) checks, waits until all specified options are present in the `<select>` element and selects these options.
+This method waits for [actionability](../actionability.md) checks, waits until all specified options are present in the `<select>` element and selects these options.
 
 If the target element is not a `<select>` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be used instead.
 
@@ -2000,9 +2326,9 @@ Triggers a `change` and `input` event once all the provided options have been se
 
 ```html
 <select multiple>
-  <option value="red">Red</div>
-  <option value="green">Green</div>
-  <option value="blue">Blue</div>
+  <option value="red">Red</option>
+  <option value="green">Green</option>
+  <option value="blue">Blue</option>
 </select>
 ```
 
@@ -2059,7 +2385,7 @@ await element.SelectOptionAsync(new[] { "red", "green", "blue" });
 ### option: Locator.selectOption.force = %%-input-force-%%
 * since: v1.14
 
-### option: Locator.selectOption.noWaitAfter = %%-input-no-wait-after-%%
+### option: Locator.selectOption.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.14
 
 ### option: Locator.selectOption.timeout = %%-input-timeout-%%
@@ -2083,7 +2409,7 @@ await element.SelectOptionAsync(new[] { "red", "green", "blue" });
 ## async method: Locator.selectText
 * since: v1.14
 
-This method waits for [actionability](../../Guides/Auto-waiting/actionability.md) checks, then focuses the element and selects all its text
+This method waits for [actionability](../actionability.md) checks, then focuses the element and selects all its text
 content.
 
 If the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), focuses and selects text in the control instead.
@@ -2129,11 +2455,10 @@ await page.GetByRole(AriaRole.Checkbox).SetCheckedAsync(true);
 This method checks or unchecks an element by performing the following steps:
 1. Ensure that matched element is a checkbox or a radio input. If not, this method throws.
 1. If the element already has the right checked state, this method returns immediately.
-1. Wait for [actionability](../../Guides/Auto-waiting/actionability.md) checks on the matched element, unless [`option: force`] option is
+1. Wait for [actionability](../actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 1. Ensure that the element is now checked or unchecked. If not, this method throws.
 
 When all steps combined have not finished during the specified [`option: timeout`], this method throws a
@@ -2145,7 +2470,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Locator.setChecked.force = %%-input-force-%%
 * since: v1.15
 
-### option: Locator.setChecked.noWaitAfter = %%-input-no-wait-after-%%
+### option: Locator.setChecked.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.15
 
 ### option: Locator.setChecked.position = %%-input-position-%%
@@ -2286,7 +2611,7 @@ This method expects [Locator] to point to an
 ### param: Locator.setInputFiles.files = %%-input-files-%%
 * since: v1.14
 
-### option: Locator.setInputFiles.noWaitAfter = %%-input-no-wait-after-%%
+### option: Locator.setInputFiles.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.14
 
 ### option: Locator.setInputFiles.timeout = %%-input-timeout-%%
@@ -2295,18 +2620,18 @@ This method expects [Locator] to point to an
 ### option: Locator.setInputFiles.timeout = %%-input-timeout-js-%%
 * since: v1.14
 
+
 ## async method: Locator.tap
 * since: v1.14
 
-Perform a tap gesture on the element matching the locator.
+Perform a tap gesture on the element matching the locator. For examples of emulating other gestures by manually dispatching touch events, see the [emulating legacy touch events](../touch-events.md) page.
 
 **Details**
 
 This method taps the element by performing the following steps:
-1. Wait for [actionability](../../Guides/Auto-waiting/actionability.md) checks on the element, unless [`option: force`] option is set.
+1. Wait for [actionability](../actionability.md) checks on the element, unless [`option: force`] option is set.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.touchscreen`] to tap the center of the element, or the specified [`option: position`].
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 
 If the element is detached from the DOM at any moment during the action, this method throws.
 
@@ -2326,7 +2651,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Locator.tap.force = %%-input-force-%%
 * since: v1.14
 
-### option: Locator.tap.noWaitAfter = %%-input-no-wait-after-%%
+### option: Locator.tap.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.14
 
 ### option: Locator.tap.timeout = %%-input-timeout-%%
@@ -2335,7 +2660,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Locator.tap.timeout = %%-input-timeout-js-%%
 * since: v1.14
 
-### option: Locator.tap.trial = %%-input-trial-%%
+### option: Locator.tap.trial = %%-input-trial-with-modifiers-%%
 * since: v1.14
 
 ## async method: Locator.textContent
@@ -2353,6 +2678,13 @@ If you need to assert text on the page, prefer [`method: LocatorAssertions.toHav
 
 ### option: Locator.textContent.timeout = %%-input-timeout-js-%%
 * since: v1.14
+
+## method: Locator.toString
+* since: v1.57
+* langs: js
+- returns: <[string]>
+
+Returns a human-readable representation of the locator, using the [`method: Locator.description`] if one exists; otherwise, it generates a string based on the locator's selector.
 
 ## async method: Locator.type
 * since: v1.14
@@ -2376,7 +2708,7 @@ A text to type into a focused element.
 
 Time to wait between key presses in milliseconds. Defaults to 0.
 
-### option: Locator.type.noWaitAfter = %%-input-no-wait-after-%%
+### option: Locator.type.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.14
 
 ### option: Locator.type.timeout = %%-input-timeout-%%
@@ -2417,10 +2749,9 @@ await page.GetByRole(AriaRole.Checkbox).UncheckAsync();
 This method unchecks the element by performing the following steps:
 1. Ensure that element is a checkbox or a radio input. If not, this method throws. If the element is already
    unchecked, this method returns immediately.
-1. Wait for [actionability](../../Guides/Auto-waiting/actionability.md) checks on the element, unless [`option: force`] option is set.
+1. Wait for [actionability](../actionability.md) checks on the element, unless [`option: force`] option is set.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 1. Ensure that the element is now unchecked. If not, this method throws.
 
 If the element is detached from the DOM at any moment during the action, this method throws.
@@ -2434,7 +2765,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Locator.uncheck.force = %%-input-force-%%
 * since: v1.14
 
-### option: Locator.uncheck.noWaitAfter = %%-input-no-wait-after-%%
+### option: Locator.uncheck.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.14
 
 ### option: Locator.uncheck.timeout = %%-input-timeout-%%

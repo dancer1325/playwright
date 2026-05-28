@@ -15,12 +15,15 @@
  * limitations under the License.
  */
 
-import type * as frames from '../frames';
+import { assert } from '@isomorphic/assert';
+import { headersArrayToObject, headersObjectToArray } from '@isomorphic/headers';
 import * as network from '../network';
+
+import type * as frames from '../frames';
 import type * as types from '../types';
 import type { Protocol } from './protocol';
 import type { WKSession } from './wkConnection';
-import { assert, headersObjectToArray, headersArrayToObject } from '../../utils';
+
 
 const errorReasons: { [reason: string]: Protocol.Network.ResourceErrorType } = {
   'aborted': 'Cancellation',
@@ -40,23 +43,28 @@ const errorReasons: { [reason: string]: Protocol.Network.ResourceErrorType } = {
 };
 
 export class WKInterceptableRequest {
-  private readonly _session: WKSession;
+  private _session: WKSession;
+  private _requestId: string;
   readonly request: network.Request;
-  readonly _requestId: string;
   _timestamp: number;
   _wallTime: number;
 
   constructor(session: WKSession, frame: frames.Frame, event: Protocol.Network.requestWillBeSentPayload, redirectedFrom: WKInterceptableRequest | null, documentId: string | undefined) {
     this._session = session;
     this._requestId = event.requestId;
-    const resourceType = event.type ? event.type.toLowerCase() : (redirectedFrom ? redirectedFrom.request.resourceType() : 'other');
+    const resourceType = event.type ? toResourceType(event.type) : (redirectedFrom ? redirectedFrom.request.resourceType() : 'other');
     let postDataBuffer = null;
     this._timestamp = event.timestamp;
     this._wallTime = event.walltime * 1000;
     if (event.request.postData)
       postDataBuffer = Buffer.from(event.request.postData, 'base64');
-    this.request = new network.Request(frame._page._browserContext, frame, null, redirectedFrom?.request || null, documentId, event.request.url,
+    this.request = new network.Request(frame._page.browserContext, frame, null, redirectedFrom?.request || null, documentId, event.request.url,
         resourceType, event.request.method, postDataBuffer, headersObjectToArray(event.request.headers));
+  }
+
+  adoptRequestFromNewProcess(newSession: WKSession, requestId: string) {
+    this._session = newSession;
+    this._requestId = requestId;
   }
 
   createResponse(responsePayload: Protocol.Network.Response): network.Response {
@@ -136,7 +144,7 @@ export class WKRouteImpl implements network.RouteDelegate {
     });
   }
 
-  async continue(request: network.Request, overrides: types.NormalizedContinueOverrides) {
+  async continue(overrides: types.NormalizedContinueOverrides) {
     // In certain cases, protocol will return error if the request was already canceled
     // or the page was closed. We should tolerate these errors.
     await this._session.sendMayFail('Network.interceptWithRequest', {
@@ -161,4 +169,21 @@ function wkMillisToRoundishMillis(value: number): number {
   }
 
   return ((value * 1000) | 0) / 1000;
+}
+
+function toResourceType(type: Protocol.Page.ResourceType): network.ResourceType {
+  switch (type) {
+    case 'Document': return 'document';
+    case 'StyleSheet': return 'stylesheet';
+    case 'Image': return 'image';
+    case 'Font': return 'font';
+    case 'Script': return 'script';
+    case 'XHR': return 'xhr';
+    case 'Fetch': return 'fetch';
+    case 'Ping': return 'ping';
+    case 'Beacon': return 'beacon';
+    case 'WebSocket': return 'websocket';
+    case 'EventSource': return 'eventsource';
+    default: return 'other';
+  }
 }

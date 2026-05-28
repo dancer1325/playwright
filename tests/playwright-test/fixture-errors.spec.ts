@@ -46,18 +46,18 @@ test('should handle worker fixture timeout', async ({ runInlineTest }) => {
     'a.spec.ts': `
       import { test as base, expect } from '@playwright/test';
       const test = base.extend({
-        timeout: [async ({}, runTest) => {
+        slowFixture: [async ({}, runTest) => {
           await runTest();
           await new Promise(f => setTimeout(f, 100000));
         }, { scope: 'worker' }]
       });
 
-      test('fails', async ({timeout}) => {
+      test('fails', async ({ slowFixture }) => {
       });
     `
   }, { timeout: 500 });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('Worker teardown timeout of 500ms exceeded while tearing down "timeout".');
+  expect(result.output).toContain('Fixture "slowFixture" timeout of 500ms exceeded during teardown.');
 });
 
 test('should handle worker fixture error', async ({ runInlineTest }) => {
@@ -253,6 +253,41 @@ test('should detect fixture dependency cycle', async ({ runInlineTest }) => {
   });
   expect(result.output).toContain('Fixtures "bar" -> "baz" -> "qux" -> "foo" -> "bar" form a dependency cycle:');
   expect(result.output).toContain('x.spec.ts:3:25 -> x.spec.ts:3:25 -> x.spec.ts:3:25 -> x.spec.ts:3:25');
+  expect(result.exitCode).toBe(1);
+});
+
+test('should hide boxed fixtures in dependency cycle', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'x.spec.ts': `
+      import { test as base } from '@playwright/test';
+      const test = base.extend({
+        storageState: async ({ context, storageState }, use) => {
+          await use(storageState);
+        }
+      });
+      test('failed', async ({ page }) => {});
+    `,
+  });
+  expect(result.output).toContain('Fixtures "context" -> "storageState" -> "context" form a dependency cycle: <builtin> -> x.spec.ts:3:25 -> <builtin>');
+  expect(result.exitCode).toBe(1);
+});
+
+test('should show boxed fixtures in dependency cycle if there are no public fixtures', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'x.spec.ts': `
+      import { test as base } from '@playwright/test';
+      const test = base.extend({
+        f1: [async ({ f2 }, use) => {
+          await use(f2);
+        }, { box: true }],
+        f2: [async ({ f1 }, use) => {
+          await use(f1);
+        }, { box: true }],
+      });
+      test('failed', async ({ f1, f2 }) => {});
+    `,
+  });
+  expect(result.output).toContain('Fixtures "f1" -> "f2" -> "f1" form a dependency cycle: x.spec.ts:3:25 -> x.spec.ts:3:25 -> x.spec.ts:3:25');
   expect(result.exitCode).toBe(1);
 });
 
@@ -572,7 +607,7 @@ test('should report worker fixture teardown with debug info', async ({ runInline
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(20);
   expect(result.output).toContain([
-    'Worker teardown timeout of 1000ms exceeded while tearing down "fixture".',
+    'Fixture "fixture" timeout of 1000ms exceeded during teardown.',
     '',
     'Failed worker ran 20 tests, last 10 tests were:',
     'a.spec.ts:10:9 › good10',
@@ -753,4 +788,31 @@ test('should report fixture teardown error after test error', async ({ runInline
   expect(result.failed).toBe(1);
   expect(result.output).toContain('Error from the fixture foo');
   expect(result.output).toContain('Error from the test');
+});
+
+test('should throw when overriding non-option fixture in config', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        use: {
+          foo: 'overridden',
+          headless: true,
+          unknownThing: 'ignored',
+        },
+      };
+    `,
+    'a.spec.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
+        foo: async ({}, use) => await use('original'),
+      });
+      test('works', async ({ foo }) => {
+        expect(foo).toBe('original');
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Fixture "foo" cannot be overridden in the configuration "use" section. Only fixtures registered with { option: true } can be set in the config.');
+  expect(result.output).not.toContain('Fixture "headless"');
+  expect(result.output).not.toContain('Fixture "unknownThing"');
 });

@@ -40,11 +40,12 @@ test('event should work', async ({ mount }) => {
 
 ## How to get started
 
-Adding Playwright Test to an existing project is easy. Below are the steps to enable Playwright Test for a React, Vue, Svelte or Solid project.
+Adding Playwright Test to an existing project is easy. Below are the steps to enable Playwright Test for a React or Vue project.
 
 ### Step 1: Install Playwright Test for components for your respective framework
 
 <Tabs
+  groupId="js-package-manager"
   defaultValue="npm"
   values={[
     {label: 'npm', value: 'npm'},
@@ -103,21 +104,18 @@ component is mounted using this script. It can be either a `.js`, `.ts`, `.jsx` 
 ### Step 2. Create a test file `src/App.spec.{ts,tsx}`
 
 <Tabs
+  groupId="js-framework"
   defaultValue="react"
   values={[
     {label: 'React', value: 'react'},
-    {label: 'Solid', value: 'solid'},
-    {label: 'Svelte', value: 'svelte'},
     {label: 'Vue', value: 'vue'},
   ]
 }>
 <TabItem value="react">
 
-```js
+```js title="app.spec.tsx"
 import { test, expect } from '@playwright/experimental-ct-react';
 import App from './App';
-
-test.use({ viewport: { width: 500, height: 500 } });
 
 test('should work', async ({ mount }) => {
   const component = await mount(<App />);
@@ -129,54 +127,29 @@ test('should work', async ({ mount }) => {
 
 <TabItem value="vue">
 
-```js
+```js title="app.spec.ts"
 import { test, expect } from '@playwright/experimental-ct-vue';
 import App from './App.vue';
 
-test.use({ viewport: { width: 500, height: 500 } });
-
 test('should work', async ({ mount }) => {
   const component = await mount(App);
-  await expect(component).toContainText('Vite + Vue');
+  await expect(component).toContainText('Learn Vue');
 });
 ```
 
+```js title="app.spec.tsx"
+import { test, expect } from '@playwright/experimental-ct-vue';
+import App from './App.vue';
+
+test('should work', async ({ mount }) => {
+  const component = await mount(<App />);
+  await expect(component).toContainText('Learn Vue');
+});
+```
 If using TypeScript and Vue make sure to add a `vue.d.ts` file to your project:
 
 ```js
 declare module '*.vue';
-```
-
-</TabItem>
-
-<TabItem value="svelte">
-
-```js
-import { test, expect } from '@playwright/experimental-ct-svelte';
-import App from './App.svelte';
-
-test.use({ viewport: { width: 500, height: 500 } });
-
-test('should work', async ({ mount }) => {
-  const component = await mount(App);
-  await expect(component).toContainText('Vite + Svelte');
-});
-```
-
-</TabItem>
-
-<TabItem value="solid">
-
-```js
-import { test, expect } from '@playwright/experimental-ct-solid';
-import App from './App';
-
-test.use({ viewport: { width: 500, height: 500 } });
-
-test('should work', async ({ mount }) => {
-  const component = await mount(<App />);
-  await expect(component).toContainText('Learn Solid');
-});
 ```
 
 </TabItem>
@@ -232,12 +205,14 @@ Let's say you'd like to test following component:
 ```js title="input-media.tsx"
 import React from 'react';
 
-export const InputMedia: React.FC<{
+type InputMediaProps = {
   // Media is a complex browser object we can't send to Node while testing.
-  onChange: (media: Media) => void,
-}> = ({ onChange }) => {
-  return <></> as any;
+  onChange(media: Media): void;
 };
+
+export function InputMedia(props: InputMediaProps) {
+  return <></> as any;
+}
 ```
 
 Create a story file for your component:
@@ -246,18 +221,23 @@ Create a story file for your component:
 import React from 'react';
 import InputMedia from './import-media';
 
-export const InputMediaForTest: React.FC<{
-  onMediaChange: (mediaName: string) => void,
-}> = ({ onMediaChange }) => {
-  // Instead of sending a complex `media` object to the test, send the media name.
-  return <InputMedia onChange={media => onMediaChange(media.name)} />;
+type InputMediaForTestProps = {
+  onMediaChange(mediaName: string): void;
 };
+
+export function InputMediaForTest(props: InputMediaForTestProps) {
+  // Instead of sending a complex `media` object to the test, send the media name.
+  return <InputMedia onChange={media => props.onMediaChange(media.name)} />;
+}
 // Export more stories here.
 ```
 
 Then test the component via testing the story:
 
-```js title="input-media.test.spec.tsx"
+```js title="input-media.spec.tsx"
+import { test, expect } from '@playwright/experimental-ct-react';
+import { InputMediaForTest } from './input-media.story.tsx';
+
 test('changes the image', async ({ mount }) => {
   let mediaSelected: string | null = null;
 
@@ -265,7 +245,6 @@ test('changes the image', async ({ mount }) => {
     <InputMediaForTest
       onMediaChange={mediaName => {
         mediaSelected = mediaName;
-        console.log({ mediaName });
       }}
     />
   );
@@ -292,6 +271,29 @@ Here is how component testing works:
 
 Playwright is using [Vite](https://vitejs.dev/) to create the components bundle and serve it.
 
+## Best practices and pitfalls
+
+Component tests are most reliable when they embrace the fact that the test runs in Node.js while the mounted component runs in the browser.
+
+### Prefer mounting inside each test
+
+Keep `mount()` close to the assertions that use it. Mounting in `beforeEach` makes it harder to see which component state belongs to which test and tends to hide accidental coupling between tests.
+
+```js
+test('renders the product name', async ({ mount }) => {
+  const component = await mount(<ProductCard name="Playwright" />);
+  await expect(component).toContainText('Playwright');
+});
+```
+
+### Module mocks do not cross the Node/browser boundary
+
+Module-level mocks such as `vi.mock()` or `jest.mock()` run in the test process. The component bundle runs in the browser, so those mocks do not automatically affect what the component imports at runtime. Prefer passing test-specific behavior through [`hooksConfig`](#hooks) and configuring it in `playwright/index.{js,ts,jsx,tsx}` with `beforeMount`.
+
+### Reset browser state when a component depends on globals
+
+Component testing may reuse the browser `context` and `page` between tests as a performance optimization. If a component depends on global browser state such as `localStorage`, cookies, singleton services, or router state, reset that state in your test setup or in [`beforeMount`](#hooks) so each test starts from a known baseline.
+
 ## API reference
 
 ### props
@@ -299,47 +301,41 @@ Playwright is using [Vite](https://vitejs.dev/) to create the components bundle 
 Provide props to a component when mounted.
 
 <Tabs
+  groupId="js-framework"
   defaultValue="react"
   values={[
     {label: 'React', value: 'react'},
-    {label: 'Solid', value: 'solid'},
-    {label: 'Svelte', value: 'svelte'},
     {label: 'Vue', value: 'vue'},
   ]
 }>
 
 <TabItem value="react">
 
-```js
+```js title="component.spec.tsx"
+import { test } from '@playwright/experimental-ct-react';
+
 test('props', async ({ mount }) => {
   const component = await mount(<Component msg="greetings" />);
-});
-```
-
-</TabItem>
-<TabItem value="solid">
-
-```js
-test('props', async ({ mount }) => {
-  const component = await mount(<Component msg="greetings" />);
-});
-```
-
-</TabItem>
-<TabItem value="svelte">
-
-```js
-test('props', async ({ mount }) => {
-  const component = await mount(Component, { props: { msg: 'greetings' } });
 });
 ```
 
 </TabItem>
 <TabItem value="vue">
 
-```js
+```js title="component.spec.ts"
+import { test } from '@playwright/experimental-ct-vue';
+
 test('props', async ({ mount }) => {
   const component = await mount(Component, { props: { msg: 'greetings' } });
+});
+```
+
+```js title="component.spec.tsx"
+// Or alternatively, using the `jsx` style
+import { test } from '@playwright/experimental-ct-vue';
+
+test('props', async ({ mount }) => {
+  const component = await mount(<Component msg="greetings" />);
 });
 ```
 
@@ -352,47 +348,41 @@ test('props', async ({ mount }) => {
 Provide callbacks/events to a component when mounted.
 
 <Tabs
+  groupId="js-framework"
   defaultValue="react"
   values={[
     {label: 'React', value: 'react'},
-    {label: 'Solid', value: 'solid'},
-    {label: 'Svelte', value: 'svelte'},
     {label: 'Vue', value: 'vue'},
   ]
 }>
 
 <TabItem value="react">
 
-```js
+```js title="component.spec.tsx"
+import { test } from '@playwright/experimental-ct-react';
+
 test('callback', async ({ mount }) => {
-  const component = await mount(<Component callback={() => {}} />);
-});
-```
-
-</TabItem>
-<TabItem value="solid">
-
-```js
-test('callback', async ({ mount }) => {
-  const component = await mount(<Component callback={() => {}} />);
-});
-```
-
-</TabItem>
-<TabItem value="svelte">
-
-```js
-test('event', async ({ mount }) => {
-  const component = await mount(Component, { on: { callback() {} } });
+  const component = await mount(<Component onClick={() => {}} />);
 });
 ```
 
 </TabItem>
 <TabItem value="vue">
 
-```js
+```js title="component.spec.ts"
+import { test } from '@playwright/experimental-ct-vue';
+
 test('event', async ({ mount }) => {
-  const component = await mount(Component, { on: { callback() {} } });
+  const component = await mount(Component, { on: { click() {} } });
+});
+```
+
+```js title="component.spec.tsx"
+// Or alternatively, using the `jsx` style
+import { test } from '@playwright/experimental-ct-vue';
+
+test('event', async ({ mount }) => {
+  const component = await mount(<Component v-on:click={() => {}} />);
 });
 ```
 
@@ -405,47 +395,41 @@ test('event', async ({ mount }) => {
 Provide children/slots to a component when mounted.
 
 <Tabs
+  groupId="js-framework"
   defaultValue="react"
   values={[
     {label: 'React', value: 'react'},
-    {label: 'Solid', value: 'solid'},
-    {label: 'Svelte', value: 'svelte'},
     {label: 'Vue', value: 'vue'},
   ]
 }>
 
 <TabItem value="react">
 
-```js
+```js title="component.spec.tsx"
+import { test } from '@playwright/experimental-ct-react';
+
 test('children', async ({ mount }) => {
   const component = await mount(<Component>Child</Component>);
-});
-```
-
-</TabItem>
-<TabItem value="solid">
-
-```js
-test('children', async ({ mount }) => {
-  const component = await mount(<Component>Child</Component>);
-});
-```
-
-</TabItem>
-<TabItem value="svelte">
-
-```js
-test('slot', async ({ mount }) => {
-  const component = await mount(Component, { slots: { default: 'Slot' } });
 });
 ```
 
 </TabItem>
 <TabItem value="vue">
 
-```js
+```js title="component.spec.ts"
+import { test } from '@playwright/experimental-ct-vue';
+
 test('slot', async ({ mount }) => {
   const component = await mount(Component, { slots: { default: 'Slot' } });
+});
+```
+
+```js title="component.spec.tsx"
+// Or alternatively, using the `jsx` style
+import { test } from '@playwright/experimental-ct-vue';
+
+test('children', async ({ mount }) => {
+  const component = await mount(<Component>Child</Component>);
 });
 ```
 
@@ -455,15 +439,14 @@ test('slot', async ({ mount }) => {
 
 ### hooks
 
-You can use `beforeMount` and `afterMount` hooks to configure your app. This lets you setup things like your app router, fake server etc. giving you the flexibility you need. You can also pass custom configuration from the `mount` call from a test, which is accessible from the `hooksConfig` fixture. This includes any config that needs to be run before or after mounting the component. An example of configuring a router is provided below:
+You can use `beforeMount` and `afterMount` hooks to configure your app. This lets you set up things like your app router, fake server etc. giving you the flexibility you need. You can also pass custom configuration from the `mount` call from a test, which is accessible from the `hooksConfig` fixture. This includes any config that needs to be run before or after mounting the component. An example of configuring a router is provided below:
 
 <Tabs
+  groupId="js-framework"
   defaultValue="react"
   values={[
     {label: 'React', value: 'react'},
-    {label: 'Solid', value: 'solid'},
-    {label: 'Vue3', value: 'vue3'},
-    {label: 'Vue2', value: 'vue2'},
+    {label: 'Vue', value: 'vue'},
   ]
 }>
   <TabItem value="react">
@@ -497,38 +480,7 @@ You can use `beforeMount` and `afterMount` hooks to configure your app. This let
 
   </TabItem>
 
-  <TabItem value="solid">
-
-  ```js title="playwright/index.tsx"
-  import { beforeMount, afterMount } from '@playwright/experimental-ct-solid/hooks';
-  import { Router } from '@solidjs/router';
-
-  export type HooksConfig = {
-    enableRouting?: boolean;
-  }
-
-  beforeMount<HooksConfig>(async ({ App, hooksConfig }) => {
-    if (hooksConfig?.enableRouting)
-      return <Router><App /></Router>;
-  });
-  ```
-
-  ```js title="src/pages/ProductsPage.spec.tsx"
-  import { test, expect } from '@playwright/experimental-ct-solid';
-  import type { HooksConfig } from '../playwright';
-  import { ProductsPage } from './pages/ProductsPage';
-
-  test('configure routing through hooks config', async ({ page, mount }) => {
-    const component = await mount<HooksConfig>(<ProductsPage />, {
-      hooksConfig: { enableRouting: true },
-    });
-    await expect(component.getByRole('link')).toHaveAttribute('href', '/products/42');
-  });
-  ```
-
-  </TabItem>
-
-  <TabItem value="vue3">
+  <TabItem value="vue">
 
   ```js title="playwright/index.ts"
   import { beforeMount, afterMount } from '@playwright/experimental-ct-vue/hooks';
@@ -559,40 +511,6 @@ You can use `beforeMount` and `afterMount` hooks to configure your app. This let
 
   </TabItem>
 
-  <TabItem value="vue2">
-
-  ```js title="playwright/index.ts"
-  import { beforeMount, afterMount } from '@playwright/experimental-ct-vue2/hooks';
-  import Router from 'vue-router';
-  import { router } from '../src/router';
-
-  export type HooksConfig = {
-    enableRouting?: boolean;
-  }
-
-  beforeMount<HooksConfig>(async ({ app, hooksConfig }) => {
-    if (hooksConfig?.enableRouting) {
-      Vue.use(Router);
-      return { router }
-    }
-  });
-  ```
-
-  ```js title="src/pages/ProductsPage.spec.ts"
-  import { test, expect } from '@playwright/experimental-ct-vue2';
-  import type { HooksConfig } from '../playwright';
-  import ProductsPage from './pages/ProductsPage.vue';
-
-  test('configure routing through hooks config', async ({ page, mount }) => {
-    const component = await mount<HooksConfig>(ProductsPage, {
-      hooksConfig: { enableRouting: true },
-    });
-    await expect(component.getByRole('link')).toHaveAttribute('href', '/products/42');
-  });
-  ```
-
-  </TabItem>
-
 </Tabs>
 
 ### unmount
@@ -600,40 +518,21 @@ You can use `beforeMount` and `afterMount` hooks to configure your app. This let
 Unmount the mounted component from the DOM. This is useful for testing the component's behavior upon unmounting. Use cases include testing an "Are you sure you want to leave?" modal or ensuring proper cleanup of event handlers to prevent memory leaks.
 
 <Tabs
+  groupId="js-framework"
   defaultValue="react"
   values={[
     {label: 'React', value: 'react'},
-    {label: 'Solid', value: 'solid'},
-    {label: 'Svelte', value: 'svelte'},
     {label: 'Vue', value: 'vue'},
   ]
 }>
 
 <TabItem value="react">
 
-```js
+```js title="component.spec.tsx"
+import { test } from '@playwright/experimental-ct-react';
+
 test('unmount', async ({ mount }) => {
   const component = await mount(<Component/>);
-  await component.unmount();
-});
-```
-
-</TabItem>
-<TabItem value="solid">
-
-```js
-test('unmount', async ({ mount }) => {
-  const component = await mount(<Component/>);
-  await component.unmount();
-});
-```
-
-</TabItem>
-<TabItem value="svelte">
-
-```js
-test('unmount', async ({ mount }) => {
-  const component = await mount(Component);
   await component.unmount();
 });
 ```
@@ -641,13 +540,24 @@ test('unmount', async ({ mount }) => {
 </TabItem>
 <TabItem value="vue">
 
-```js
+```js title="component.spec.ts"
+import { test } from '@playwright/experimental-ct-vue';
+
 test('unmount', async ({ mount }) => {
   const component = await mount(Component);
   await component.unmount();
 });
 ```
 
+```js title="component.spec.tsx"
+// Or alternatively, using the `jsx` style
+import { test } from '@playwright/experimental-ct-vue';
+
+test('unmount', async ({ mount }) => {
+  const component = await mount(<Component/>);
+  await component.unmount();
+});
+```
 </TabItem>
 
 </Tabs>
@@ -657,63 +567,52 @@ test('unmount', async ({ mount }) => {
 Update props, slots/children, and/or events/callbacks of a mounted component. These component inputs can change at any time and are typically provided by the parent component, but sometimes it is necessary to ensure that your components behave appropriately to new inputs.
 
 <Tabs
+  groupId="js-framework"
   defaultValue="react"
   values={[
     {label: 'React', value: 'react'},
-    {label: 'Solid', value: 'solid'},
-    {label: 'Svelte', value: 'svelte'},
     {label: 'Vue', value: 'vue'},
   ]
 }>
 
 <TabItem value="react">
 
-```js
+```js title="component.spec.tsx"
+import { test } from '@playwright/experimental-ct-react';
+
 test('update', async ({ mount }) => {
   const component = await mount(<Component/>);
   await component.update(
-      <Component msg="greetings" callback={() => {}}>Child</Component>
+      <Component msg="greetings" onClick={() => {}}>Child</Component>
   );
-});
-```
-
-</TabItem>
-<TabItem value="solid">
-
-```js
-test('update', async ({ mount }) => {
-  const component = await mount(<Component/>);
-  await component.update(
-      <Component msg="greetings" callback={() => {}}>Child</Component>
-  );
-});
-```
-
-</TabItem>
-<TabItem value="svelte">
-
-```js
-test('update', async ({ mount }) => {
-  const component = await mount(<Component/>);
-  await component.update({
-    props: { msg: 'greetings' },
-    on: { callback: () => {} },
-    slots: { default: 'Child' }
-  });
 });
 ```
 
 </TabItem>
 <TabItem value="vue">
 
-```js
+```js title="component.spec.ts"
+import { test } from '@playwright/experimental-ct-vue';
+
 test('update', async ({ mount }) => {
-  const component = await mount(<Component/>);
+  const component = await mount(Component);
   await component.update({
     props: { msg: 'greetings' },
-    on: { callback: () => {} },
+    on: { click() {} },
     slots: { default: 'Child' }
   });
+});
+```
+
+```js title="component.spec.tsx"
+// Or alternatively, using the `jsx` style
+import { test } from '@playwright/experimental-ct-vue';
+
+test('update', async ({ mount }) => {
+  const component = await mount(<Component/>);
+  await component.update(
+      <Component msg="greetings" v-on:click={() => {}}>Child</Component>
+  );
 });
 ```
 
@@ -721,9 +620,46 @@ test('update', async ({ mount }) => {
 
 </Tabs>
 
+### Handling network requests
+
+Playwright provides an **experimental** `router` fixture to intercept and handle network requests. There are two ways to use the `router` fixture:
+* Call `router.route(url, handler)` that behaves similarly to [`method: Page.route`]. See the [network mocking guide](./mock.md) for more details.
+* Call `router.use(handlers)` and pass [MSW library](https://mswjs.io/) request handlers to it.
+
+Here is an example of reusing your existing MSW handlers in the test.
+
+```js
+import { handlers } from '@src/mocks/handlers';
+
+test.beforeEach(async ({ router }) => {
+  // install common handlers before each test
+  await router.use(...handlers);
+});
+
+test('example test', async ({ mount }) => {
+  // test as usual, your handlers are active
+  // ...
+});
+```
+
+You can also introduce a one-off handler for a specific test.
+
+```js
+import { http, HttpResponse } from 'msw';
+
+test('example test', async ({ mount, router }) => {
+  await router.use(http.get('/data', async ({ request }) => {
+    return HttpResponse.json({ value: 'mocked' });
+  }));
+
+  // test as usual, your handler is active
+  // ...
+});
+```
+
 ## Frequently asked questions
 
-### What's the difference between `@playwright/test` and `@playwright/experimental-ct-{react,svelte,vue,solid}`?
+### What's the difference between `@playwright/test` and `@playwright/experimental-ct-{react,vue}`?
 
 ```js
 test('…', async ({ mount, page, context }) => {
@@ -731,14 +667,13 @@ test('…', async ({ mount, page, context }) => {
 });
 ```
 
-`@playwright/experimental-ct-{react,svelte,vue,solid}` wrap `@playwright/test` to provide an additional built-in component-testing specific fixture called `mount`:
+`@playwright/experimental-ct-{react,vue}` wrap `@playwright/test` to provide an additional built-in component-testing specific fixture called `mount`:
 
 <Tabs
+  groupId="js-framework"
   defaultValue="react"
   values={[
     {label: 'React', value: 'react'},
-    {label: 'Solid', value: 'solid'},
-    {label: 'Svelte', value: 'svelte'},
     {label: 'Vue', value: 'vue'},
   ]
 }>
@@ -772,42 +707,6 @@ test('should work', async ({ mount }) => {
       msg: 'Greetings',
     },
   });
-  await expect(component).toContainText('Greetings');
-});
-```
-
-</TabItem>
-
-<TabItem value="svelte">
-
-```js
-import { test, expect } from '@playwright/experimental-ct-svelte';
-import HelloWorld from './HelloWorld.svelte';
-
-test.use({ viewport: { width: 500, height: 500 } });
-
-test('should work', async ({ mount }) => {
-  const component = await mount(HelloWorld, {
-    props: {
-      msg: 'Greetings',
-    },
-  });
-  await expect(component).toContainText('Greetings');
-});
-```
-
-</TabItem>
-
-<TabItem value="solid">
-
-```js
-import { test, expect } from '@playwright/experimental-ct-solid';
-import HelloWorld from './HelloWorld';
-
-test.use({ viewport: { width: 500, height: 500 } });
-
-test('should work', async ({ mount }) => {
-  const component = await mount(<HelloWorld msg="greetings" />);
   await expect(component).toContainText('Greetings');
 });
 ```
@@ -883,6 +782,14 @@ export default defineConfig({
   },
 });
 ```
+
+### How do I use CSS imports?
+
+If you have a component that imports CSS, Vite will handle it automatically. You can also use CSS pre-processors such as Sass, Less, or Stylus, and Vite will handle them as well without any additional configuration. However, corresponding CSS pre-processor needs to be installed.
+
+Vite has a hard requirement that all CSS Modules are named `*.module.[css extension]`. If you have a custom build config for your project normally and have imports of the form `import styles from 'styles.css'` you must rename your files to properly indicate they are to be treated as modules. You could also write a Vite plugin to handle this for you.
+
+Check [Vite documentation](https://vite.dev/guide/features#css) for more details.
 
 ### How can I test components that uses Pinia?
 

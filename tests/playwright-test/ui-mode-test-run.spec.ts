@@ -61,7 +61,27 @@ test('should run visible', async ({ runUITest }) => {
         ⊘ skipped
   `);
 
-  await expect(page.getByTestId('status-line')).toHaveText('4/8 passed (50%)');
+  await expect(page).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-error] a.test.ts" [expanded]:
+        - group:
+          - treeitem ${/\[icon-check\] passes/}
+          - treeitem ${/\[icon-error\] fails/} [selected]:
+            - button "Run"
+            - button "Show source"
+            - button "Watch"
+          - treeitem "[icon-error] suite" [expanded=false]
+      - treeitem "[icon-error] b.test.ts" [expanded]:
+        - group:
+          - treeitem ${/\[icon-check\] passes/}
+          - treeitem ${/\[icon-error\] fails/}
+      - treeitem "[icon-check] c.test.ts" [expanded]:
+        - group:
+          - treeitem ${/\[icon-check\] passes/}
+          - treeitem "[icon-circle-slash] skipped"
+  `);
+
+  await expect(page.getByTestId('status-line')).toHaveText('8/8 (100%) — 4 passed, 3 failed, 1 skipped');
 });
 
 test('should show running progress', async ({ runUITest }) => {
@@ -76,11 +96,30 @@ test('should show running progress', async ({ runUITest }) => {
   });
 
   await page.getByTitle('Run all').click();
-  await expect(page.getByTestId('status-line')).toHaveText('Running 1/4 passed (25%)');
-  await page.getByTitle('Stop').click();
-  await expect(page.getByTestId('status-line')).toHaveText('1/4 passed (25%)');
+  await expect(page.getByTestId('status-line')).toHaveText('Running 1/4 (25%) — 1 passed');
+  await page.getByTestId('stop-button').click();
+  await expect(page.getByTestId('status-line')).toHaveText('2/4 (50%) — 1 passed, 1 skipped');
   await page.getByTitle('Reload').click();
   await expect(page.getByTestId('status-line')).toBeHidden();
+});
+
+test('should stop on first failure', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test 1', async () => {});
+      test('test 2', async () => { expect(1).toBe(2); });
+      test('test 3', async () => {});
+      test('test 4', async () => {});
+    `,
+  });
+
+  await page.getByText('Testing Options').click();
+  await page.getByLabel('Stop on first failure').check();
+
+  await page.getByTitle('Run all').click();
+  // After test 2 fails, the runner stops dispatching: tests 3 and 4 never start.
+  await expect(page.getByTestId('status-line')).toHaveText('2/4 (50%) — 1 passed, 1 failed');
 });
 
 test('should run on hover', async ({ runUITest }) => {
@@ -93,12 +132,23 @@ test('should run on hover', async ({ runUITest }) => {
   });
 
   await page.getByText('passes').hover();
-  await page.getByRole('listitem').filter({ hasText: 'passes' }).getByTitle('Run').click();
+  await page.getByRole('treeitem', { name: 'passes' }).getByRole('button', { name: 'Run' }).click();
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts
         ✅ passes <=
         ◯ fails
+  `);
+
+  await expect(page).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
+        - group:
+          - treeitem ${/\[icon-check\] passes/}:
+            - button "Run"
+            - button "Show source"
+            - button "Watch"
+          - treeitem "[icon-circle-outline] fails"
   `);
 });
 
@@ -118,6 +168,17 @@ test('should run on double click', async ({ runUITest }) => {
         ✅ passes <=
         ◯ fails
   `);
+
+  await expect(page).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
+        - group:
+          - treeitem ${/\[icon-check\] passes/} [selected]:
+            - button "Run"
+            - button "Show source"
+            - button "Watch"
+          - treeitem "[icon-circle-outline] fails"
+  `);
 });
 
 test('should run on Enter', async ({ runUITest }) => {
@@ -136,6 +197,17 @@ test('should run on Enter', async ({ runUITest }) => {
     ▼ ❌ a.test.ts
         ◯ passes
         ❌ fails <=
+  `);
+
+  await expect(page).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-error] a.test.ts" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] passes"
+          - treeitem ${/\[icon-error\] fails/} [selected]:
+            - button "Run"
+            - button "Show source"
+            - button "Watch"
   `);
 });
 
@@ -168,13 +240,35 @@ test('should run by project', async ({ runUITest }) => {
         ⊘ skipped
   `);
 
+  await expect(page).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-error] a.test.ts" [expanded]:
+        - group:
+          - treeitem ${/\[icon-check\] passes/}
+          - treeitem ${/\[icon-error\] fails/} [selected]:
+            - button "Run"
+            - button "Show source"
+            - button "Watch"
+          - treeitem "[icon-error] suite" [expanded=false]
+      - treeitem "[icon-error] b.test.ts" [expanded]:
+        - group:
+          - treeitem ${/\[icon-check\] passes/}
+          - treeitem ${/\[icon-error\] fails/}
+      - treeitem "[icon-check] c.test.ts" [expanded]:
+        - group:
+          - treeitem ${/\[icon-check\] passes/}
+          - treeitem "[icon-circle-slash] skipped"
+  `);
+
   await page.getByText('Status:').click();
   await page.getByLabel('bar').setChecked(true);
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ❌ a.test.ts
       ► ◯ passes
-      ► ❌ fails <=
+      ▼ ❌ fails
+          ❌ foo <=
+          ◯ bar
       ► ❌ suite
     ▼ ❌ b.test.ts
       ► ◯ passes
@@ -182,6 +276,26 @@ test('should run by project', async ({ runUITest }) => {
     ▼ ◯ c.test.ts
       ► ◯ passes
       ► ◯ skipped
+  `);
+
+  await expect(page).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-error] a.test.ts" [expanded]:
+        - group:
+          - treeitem ${/\[icon-circle-outline\] passes/} [expanded=false]
+          - treeitem ${/\[icon-error\] fails/}:
+            - group:
+              - treeitem ${/\[icon-error\] foo/} [selected]
+              - treeitem "[icon-circle-outline] bar"
+          - treeitem "[icon-error] suite" [expanded=false]
+      - treeitem "[icon-error] b.test.ts" [expanded]:
+        - group:
+          - treeitem ${/\[icon-circle-outline\] passes/} [expanded=false]
+          - treeitem ${/\[icon-error\] fails/} [expanded=false]
+      - treeitem "[icon-circle-outline] c.test.ts" [expanded]:
+        - group:
+          - treeitem ${/\[icon-circle-outline\] passes/} [expanded=false]
+          - treeitem ${/\[icon-circle-outline\] skipped/} [expanded=false]
   `);
 
   await page.getByText('Status:').click();
@@ -195,6 +309,20 @@ test('should run by project', async ({ runUITest }) => {
           ✅ foo
           ◯ bar
       ► ❌ fails
+  `);
+
+  await expect(page).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-error] a.test.ts" [expanded]:
+        - group:
+          - treeitem ${/\[icon-circle-outline\] passes/} [expanded] [selected]:
+            - button "Run"
+            - button "Show source"
+            - button "Watch"
+            - group:
+              - treeitem ${/\[icon-check\] foo/}
+              - treeitem ${/\[icon-circle-outline\] bar/}
+          - treeitem ${/\[icon-error\] fails/}
   `);
 
   await expect(page.getByText('Projects: foo bar')).toBeVisible();
@@ -216,6 +344,32 @@ test('should run by project', async ({ runUITest }) => {
       ► ✅ passes
       ► ⊘ skipped
   `);
+
+  await expect(page).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-error] a.test.ts" [expanded]:
+        - group:
+          - treeitem ${/\[icon-check\] passes/} [expanded]:
+            - group:
+              - treeitem ${/\[icon-check\] foo/}
+              - treeitem ${/\[icon-check\] bar/}
+          - treeitem ${/\[icon-error\] fails/} [expanded]:
+            - group:
+              - treeitem ${/\[icon-error\] foo/} [selected]:
+                - button "Run"
+                - button "Show source"
+                - button "Watch"
+              - treeitem ${/\[icon-error\] bar/}
+          - treeitem ${/\[icon-error\] suite/}
+      - treeitem "[icon-error] b.test.ts" [expanded]:
+        - group:
+          - treeitem ${/\[icon-check\] passes/} [expanded=false]
+          - treeitem ${/\[icon-error\] fails/} [expanded=false]
+      - treeitem "[icon-check] c.test.ts" [expanded]:
+        - group:
+          - treeitem ${/\[icon-check\] passes/} [expanded=false]
+          - treeitem ${/\[icon-circle-slash\] skipped/} [expanded=false]
+  `);
 });
 
 test('should stop', async ({ runUITest }) => {
@@ -230,7 +384,7 @@ test('should stop', async ({ runUITest }) => {
   });
 
   await expect(page.getByTitle('Run all')).toBeEnabled();
-  await expect(page.getByTitle('Stop')).toBeDisabled();
+  await expect(page.getByTestId('stop-button')).toBeDisabled();
 
   await page.getByTitle('Run all').click();
 
@@ -242,10 +396,20 @@ test('should stop', async ({ runUITest }) => {
         🕦 test 3
   `);
 
-  await expect(page.getByTitle('Run all')).toBeDisabled();
-  await expect(page.getByTitle('Stop')).toBeEnabled();
+  await expect(page).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-loading] a.test.ts" [expanded]:
+        - group:
+          - treeitem "[icon-circle-slash] test 0"
+          - treeitem ${/\[icon-check\] test 1/}
+          - treeitem ${/\[icon-loading\] test 2/}
+          - treeitem ${/\[icon-clock\] test 3/}
+  `);
 
-  await page.getByTitle('Stop').click();
+  await expect(page.getByTitle('Run all')).toBeDisabled();
+  await expect(page.getByTestId('stop-button')).toBeEnabled();
+
+  await page.getByTestId('stop-button').click();
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts
@@ -253,6 +417,16 @@ test('should stop', async ({ runUITest }) => {
         ✅ test 1
         ◯ test 2
         ◯ test 3
+  `);
+
+  await expect(page).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
+        - group:
+          - treeitem "[icon-circle-slash] test 0"
+          - treeitem ${/\[icon-check\] test 1/}
+          - treeitem ${/\[icon-circle-outline\] test 2/}
+          - treeitem ${/\[icon-circle-outline\] test 3/}
   `);
 });
 
@@ -273,7 +447,7 @@ test('should run folder', async ({ runUITest }) => {
   });
 
   await page.getByText('folder-b').hover();
-  await page.getByRole('listitem').filter({ hasText: 'folder-b' }).getByTitle('Run').click();
+  await page.getByRole('treeitem', { name: 'folder-b' }).getByRole('button', { name: 'Run' }).click();
 
   await expect.poll(dumpTestTree(page)).toContain(`
     ▼ ✅ folder-b <=
@@ -281,6 +455,17 @@ test('should run folder', async ({ runUITest }) => {
       ► ✅ in-b.test.ts
     ▼ ◯ in-a.test.ts
         ◯ passes
+  `);
+
+  await expect(page).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-check] folder-b" [expanded] [selected]:
+        - group:
+          - treeitem "[icon-check] folder-c" [expanded=false]
+          - treeitem "[icon-check] in-b.test.ts" [expanded=false]
+      - treeitem "[icon-circle-outline] in-a.test.ts" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] passes"
   `);
 });
 
@@ -305,7 +490,27 @@ test('should show time', async ({ runUITest }) => {
         ⊘ skipped
   `);
 
-  await expect(page.getByTestId('status-line')).toHaveText('4/8 passed (50%)');
+  await expect(page).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-error] a.test.ts" [expanded]:
+        - group:
+          - treeitem ${/\[icon-check\] passes \d+m?s/}
+          - treeitem ${/\[icon-error\] fails \d+m?s/} [selected]:
+            - button "Run"
+            - button "Show source"
+            - button "Watch"
+          - treeitem "[icon-error] suite" [expanded=false]
+      - treeitem "[icon-error] b.test.ts" [expanded]:
+        - group:
+          - treeitem ${/\[icon-check\] passes \d+m?s/}
+          - treeitem ${/\[icon-error\] fails \d+m?s/}
+      - treeitem "[icon-check] c.test.ts" [expanded]:
+        - group:
+          - treeitem ${/\[icon-check\] passes \d+m?s/}
+          - treeitem "[icon-circle-slash] skipped"
+  `);
+
+  await expect(page.getByTestId('status-line')).toHaveText('8/8 (100%) — 4 passed, 3 failed, 1 skipped');
 });
 
 test('should show test.fail as passing', async ({ runUITest }) => {
@@ -329,7 +534,14 @@ test('should show test.fail as passing', async ({ runUITest }) => {
         ✅ should fail XXms
   `);
 
-  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+  await expect(page).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-check] a.test.ts" [expanded]:
+        - group:
+          - treeitem ${/\[icon-check\] should fail \d+m?s/}
+  `);
+
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 (100%) — 1 passed');
 });
 
 test('should ignore repeatEach', async ({ runUITest }) => {
@@ -358,7 +570,14 @@ test('should ignore repeatEach', async ({ runUITest }) => {
         ✅ should pass
   `);
 
-  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+  await expect(page).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-check] a.test.ts" [expanded]:
+        - group:
+          - treeitem ${/\[icon-check\] should pass/}
+  `);
+
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 (100%) — 1 passed');
 });
 
 test('should remove output folder before test run', async ({ runUITest }) => {
@@ -385,14 +604,30 @@ test('should remove output folder before test run', async ({ runUITest }) => {
     ▼ ✅ a.test.ts
         ✅ should pass
   `);
-  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+
+  await expect(page).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-check] a.test.ts" [expanded]:
+        - group:
+          - treeitem ${/\[icon-check\] should pass/}
+  `);
+
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 (100%) — 1 passed');
 
   await page.getByTitle('Run all').click();
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ✅ a.test.ts
         ✅ should pass
   `);
-  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+
+  await expect(page).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-check] a.test.ts" [expanded]:
+        - group:
+          - treeitem ${/\[icon-check\] should pass/}
+  `);
+
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 (100%) — 1 passed');
 });
 
 test('should show proper total when using deps', async ({ runUITest }) => {
@@ -419,8 +654,8 @@ test('should show proper total when using deps', async ({ runUITest }) => {
 
 
   await page.getByText('Status:').click();
-  await page.getByLabel('setup').setChecked(true);
-  await page.getByLabel('chromium').setChecked(true);
+  await page.getByRole('checkbox', { name: 'setup' }).setChecked(true);
+  await page.getByRole('checkbox', { name: 'chromium' }).setChecked(true);
 
   await expect.poll(dumpTestTree(page)).toContain(`
     ▼ ◯ a.test.ts
@@ -432,7 +667,19 @@ test('should show proper total when using deps', async ({ runUITest }) => {
         ✅ run @setup <=
         ◯ run @chromium
   `);
-  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+
+  await expect(page).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
+        - group:
+          - treeitem ${/\[icon-check\] run @setup setup/} [selected]:
+            - button "Run"
+            - button "Show source"
+            - button "Watch"
+          - treeitem "[icon-circle-outline] run @chromium chromium"
+  `);
+
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 (100%) — 1 passed');
 
   await page.getByTitle('run @chromium').dblclick();
   await expect.poll(dumpTestTree(page)).toBe(`
@@ -440,5 +687,168 @@ test('should show proper total when using deps', async ({ runUITest }) => {
         ✅ run @setup
         ✅ run @chromium <=
   `);
-  await expect(page.getByTestId('status-line')).toHaveText('2/2 passed (100%)');
+
+  await expect(page).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-check] a.test.ts" [expanded]:
+        - group:
+          - treeitem ${/\[icon-check\] run @setup setup/}
+          - treeitem ${/\[icon-check\] run @chromium chromium/} [selected]:
+            - button "Run"
+            - button "Show source"
+            - button "Watch"
+  `);
+
+  await expect(page.getByTestId('status-line')).toHaveText('2/2 (100%) — 2 passed');
+});
+
+test('should respect --tsconfig option', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32797' }
+}, async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'playwright.config.ts': `
+      import { foo } from '~/foo';
+      export default {
+        testDir: './tests' + foo,
+      };
+    `,
+    'tsconfig.json': `{
+      "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+          "~/*": ["./does-not-exist/*"],
+        },
+      },
+    }`,
+    'tsconfig.special.json': `{
+      "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+          "~/*": ["./mapped-from-root/*"],
+        },
+      },
+    }`,
+    'mapped-from-root/foo.ts': `
+      export const foo = 42;
+    `,
+    'tests42/tsconfig.json': `{
+      "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+          "~/*": ["../should-be-ignored/*"],
+        },
+      },
+    }`,
+    'tests42/a.test.ts': `
+      import { foo } from '~/foo';
+      import { test, expect } from '@playwright/test';
+      test('test', ({}) => {
+        expect(foo).toBe(42);
+      });
+    `,
+    'should-be-ignored/foo.ts': `
+      export const foo = 43;
+    `,
+  }, undefined, { additionalArgs: ['--tsconfig=tsconfig.special.json'] });
+
+  await page.getByTitle('Run all').click();
+
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ✅ a.test.ts
+        ✅ test
+  `);
+
+  await expect(page).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-check] a.test.ts" [expanded]:
+        - group:
+          - treeitem ${/\[icon-check\] test/}
+  `);
+
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 (100%) — 1 passed');
+});
+
+test('should respect --ignore-snapshots option', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32868' }
+}, async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('snapshot', () => {
+        expect('foo').toMatchSnapshot(); // fails because no snapshot is present
+      });
+    `,
+  }, undefined, { additionalArgs: ['--ignore-snapshots'] });
+
+  await page.getByTitle('Run all').click();
+
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ✅ a.test.ts
+        ✅ snapshot
+  `);
+
+  await expect(page).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-check] a.test.ts" [expanded]:
+        - group:
+          - treeitem ${/\[icon-check\] snapshot/}
+  `);
+});
+
+test('should not leak websocket connections', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33641' }
+}, async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async () => {});
+    `,
+  });
+
+  const [ws1] = await Promise.all([
+    page.waitForEvent('websocket', w => !w.url().includes('hmr')),
+    page.getByTitle('Reload').click(),
+  ]);
+
+  await Promise.all([
+    page.waitForEvent('websocket', w => !w.url().includes('hmr')),
+    page.getByTitle('Reload').click(),
+  ]);
+
+  await expect.poll(() => ws1.isClosed()).toBe(true);
+});
+
+test('should run test defined outside of .spec.ts file', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'example.spec.ts': `
+      import './impl';
+    `,
+    'impl.ts': `
+      import { test } from '@playwright/test';
+      test('one', async () => {});
+    `,
+  });
+  await page.getByRole('treeitem', { name: 'one' }).dblclick();
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ✅ example.spec.ts
+        ✅ one <=
+  `);
+});
+
+test('should run test defined outside of testdir', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'playwright.config.ts': `export default { testDir: 'tests' };`,
+    'tests/example.spec.ts': `
+      import '../src/impl';
+    `,
+    'src/impl.ts': `
+      import { test } from '@playwright/test';
+      test('external', async () => {});
+    `,
+  });
+  await page.getByRole('treeitem', { name: 'external' }).dblclick();
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ✅ example.spec.ts
+        ✅ external <=
+  `);
 });

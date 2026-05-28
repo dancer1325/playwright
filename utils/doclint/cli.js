@@ -21,7 +21,6 @@ const playwright = require('playwright-core');
 const fs = require('fs');
 const path = require('path');
 const { parseApi } = require('./api_parser');
-const missingDocs = require('./missingDocs');
 const md = require('../markdown');
 const docs = require('./documentation');
 const toKebabCase = require('lodash/kebabCase')
@@ -130,14 +129,23 @@ async function run() {
   {
     const langs = ['js', 'java', 'python', 'csharp'];
     const documentationRoot = path.join(PROJECT_DIR, 'docs', 'src');
+    const apiRoot = path.join(documentationRoot, 'api');
+    const testApiRoot = path.join(documentationRoot, 'test-api');
+    const testReporterApiRoot = path.join(documentationRoot, 'test-reporter-api');
+    const electronApiRoot = path.join(documentationRoot, 'electron-api');
+    const mobileApiRoot = path.join(documentationRoot, 'mobile-api');
     for (const lang of langs) {
       try {
-        let documentation = parseApi(path.join(documentationRoot, 'api'));
+        let documentation = parseApi(apiRoot);
         if (lang === 'js') {
           documentation = documentation.mergeWith(
-            parseApi(path.join(documentationRoot, 'test-api'), path.join(documentationRoot, 'api', 'params.md'))
+            parseApi(testApiRoot, path.join(documentationRoot, 'api', 'params.md'))
           ).mergeWith(
-            parseApi(path.join(documentationRoot, 'test-reporter-api'))
+            parseApi(testReporterApiRoot)
+          ).mergeWith(
+            parseApi(electronApiRoot, path.join(documentationRoot, 'api', 'params.md'))
+          ).mergeWith(
+            parseApi(mobileApiRoot, path.join(documentationRoot, 'api', 'params.md'))
           );
         }
         documentation.filterForLanguage(lang);
@@ -175,7 +183,7 @@ async function run() {
 
           // Standardise naming and remove the filter in the file name
           // Also, Internally (playwright.dev generator) we merge test-api and test-reporter-api into api.
-          const canonicalName = filePath.replace(/(-(js|python|csharp|java))+/, '').replace(/(\/|\\)(test-api|test-reporter-api)(\/|\\)/, `${path.sep}api${path.sep}`);
+          const canonicalName = filePath.replace(/(-(js|python|csharp|java))+/, '').replace(/(\/|\\)(test-api|test-reporter-api|electron-api|mobile-api)(\/|\\)/, `${path.sep}api${path.sep}`);
           mdSections.add(canonicalName);
 
           const data = fs.readFileSync(filePath, 'utf-8');
@@ -183,7 +191,8 @@ async function run() {
           // Validates code snippet groups.
           rootNode = docs.processCodeGroups(rootNode, lang, tabs => tabs.map(tab => tab.spec));
           // Renders links.
-          documentation.renderLinksInNodes(rootNode);
+          if (!filePath.startsWith(apiRoot) && !filePath.startsWith(testApiRoot) && !filePath.startsWith(testReporterApiRoot) && !filePath.startsWith(electronApiRoot) && !filePath.startsWith(mobileApiRoot))
+            documentation.renderLinksInNodes(rootNode);
           // Validate links.
           {
             md.visitAll(rootNode, node => {
@@ -193,6 +202,7 @@ async function run() {
                   'java',
                   'css',
                   'js',
+                  'markdown',
                   'ts',
                   'python',
                   'py',
@@ -213,7 +223,7 @@ async function run() {
                   'Dockerfile',
                 ]);
                 if (!allowedCodeLangs.has(node.codeLang.split(' ')[0]))
-                  throw new Error(`${path.relative(PROJECT_DIR, filePath)} contains code block with invalid code block language ${node.codeLang}`);
+                  throw new Error(`${path.relative(PROJECT_DIR, filePath)} contains code block with invalid code block language "${node.codeLang}"`);
               }
               if (node.type.startsWith('h')) {
                 const hash = mdSectionHash(node.text || '');
@@ -243,6 +253,8 @@ async function run() {
 
         const badLinks = [];
         for (const { filePath, linkTarget, name } of mdLinks) {
+          if (linkTarget.startsWith(path.join(documentationRoot, 'images')))
+            continue;
           if (!mdSections.has(linkTarget))
             badLinks.push(`${path.relative(PROJECT_DIR, filePath)} references to '${linkTarget}' as '${name}' which does not exist.`);
         }
@@ -253,22 +265,6 @@ async function run() {
         e.message = `While processing "${lang}"\n` + e.message;
         throw e;
       }
-    }
-  }
-
-  // Check for missing docs
-  {
-    const apiDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'api'));
-    apiDocumentation.filterForLanguage('js');
-    const srcClient = path.join(PROJECT_DIR, 'packages', 'playwright-core', 'src', 'client');
-    const sources = fs.readdirSync(srcClient).map(n => path.join(srcClient, n));
-    const errors = missingDocs(apiDocumentation, sources, path.join(srcClient, 'api.ts'));
-    if (errors.length) {
-      console.log('============================');
-      console.log('ERROR: missing documentation:');
-      errors.forEach(e => console.log(e));
-      console.log('============================')
-      process.exit(1);
     }
   }
 

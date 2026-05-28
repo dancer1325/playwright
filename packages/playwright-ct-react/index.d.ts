@@ -14,24 +14,26 @@
  * limitations under the License.
  */
 
-import type { Locator } from 'playwright/test';
-import type { TestType } from '@playwright/experimental-ct-core';
+import type React from 'react';
+
+import type { TestType, Locator } from '@playwright/experimental-ct-core';
 
 export interface MountOptions<HooksConfig> {
   hooksConfig?: HooksConfig;
 }
 
 export interface MountResult extends Locator {
-  unmount(): Promise<void>;
-  update(component: JSX.Element): Promise<void>;
+  unmount: () => Promise<void>;
+  update: (component: React.JSX.Element) => Promise<void>;
 }
 
-export const test: TestType<{
-  mount<HooksConfig>(
-    component: JSX.Element,
+export interface ComponentFixtures {
+  mount: <HooksConfig>(
+    component: React.JSX.Element,
     options?: MountOptions<HooksConfig>
-  ): Promise<MountResult>;
-}>;
+  ) => Promise<MountResult>;
+}
 
-export { defineConfig, PlaywrightTestConfig } from '@playwright/experimental-ct-core';
-export { expect, devices } from 'playwright/test';
+export const test: TestType<ComponentFixtures>;
+
+export { defineConfig, PlaywrightTestConfig, expect, devices } from '@playwright/experimental-ct-core';

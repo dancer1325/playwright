@@ -7,7 +7,7 @@ title: "Getting started - Library"
 
 ### Pip
 
-[![PyPI version](https://badge.fury.io/py/playwright.svg)](https://pypi.python.org/pypi/playwright/)
+[<img src="https://badge.fury.io/py/playwright.svg" alt="PyPI version" width="132" height="20" />](https://pypi.python.org/pypi/playwright/)
 
 ```bash
 pip install --upgrade pip
@@ -17,7 +17,7 @@ playwright install
 
 ### Conda
 
-[![Anaconda version](https://img.shields.io/conda/v/microsoft/playwright)](https://anaconda.org/Microsoft/playwright)
+[<img src="https://img.shields.io/conda/v/microsoft/playwright" alt="Anaconda version" width="160" height="20" />](https://anaconda.org/Microsoft/playwright)
 
 ```bash
 conda config --add channels conda-forge
@@ -38,7 +38,7 @@ from playwright.sync_api import sync_playwright
 with sync_playwright() as p:
     browser = p.chromium.launch()
     page = browser.new_page()
-    page.goto("http://playwright.dev")
+    page.goto("https://playwright.dev")
     print(page.title())
     browser.close()
 ```
@@ -53,7 +53,7 @@ async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch()
         page = await browser.new_page()
-        await page.goto("http://playwright.dev")
+        await page.goto("https://playwright.dev")
         print(await page.title())
         await browser.close()
 
@@ -75,7 +75,7 @@ with sync_playwright() as p:
     browser.close()
 ```
 
-By default, Playwright runs the browsers in headless mode. To see the browser UI, pass the `headless=False` flag while launching the browser. You can also use [`option: slowMo`] to slow down execution. Learn more in the debugging tools [section](./debug.md).
+By default, Playwright runs the browsers in headless mode. To see the browser UI, set [`option: BrowserType.launch.headless`] option to `False`. You can also use [`option: BrowserType.launch.slowMo`] to slow down execution. Learn more in the debugging tools [section](./debug.md).
 
 ```py
 firefox.launch(headless=False, slow_mo=50)

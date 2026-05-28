@@ -1,7 +1,7 @@
 /*
   Copyright (c) Microsoft Corporation.
 
-  Licensed under the Apache License, Version 2.0 (the 'License");
+  Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
   You may obtain a copy of the License at
 
@@ -18,7 +18,7 @@ import * as React from 'react';
 import { ListView } from './listView';
 import type { ListViewProps } from './listView';
 import './gridView.css';
-import { ResizeView } from '@web/shared/resizeView';
+import { ResizeView } from '../shared/resizeView';
 
 export type Sorting<T> = { by: keyof T, negate: boolean };
 
@@ -76,6 +76,7 @@ export function GridView<T>(model: GridViewProps<T>) {
       <div className='grid-view-header'>
         {model.columns.map((column, i) => {
           return <div
+            key={model.columnTitle(column)}
             className={'grid-view-header-cell ' + sortingHeader(column, model.sorting)}
             style={{
               width: i < model.columns.length - 1 ? model.columnWidths.get(column) : undefined,
@@ -91,12 +92,14 @@ export function GridView<T>(model: GridViewProps<T>) {
       <ListView
         name={model.name}
         items={model.items}
+        ariaLabel={model.ariaLabel}
         id={model.id}
         render={(item, index) => {
           return <>
             {model.columns.map((column, i) => {
               const { body, title } = model.render(item, column, index);
               return <div
+                key={model.columnTitle(column)}
                 className={`grid-view-cell grid-view-column-${String(column)}`}
                 title={title}
                 style={{
@@ -108,20 +111,17 @@ export function GridView<T>(model: GridViewProps<T>) {
           </>;
         }}
         icon={model.icon}
-        indent={model.indent}
         isError={model.isError}
         isWarning={model.isWarning}
         isInfo={model.isInfo}
         selectedItem={model.selectedItem}
         onAccepted={model.onAccepted}
         onSelected={model.onSelected}
-        onLeftArrow={model.onLeftArrow}
-        onRightArrow={model.onRightArrow}
         onHighlighted={model.onHighlighted}
         onIconClicked={model.onIconClicked}
         noItemsMessage={model.noItemsMessage}
         dataTestId={model.dataTestId}
-        noHighlightOnHover={model.noHighlightOnHover}
+        notSelectable={model.notSelectable}
       ></ListView>
     </div>
   </div>;

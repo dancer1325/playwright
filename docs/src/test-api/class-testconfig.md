@@ -36,18 +36,54 @@ export default defineConfig({
 });
 ```
 
+## property: TestConfig.captureGitInfo
+* since: v1.51
+- type: ?<[Object]>
+  - `commit` ?<boolean> Whether to capture commit and pull request information such as hash, author, timestamp.
+  - `diff` ?<boolean> Whether to capture commit diff.
+
+These settings control whether git information is captured and stored in the config [`property: TestConfig.metadata`].
+
+**Usage**
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  captureGitInfo: { commit: true, diff: true }
+});
+```
+
+**Details**
+
+* Capturing `commit` information is useful when you'd like to see it in your HTML (or a third party) report.
+* Capturing `diff` information is useful to enrich the report with the actual source diff. This information can be used to provide intelligent advice on how to fix the test.
+
+:::note
+Default values for these settings depend on the environment. When tests run as a part of CI where it is safe to obtain git information, the default value is `true`, `false` otherwise.
+:::
+
+:::note
+The structure of the git commit metadata is subject to change.
+:::
+
+
 ## property: TestConfig.expect
 * since: v1.10
 - type: ?<[Object]>
   - `timeout` ?<[int]> Default timeout for async expect matchers in milliseconds, defaults to 5000ms.
   - `toHaveScreenshot` ?<[Object]> Configuration for the [`method: PageAssertions.toHaveScreenshot#1`] method.
-    - `animations` ?<[ScreenshotAnimations]<"allow"|"disabled">> See [`option: animations`] in [`method: Page.screenshot`]. Defaults to `"disabled"`.
-    - `caret` ?<[ScreenshotCaret]<"hide"|"initial">> See [`option: caret`] in [`method: Page.screenshot`]. Defaults to `"hide"`.
+    - `animations` ?<[ScreenshotAnimations]<"allow"|"disabled">> See [`option: Page.screenshot.animations`] in [`method: Page.screenshot`]. Defaults to `"disabled"`.
+    - `caret` ?<[ScreenshotCaret]<"hide"|"initial">> See [`option: Page.screenshot.caret`] in [`method: Page.screenshot`]. Defaults to `"hide"`.
     - `maxDiffPixels` ?<[int]> An acceptable amount of pixels that could be different, unset by default.
     - `maxDiffPixelRatio` ?<[float]> An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
-    - `scale` ?<[ScreenshotScale]<"css"|"device">> See [`option: scale`] in [`method: Page.screenshot`]. Defaults to `"css"`.
-    - `stylePath` ?<[string]|[Array]<[string]>> See [`option: style`] in [`method: Page.screenshot`].
+    - `scale` ?<[ScreenshotScale]<"css"|"device">> See [`option: Page.screenshot.scale`] in [`method: Page.screenshot`]. Defaults to `"css"`.
+    - `stylePath` ?<[string]|[Array]<[string]>> See [`option: Page.screenshot.style`] in [`method: Page.screenshot`].
     - `threshold` ?<[float]> An acceptable perceived color difference between the same pixel in compared images, ranging from `0` (strict) and `1` (lax). `"pixelmatch"` comparator computes color difference in [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`.
+    - `pathTemplate` ?<[string]> A template controlling location of the screenshots. See [`property: TestConfig.snapshotPathTemplate`] for details.
+  - `toMatchAriaSnapshot` ?<[Object]> Configuration for the [`method: LocatorAssertions.toMatchAriaSnapshot#2`] method.
+    - `pathTemplate` ?<[string]> A template controlling location of the aria snapshots. See [`property: TestConfig.snapshotPathTemplate`] for details.
+    - `children` ?<["contain" | "equal" | "deep-equal"]> Controls how children of the snapshot root are matched against the actual accessibility tree. This is equivalent to adding a `/children` property at the top of every aria snapshot template. Individual snapshots can override this by including an explicit `/children` property.
   - `toMatchSnapshot` ?<[Object]> Configuration for the [`method: SnapshotAssertions.toMatchSnapshot#1`] method.
     - `maxDiffPixels` ?<[int]> An acceptable amount of pixels that could be different, unset by default.
     - `maxDiffPixelRatio` ?<[float]> An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
@@ -70,6 +106,24 @@ export default defineConfig({
       maxDiffPixels: 10,
     },
   },
+});
+```
+
+## property: TestConfig.failOnFlakyTests
+* since: v1.52
+- type: ?<[boolean]>
+
+Whether to exit with an error if any tests are marked as flaky. Useful on CI.
+
+Also available in the [command line](../test-cli.md) with the `--fail-on-flaky-tests` option.
+
+**Usage**
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  failOnFlakyTests: !!process.env.CI,
 });
 ```
 
@@ -110,9 +164,9 @@ export default defineConfig({
 
 ## property: TestConfig.globalSetup
 * since: v1.10
-- type: ?<[string]>
+- type: ?<[string]|[Array]<[string]>>
 
-Path to the global setup file. This file will be required and run before all the tests. It must export a single function that takes a [FullConfig] argument.
+Path to the global setup file. This file will be required and run before all the tests. It must export a single function that takes a [FullConfig] argument. Pass an array of paths to specify multiple global setup files.
 
 Learn more about [global setup and teardown](../test-global-setup-teardown.md).
 
@@ -128,9 +182,9 @@ export default defineConfig({
 
 ## property: TestConfig.globalTeardown
 * since: v1.10
-- type: ?<[string]>
+- type: ?<[string]|[Array]<[string]>>
 
-Path to the global teardown file. This file will be required and run after all the tests. It must export a single function. See also [`property: TestConfig.globalSetup`].
+Path to the global teardown file. This file will be required and run after all the tests. It must export a single function. See also [`property: TestConfig.globalSetup`]. Pass an array of paths to specify multiple global teardown files.
 
 Learn more about [global setup and teardown](../test-global-setup-teardown.md).
 
@@ -234,7 +288,7 @@ export default defineConfig({
 * since: v1.10
 - type: ?<[Metadata]>
 
-Metadata that will be put directly to the test report serialized as JSON.
+Metadata contains key-value pairs to be included in the report. For example, the JSON report will include metadata serialized as JSON.
 
 **Usage**
 
@@ -242,7 +296,7 @@ Metadata that will be put directly to the test report serialized as JSON.
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-  metadata: 'acceptance tests',
+  metadata: { title: 'acceptance tests' },
 });
 ```
 
@@ -403,7 +457,7 @@ The list of reporters to use. Each reporter can be:
 * A module name like `'my-awesome-reporter'`.
 * A relative path to the reporter like `'./reporters/my-awesome-reporter.js'`.
 
-You can pass options to the reporter in a tuple like `['json', { outputFile: './report.json' }]`.
+You can pass options to the reporter in a tuple like `['json', { outputFile: './report.json' }]`. If the property is not specified, Playwright uses the `'dot'` reporter when the CI environment variable is set, and the `'list'` reporter otherwise.
 
 Learn more in the [reporters guide](../test-reporters.md).
 
@@ -421,7 +475,7 @@ export default defineConfig({
 * since: v1.10
 - type: ?<[null]|[Object]>
   - `max` <[int]> The maximum number of slow test files to report. Defaults to `5`.
-  - `threshold` <[float]> Test duration in milliseconds that is considered slow. Defaults to 15 seconds.
+  - `threshold` <[float]> Test file duration in milliseconds that is considered slow. Defaults to 5 minutes.
 
 Whether to report slow test files. Pass `null` to disable this feature.
 
@@ -478,6 +532,25 @@ import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
   shard: { total: 10, current: 3 },
+});
+```
+
+
+## property: TestConfig.tag
+* since: v1.57
+- type: ?<[string]|[Array]<[string]>>
+
+Tag or tags prepended to each test in the report. Useful for tagging your test run to differentiate between [CI environments](../test-sharding.md#merging-reports-from-multiple-environments).
+
+Note that each tag must start with `@` symbol. Learn more about [tagging](../test-annotations.md#tag-tests).
+
+**Usage**
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  tag: process.env.CI_ENVIRONMENT_NAME,  // for example "@APIv2"
 });
 ```
 
@@ -552,14 +625,31 @@ export default defineConfig({
 });
 ```
 
+## property: TestConfig.tsconfig
+* since: v1.49
+- type: ?<[string]>
+
+Path to a single `tsconfig` applicable to all imported files. By default, `tsconfig` for each imported file is looked up separately. Note that `tsconfig` property has no effect while the configuration file or any of its dependencies are loaded. Ignored when `--tsconfig` command line option is specified.
+
+**Usage**
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  tsconfig: './tsconfig.test.json',
+});
+```
+
 ## property: TestConfig.updateSnapshots
 * since: v1.10
-- type: ?<[UpdateSnapshots]<"all"|"none"|"missing">>
+- type: ?<[UpdateSnapshots]<"all"|"changed"|"missing"|"none">>
 
 Whether to update expected snapshots with the actual results produced by the test run. Defaults to `'missing'`.
-* `'all'` - All tests that are executed will update snapshots that did not match. Matching snapshots will not be updated.
-* `'none'` - No snapshots are updated.
+* `'all'` - All tests that are executed will update snapshots.
+* `'changed'` - All tests that are executed will update snapshots that did not match. Matching snapshots will not be updated. Also creates missing snapshots.
 * `'missing'` - Missing snapshots are created, for example when authoring a new test and running it for the first time. This is the default.
+* `'none'` - No snapshots are updated.
 
 Learn more about [snapshots](../test-snapshots.md).
 
@@ -572,6 +662,15 @@ export default defineConfig({
   updateSnapshots: 'missing',
 });
 ```
+
+## property: TestConfig.updateSourceMethod
+* since: v1.50
+- type: ?<[UpdateSourceMethod]<"overwrite"|"3way"|"patch">>
+
+Defines how to update snapshots in the source code.
+* `'patch'` - Create a unified diff file that can be used to update the source code later. This is the default.
+* `'3way'` - Generate merge conflict markers in source code. This allows user to manually pick relevant changes, as if they are resolving a merge conflict in the IDE.
+* `'overwrite'` - Overwrite the source code with the new snapshot values.
 
 ## property: TestConfig.use
 * since: v1.10
@@ -591,19 +690,8 @@ export default defineConfig({
 });
 ```
 
-## property: TestConfig.webServer
+## property: TestConfig.webServer = %%-test-config-web-server-options-%%
 * since: v1.10
-- type: ?<[Object]|[Array]<[Object]>>
-  - `command` <[string]> Shell command to start. For example `npm run start`..
-  - `cwd` ?<[string]> Current working directory of the spawned process, defaults to the directory of the configuration file.
-  - `env` ?<[Object]<[string], [string]>> Environment variables to set for the command, `process.env` by default.
-  - `ignoreHTTPSErrors` ?<[boolean]> Whether to ignore HTTPS errors when fetching the `url`. Defaults to `false`.
-  - `port` ?<[int]> The port that your http server is expected to appear on. It does wait until it accepts connections. Either `port` or `url` should be specified.
-  - `reuseExistingServer` ?<[boolean]> If true, it will re-use an existing server on the `port` or `url` when available. If no server is running on that `port` or `url`, it will run the command to start a new server. If `false`, it will throw if an existing process is listening on the `port` or `url`. This should be commonly set to `!process.env.CI` to allow the local dev server when running tests locally.
-  - `stdout` ?<["pipe"|"ignore"]> If `"pipe"`, it will pipe the stdout of the command to the process stdout. If `"ignore"`, it will ignore the stdout of the command. Default to `"ignore"`.
-  - `stderr` ?<["pipe"|"ignore"]> Whether to pipe the stderr of the command to the process stderr or ignore it. Defaults to `"pipe"`.
-  - `timeout` ?<[int]> How long to wait for the process to start up and be available in milliseconds. Defaults to 60000.
-  - `url` ?<[string]> The url on your http server that is expected to return a 2xx, 3xx, 400, 401, 402, or 403 status code when the server is ready to accept connections. Redirects (3xx status codes) are being followed and the new location is checked. Either `port` or `url` should be specified.
 
 Launch a development web server (or multiple) during the tests.
 
@@ -626,7 +714,7 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   webServer: {
     command: 'npm run start',
-    url: 'http://127.0.0.1:3000',
+    url: 'http://localhost:3000',
     timeout: 120 * 1000,
     reuseExistingServer: !process.env.CI,
   },
@@ -655,20 +743,47 @@ export default defineConfig({
   webServer: [
     {
       command: 'npm run start',
-      url: 'http://127.0.0.1:3000',
+      url: 'http://localhost:3000',
+      name: 'Frontend',
       timeout: 120 * 1000,
       reuseExistingServer: !process.env.CI,
     },
     {
       command: 'npm run backend',
-      url: 'http://127.0.0.1:3333',
+      url: 'http://localhost:3333',
+      name: 'Backend',
       timeout: 120 * 1000,
       reuseExistingServer: !process.env.CI,
     }
   ],
   use: {
-    baseURL: 'http://127.0.0.1:3000',
+    baseURL: 'http://localhost:3000',
   },
+});
+```
+
+If your webserver runs on varying ports, use `wait` to capture the port:
+
+```js
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  webServer: {
+    command: 'npm run start',
+    wait: {
+      stdout: /Listening on port (?<my_server_port>\d+)/
+    },
+  },
+});
+```
+
+```js
+import { test, expect } from '@playwright/test';
+
+test.use({ baseUrl: `http://localhost:${process.env.MY_SERVER_PORT ?? 3000}` });
+
+test('homepage', async ({ page }) => {
+  await page.goto('/');
 });
 ```
 

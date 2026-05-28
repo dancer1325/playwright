@@ -17,7 +17,6 @@
 import { test } from '@playwright/test';
 import type { TestModeName } from './testMode';
 import { DefaultTestMode, DriverTestMode } from './testMode';
-import * as playwrightLibrary from 'playwright-core';
 
 export type TestModeWorkerOptions = {
   mode: TestModeName;
@@ -30,28 +29,22 @@ export type TestModeTestFixtures = {
 export type TestModeWorkerFixtures = {
   toImplInWorkerScope: (rpcObject?: any) => any;
   playwright: typeof import('@playwright/test');
-  _playwrightImpl: typeof import('@playwright/test');
 };
 
 export const testModeTest = test.extend<TestModeTestFixtures, TestModeWorkerOptions & TestModeWorkerFixtures>({
   mode: ['default', { scope: 'worker', option: true }],
-  _playwrightImpl: [async ({ mode }, run) => {
+  playwright: [async ({ mode }, run) => {
     const testMode = {
       'default': new DefaultTestMode(),
-      'service': new DefaultTestMode(),
-      'service2': new DefaultTestMode(),
-      'service-grid': new DefaultTestMode(),
       'driver': new DriverTestMode(),
     }[mode];
-    require('playwright-core/lib/utils').setUnderTest();
     const playwright = await testMode.setup();
-    playwright._setSelectors(playwrightLibrary.selectors);
     await run(playwright);
     await testMode.teardown();
   }, { scope: 'worker' }],
 
   toImplInWorkerScope: [async ({ playwright }, use) => {
-    await use((playwright as any)._toImpl);
+    await use((playwright as any)._connection.toImpl);
   }, { scope: 'worker' }],
 
   toImpl: async ({ toImplInWorkerScope: toImplWorker, mode }, use, testInfo) => {

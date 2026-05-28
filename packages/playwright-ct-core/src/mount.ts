@@ -14,26 +14,30 @@
  * limitations under the License.
  */
 
-import type { Fixtures, Locator, Page, BrowserContextOptions, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, BrowserContext } from 'playwright/test';
-import type { Component, JsxComponent, MountOptions, ObjectComponentOptions } from '../types/component';
-import type { ContextReuseMode, FullConfigInternal } from '../../playwright/src/common/config';
-import type { ImportRef } from './injected/importRegistry';
 import { wrapObject } from './injected/serializers';
+import { Router } from './router';
+
+import type { config, FullConfigInternal } from 'playwright/lib/common';
+import type { RouterFixture } from '../index';
+import type { ImportRef } from './injected/importRegistry';
+import type { Component, JsxComponent, MountOptions, ObjectComponentOptions } from '../types/component';
+import type { Fixtures, Locator, Page, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions } from 'playwright/test';
+import type { Page as PageImpl } from 'playwright-core/lib/client/page';
 
 let boundCallbacksForMount: Function[] = [];
 
 interface MountResult extends Locator {
-  unmount(locator: Locator): Promise<void>;
-  update(options: Omit<MountOptions, 'hooksConfig'> | string | JsxComponent): Promise<void>;
+  unmount: () => Promise<void>;
+  update: (options: ObjectComponentOptions | JsxComponent) => Promise<void>;
 }
 
 type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
   mount: (component: any, options: any) => Promise<MountResult>;
+  router: RouterFixture;
 };
-type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & { _ctWorker: { context: BrowserContext | undefined, hash: string } };
+type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions;
 type BaseTestFixtures = {
-  _contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>,
-  _optionContextReuseMode: ContextReuseMode
+  _optionContextReuseMode: config.ContextReuseMode
 };
 
 export const fixtures: Fixtures<TestFixtures, WorkerFixtures, BaseTestFixtures> = {
@@ -42,25 +46,25 @@ export const fixtures: Fixtures<TestFixtures, WorkerFixtures, BaseTestFixtures> 
 
   serviceWorkers: 'block',
 
-  _ctWorker: [{ context: undefined, hash: '' }, { scope: 'worker' }],
-
   page: async ({ page }, use, info) => {
     if (!((info as any)._configInternal as FullConfigInternal).defineConfigWasUsed)
       throw new Error('Component testing requires the use of the defineConfig() in your playwright-ct.config.{ts,js}: https://aka.ms/playwright/ct-define-config');
-    await (page as any)._wrapApiCall(async () => {
+    if (!process.env.PLAYWRIGHT_TEST_BASE_URL)
+      throw new Error('Component testing could not determine the base URL of your component under test. Ensure you have supplied a template playwright/index.html or have set the PLAYWRIGHT_TEST_BASE_URL environment variable.');
+    await (page as PageImpl)._wrapApiCall(async () => {
       await page.exposeFunction('__ctDispatchFunction', (ordinal: number, args: any[]) => {
         boundCallbacksForMount[ordinal](...args);
       });
       await page.goto(process.env.PLAYWRIGHT_TEST_BASE_URL!);
-    }, true);
+    }, { internal: true });
     await use(page);
   },
 
   mount: async ({ page }, use) => {
     await use(async (componentRef: JsxComponent | ImportRef, options?: ObjectComponentOptions & MountOptions) => {
-      const selector = await (page as any)._wrapApiCall(async () => {
+      const selector = await (page as PageImpl)._wrapApiCall(async () => {
         return await innerMount(page, componentRef, options);
-      }, true);
+      }, { internal: true });
       const locator = page.locator(selector);
       return Object.assign(locator, {
         unmount: async () => {
@@ -77,6 +81,12 @@ export const fixtures: Fixtures<TestFixtures, WorkerFixtures, BaseTestFixtures> 
       });
     });
     boundCallbacksForMount = [];
+  },
+
+  router: async ({ context, baseURL }, use) => {
+    const router = new Router(context, baseURL);
+    await use(router);
+    await router.dispose();
   },
 };
 

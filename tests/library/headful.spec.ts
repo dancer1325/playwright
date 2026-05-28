@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
-import { compare } from 'playwright-core/lib/image_tools/compare';
+import { utils } from '../../packages/playwright-core/lib/coreBundle';
 import { PNG } from 'playwright-core/lib/utilsBundle';
 import { expect, playwrightTest as it } from '../config/browserTest';
 
-it.use({ headless: false });
+const { compare } = utils;
+
+it.skip(({ headless }) => headless, 'avoid popping windows in headless mode');
+it.skip(({ channel }) => channel === 'chromium-headless-shell' || channel === 'chromium-tip-of-tree-headless-shell', 'shell is never headed');
 
 it('should have default url when launching browser @smoke', async ({ launchPersistent }) => {
   const { context } = await launchPersistent();
@@ -118,7 +121,7 @@ it('should close browser after context menu was triggered', async ({ browserType
   await browser.close();
 });
 
-it('should(not) block third party cookies', async ({ page, server, allowsThirdParty }) => {
+it('should(not) block third party cookies', async ({ page, server, allowsThirdParty, defaultSameSiteCookieValue }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(src => {
     let fulfill;
@@ -144,7 +147,7 @@ it('should(not) block third party cookies', async ({ page, server, allowsThirdPa
         'httpOnly': false,
         'name': 'username',
         'path': '/',
-        'sameSite': 'None',
+        'sameSite': defaultSameSiteCookieValue,
         'secure': false,
         'value': 'John Doe'
       }
@@ -156,7 +159,7 @@ it('should(not) block third party cookies', async ({ page, server, allowsThirdPa
 
 it('should not block third party SameSite=None cookies', async ({ httpsServer, browserName, browser }) => {
   it.skip(browserName === 'webkit', 'No third party cookies in WebKit');
-  it.skip(!!process.env.PW_FREEZE_TIME);
+  it.skip(process.env.PW_CLOCK === 'frozen');
   const page = await browser.newPage({
     ignoreHTTPSErrors: true,
   });
@@ -192,7 +195,7 @@ it('should not block third party SameSite=None cookies', async ({ httpsServer, b
 });
 
 it('should not override viewport size when passed null', async function({ browserName, server, browser }) {
-  it.fixme(browserName === 'webkit', 'Our WebKit embedder does not respect window features');
+  it.skip(browserName === 'webkit', 'Our WebKit embedder does not respect window features');
 
   const context = await browser.newContext({ viewport: null });
   const page = await context.newPage();
@@ -230,8 +233,6 @@ it('Page.bringToFront should work', async ({ browser }) => {
 });
 
 it('should click in OOPIF', async ({ browserName, launchPersistent, server }) => {
-  it.fixme(browserName === 'chromium', 'Click is offset by the infobar height');
-
   server.setRoute('/empty.html', (req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/html' });
     res.end(`<iframe src="${server.CROSS_PROCESS_PREFIX}/iframe.html"></iframe>`);
@@ -251,8 +252,6 @@ it('should click in OOPIF', async ({ browserName, launchPersistent, server }) =>
 });
 
 it('should click bottom row w/ infobar in OOPIF', async ({ browserName, launchPersistent, server }) => {
-  it.fixme(browserName === 'chromium', 'Click is offset by the infobar height');
-
   server.setRoute('/empty.html', (req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/html' });
     res.end(`
@@ -271,23 +270,29 @@ it('should click bottom row w/ infobar in OOPIF', async ({ browserName, launchPe
         html, body { margin: 0; padding: 0; width: 100%; height: 100%; }
         button { position: absolute; bottom: 0; }
       </style>
-      <button id="button" onclick="console.log('ok')">Submit</button>`);
+      <button id="button" onclick="window._clicked=true">Submit</button>`);
   });
 
   const { page } = await launchPersistent();
   await page.goto(server.EMPTY_PAGE);
-  // Chrome bug! Investigate what's happening in the oopif router.
-  const consoleLog: string[] = [];
-  page.on('console', m => consoleLog.push(m.text()));
-  while (!consoleLog.includes('ok')) {
-    await page.waitForTimeout(100);
-    await page.frames()[1].click('text=Submit');
+  if (browserName === 'chromium') {
+    // CHROME BUG:
+    //   Unfortunately, on some platforms the automation infobar is shown up late or animates in.
+    //   Upon showing, it triggers a resize of WebContentsView and RenderWidgetHostView
+    //   through the native view hierarchy. This in turn resizes the compositor to the visible view size
+    //   instead of the emulated size specified in Emulation.setDeviceMetricsOverride.
+    //   Hit testing for OOPIFs is affected by the new size, and clicks do not reach the iframe.
+    //
+    //   The workaround is to re-apply the viewport after a delay, in this case after the navigation.
+    await page.setViewportSize({ width: 800, height: 600 });
   }
+  await page.frames()[1].click('text=Submit');
+  expect(await page.frames()[1].evaluate('window._clicked')).toBe(true);
 });
 
-it('headless and headful should use same default fonts', async ({ page, browserName, browserType }) => {
+it('headless and headful should use same default fonts', async ({ page, browserName, browserType, isBidi }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/11177' });
-  it.skip(browserName === 'firefox', 'Text is misaligned in headed vs headless');
+  it.skip(browserName === 'firefox' && !isBidi, 'Text is misaligned in headed vs headless');
 
   const genericFontFamilies = [
     'standard',
@@ -313,4 +318,47 @@ it('headless and headful should use same default fonts', async ({ page, browserN
     expect(count).toBe(0);
   }
   await headlessBrowser.close();
+});
+
+it('should have the same hyphen rendering on headless and headed', {
+  annotation: {
+    type: 'issue',
+    description: 'https://github.com/microsoft/playwright/issues/33590'
+  }
+}, async ({ browserType, page, headless, server }) => {
+  const content = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <style>
+        .hyphenated {
+          width: 100px;
+          hyphens: auto;
+          text-align: justify;
+          border: 1px solid black;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="hyphenated">
+        supercalifragilisticexpialidocious
+      </div>
+    </body>
+    </html>
+  `;
+  server.setRoute('/hyphenated.html', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(content);
+  });
+  const oppositeBrowser = await browserType.launch({ headless: !headless });
+  const oppositePage = await oppositeBrowser.newPage();
+  await oppositePage.goto(server.PREFIX + '/hyphenated.html');
+  await page.goto(server.PREFIX + '/hyphenated.html');
+
+  const [divHeight1, divHeight2] = await Promise.all([
+    page.evaluate(() => document.querySelector('.hyphenated').getBoundingClientRect().height),
+    oppositePage.evaluate(() => document.querySelector('.hyphenated').getBoundingClientRect().height),
+  ]);
+  expect(divHeight1).toBe(divHeight2);
+  await oppositeBrowser.close();
 });

@@ -1,7 +1,7 @@
 /**
  * Copyright (c) Microsoft Corporation.
  *
- * Licensed under the Apache License, Version 2.0 (the 'License");
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-import type * as channels from '@protocol/channels';
-import { eventsHelper } from '../../utils';
-import type { RegisteredListener } from '../../utils/eventsHelper';
+import { eventsHelper } from '@utils/eventsHelper';
 import { DebugController } from '../debugController';
-import type { DispatcherConnection, RootDispatcher } from './dispatcher';
 import { Dispatcher } from './dispatcher';
+
+import type { DispatcherConnection, RootDispatcher } from './dispatcher';
+import type { RegisteredListener } from '@utils/eventsHelper';
+import type * as channels from '@protocol/channels';
+import type { Progress } from '@protocol/progress';
+
 
 export class DebugControllerDispatcher extends Dispatcher<DebugController, channels.DebugControllerChannel, RootDispatcher> implements channels.DebugControllerChannel {
   _type_DebugController;
@@ -32,8 +35,8 @@ export class DebugControllerDispatcher extends Dispatcher<DebugController, chann
       eventsHelper.addEventListener(this._object, DebugController.Events.StateChanged, params => {
         this._dispatchEvent('stateChanged', params);
       }),
-      eventsHelper.addEventListener(this._object, DebugController.Events.InspectRequested, ({ selector, locator }) => {
-        this._dispatchEvent('inspectRequested', { selector, locator });
+      eventsHelper.addEventListener(this._object, DebugController.Events.InspectRequested, ({ selector, locator, ariaSnapshot }) => {
+        this._dispatchEvent('inspectRequested', { selector, locator, ariaSnapshot });
       }),
       eventsHelper.addEventListener(this._object, DebugController.Events.SourceChanged, ({ text, header, footer, actions }) => {
         this._dispatchEvent('sourceChanged', ({ text, header, footer, actions }));
@@ -47,44 +50,32 @@ export class DebugControllerDispatcher extends Dispatcher<DebugController, chann
     ];
   }
 
-  async initialize(params: channels.DebugControllerInitializeParams) {
-    this._object.initialize(params.codegenId, params.sdkLanguage);
+  async initialize(params: channels.DebugControllerInitializeParams, progress: Progress) {
+    this._object.initialize(progress, params.codegenId, params.sdkLanguage);
   }
 
-  async setReportStateChanged(params: channels.DebugControllerSetReportStateChangedParams) {
-    this._object.setReportStateChanged(params.enabled);
+  async setReportStateChanged(params: channels.DebugControllerSetReportStateChangedParams, progress: Progress) {
+    this._object.setReportStateChanged(progress, params.enabled);
   }
 
-  async resetForReuse() {
-    await this._object.resetForReuse();
+  async setRecorderMode(params: channels.DebugControllerSetRecorderModeParams, progress: Progress) {
+    await this._object.setRecorderMode(progress, params);
   }
 
-  async navigate(params: channels.DebugControllerNavigateParams) {
-    await this._object.navigate(params.url);
+  async highlight(params: channels.DebugControllerHighlightParams, progress: Progress) {
+    await this._object.highlight(progress, params);
   }
 
-  async setRecorderMode(params: channels.DebugControllerSetRecorderModeParams) {
-    await this._object.setRecorderMode(params);
+  async hideHighlight(params: channels.DebugControllerHideHighlightParams, progress: Progress) {
+    await this._object.hideHighlight(progress);
   }
 
-  async highlight(params: channels.DebugControllerHighlightParams) {
-    await this._object.highlight(params.selector);
+  async resume(params: channels.DebugControllerResumeParams, progress: Progress) {
+    await this._object.resume(progress);
   }
 
-  async hideHighlight() {
-    await this._object.hideHighlight();
-  }
-
-  async resume() {
-    await this._object.resume();
-  }
-
-  async kill() {
-    await this._object.kill();
-  }
-
-  async closeAllBrowsers() {
-    await this._object.closeAllBrowsers();
+  async kill(params: channels.DebugControllerKillParams, progress: Progress) {
+    this._object.kill(progress);
   }
 
   override _onDispose() {

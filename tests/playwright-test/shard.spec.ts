@@ -16,6 +16,8 @@
 
 import { test, expect } from './playwright-test-fixtures';
 
+test.describe.configure({ mode: 'parallel' });
+
 const tests = {
   'a1.spec.ts': `
     import { test } from '@playwright/test';
@@ -137,6 +139,12 @@ test('should respect shard=3/4', async ({ runInlineTest }) => {
     'a3-test1-done',
     'a3-test2-done',
   ]);
+});
+
+test('should exit with shard=/3', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/34463' });
+  const result = await runInlineTest(tests, { shard: '/3' });
+  expect(result.exitCode).toBe(1);
 });
 
 test('should not produce skipped tests for zero-sized shards', async ({ runInlineTest }) => {
@@ -283,4 +291,69 @@ test('should not shard mode:default suites', async ({ runInlineTest }) => {
     expect(result.passed).toBe(2);
     expect(result.outputLines).toEqual(['beforeAll2', 'test4', 'test5']);
   }
+});
+
+test('should shard tests with beforeAll based on shards total instead of workers', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33077' },
+}, async ({ runInlineTest }) => {
+  const tests = {
+    'a.spec.ts': `
+      import { test } from '@playwright/test';
+
+      test.describe.configure({ mode: 'parallel' });
+      test.beforeAll(() => {
+        console.log('\\n%%beforeAll');
+      });
+
+      for (let i = 1; i <= 8; i++) {
+        test('test ' + i, async ({ }) => {
+          console.log('\\n%%test' + i);
+        });
+      }
+    `,
+  };
+
+  {
+    const result = await runInlineTest(tests, { shard: '1/4', workers: 1 });
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(2);
+    expect(result.outputLines).toEqual(['beforeAll', 'test1', 'test2']);
+  }
+  {
+    const result = await runInlineTest(tests, { shard: '2/4', workers: 1 });
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(2);
+    expect(result.outputLines).toEqual(['beforeAll', 'test3', 'test4']);
+  }
+  {
+    const result = await runInlineTest(tests, { shard: '7/8', workers: 6 });
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(1);
+    expect(result.outputLines).toEqual(['beforeAll', 'test7']);
+  }
+});
+
+test('should respect custom shard weights', async ({ runInlineTest }) => {
+  await test.step('shard 1', async () => {
+    const result = await runInlineTest(tests, { 'shard': '1/2', 'workers': 1 }, { PWTEST_SHARD_WEIGHTS: '40:60' });
+    expect.soft(result.exitCode).toBe(0);
+    expect.soft(result.outputLines).toEqual([
+      'a1-test1-done',
+      'a1-test2-done',
+      'a1-test3-done',
+      'a1-test4-done',
+    ]);
+  });
+  await test.step('shard 2', async () => {
+    const result = await runInlineTest(tests, { 'shard': '2/2', 'workers': 1 }, { PWTEST_SHARD_WEIGHTS: '40:60' });
+    expect.soft(result.exitCode).toBe(0);
+    expect.soft(result.outputLines).toEqual([
+      'a2-test1-done',
+      'a2-test2-done',
+      'a3-test1-done',
+      'a3-test2-done',
+      'a4-test1-done',
+      'a4-test2-done',
+    ]);
+  });
 });

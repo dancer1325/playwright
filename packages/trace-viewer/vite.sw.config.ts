@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
+import path from 'path';
+
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-// @ts-ignore
+
 import { bundle } from './bundle';
-import * as path from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -29,24 +30,25 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@isomorphic': path.resolve(__dirname, '../playwright-core/src/utils/isomorphic'),
+      '@isomorphic': path.resolve(__dirname, '../isomorphic'),
       '@protocol': path.resolve(__dirname, '../protocol/src'),
-      '@testIsomorphic': path.resolve(__dirname, '../playwright-core/src/utils/testIsomorphic'),
+      '@testIsomorphic': path.resolve(__dirname, '../playwright/src/isomorphic'),
       '@trace': path.resolve(__dirname, '../trace/src'),
       '@web': path.resolve(__dirname, '../web/src'),
     },
   },
+  publicDir: false,
   build: {
     outDir: path.resolve(__dirname, '../playwright-core/lib/vite/traceViewer'),
     // Output dir is shared with vite.config.ts, clearing it here is racy.
     emptyOutDir: false,
     rollupOptions: {
       input: {
-        sw: path.resolve(__dirname, 'src/sw.ts'),
+        sw: path.resolve(__dirname, 'src/sw-main.ts'),
       },
       output: {
-        entryFileNames: info => '[name].bundle.js',
-        assetFileNames: () => '[name].[hash][extname]',
+        entryFileNames: info => 'sw.bundle.js',
+        assetFileNames: () => 'sw.[hash][extname]',
         manualChunks: undefined,
       },
     },

@@ -20,6 +20,8 @@ import type { ReporterV2 } from '../reporters/reporterV2';
 export interface TestRunnerPlugin {
   name: string;
   setup?(config: FullConfig, configDir: string, reporter: ReporterV2): Promise<void>;
+  populateDependencies?(): Promise<void>;
+  clearCache?(): Promise<void>;
   begin?(suite: Suite): Promise<void>;
   end?(): Promise<void>;
   teardown?(): Promise<void>;
@@ -28,7 +30,9 @@ export interface TestRunnerPlugin {
 export type TestRunnerPluginRegistration = {
   factory: TestRunnerPlugin | (() => TestRunnerPlugin | Promise<TestRunnerPlugin>);
   instance?: TestRunnerPlugin;
+  // When set, the plugin is only set up when the project (or their
+  // transitive closure of dependencies/teardowns) is selected to run.
+  projectId?: string;
 };
 
 export { webServer } from './webServerPlugin';
-export { gitCommitInfo } from './gitCommitInfoPlugin';

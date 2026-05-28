@@ -14,108 +14,129 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import path from 'path';
-import { installRootRedirect, openTraceInBrowser, openTraceViewerApp, registry, startTraceViewerServer } from 'playwright-core/lib/server';
-import { ManualPromise, gracefullyProcessExitDoNotHang, isUnderTest } from 'playwright-core/lib/utils';
-import type { Transport, HttpServer } from 'playwright-core/lib/utils';
-import type * as reporterTypes from '../../types/testReporter';
-import { collectAffectedTestFiles, dependenciesForTestFile } from '../transform/compilationCache';
-import type { ConfigLocation, FullConfigInternal } from '../common/config';
-import { InternalReporter } from '../reporters/internalReporter';
-import { createReporterForTestServer, createReporters } from './reporters';
-import { TestRun, createTaskRunnerForList, createTaskRunnerForTestServer, createTaskRunnerForWatchSetup, createTaskRunnerForListFiles } from './tasks';
-import { open } from 'playwright-core/lib/utilsBundle';
-import ListReporter from '../reporters/list';
-import { Multiplexer } from '../reporters/multiplexer';
-import { SigIntWatcher } from './sigIntWatcher';
-import { Watcher } from '../fsWatcher';
-import type { ReportEntry, TestServerInterface, TestServerInterfaceEventEmitters } from '../isomorphic/testServerInterface';
-import { Runner } from './runner';
-import type { ConfigCLIOverrides } from '../common/ipc';
-import { loadConfig, resolveConfigLocation, restartWithExperimentalTsEsm } from '../common/configLoader';
-import { webServerPluginsForConfig } from '../plugins/webServerPlugin';
-import type { TraceViewerRedirectOptions, TraceViewerServerOptions } from 'playwright-core/lib/server/trace/viewer/traceViewer';
-import type { TestRunnerPluginRegistration } from '../plugins';
-import { serializeError } from '../util';
-import { cacheDir } from '../transform/compilationCache';
-import { baseFullConfig } from '../isomorphic/teleReceiver';
+import util from 'util';
+import debug from 'debug';
+import open from 'open';
 
+import { server as coreServer } from 'playwright-core/lib/coreBundle';
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { isUnderTest } from '@utils/debug';
+import { HttpServer } from '@utils/httpServer';
+import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
+
+import { configLoader, ipc } from '../common';
+import ListReporter from '../reporters/list';
+import { SigIntWatcher } from './sigIntWatcher';
+import { TestRunner, TestRunnerEvent } from './testRunner';
+import UIModeReporter from './uiModeReporter';
+import { loadReporter } from './loadUtils';
+import { wrapReporterAsV2 } from '../reporters/reporterV2';
+
+import type { Transport } from '@utils/httpServer';
+import type * as reporterTypes from '../../types/testReporter';
+import type { ConfigLocation } from '../common';
+import type { ReportEntry, TestServerInterface, TestServerInterfaceEventEmitters } from '../isomorphic/testServerInterface';
+import type { ReporterV2 } from '../reporters/reporterV2';
+
+type TraceViewerRedirectOptions = coreServer.TraceViewerRedirectOptions;
+type TraceViewerServerOptions = coreServer.TraceViewerServerOptions;
+
+const originalDebugLog = debug.log;
+// eslint-disable-next-line no-restricted-properties
 const originalStdoutWrite = process.stdout.write;
+// eslint-disable-next-line no-restricted-properties
 const originalStderrWrite = process.stderr.write;
+
+const originalStdinIsTTY = process.stdin.isTTY;
 
 class TestServer {
   private _configLocation: ConfigLocation;
+  private _configCLIOverrides: ipc.ConfigCLIOverrides;
   private _dispatcher: TestServerDispatcher | undefined;
 
-  constructor(configLocation: ConfigLocation) {
+  constructor(configLocation: ConfigLocation, configCLIOverrides: ipc.ConfigCLIOverrides) {
     this._configLocation = configLocation;
+    this._configCLIOverrides = configCLIOverrides;
   }
 
   async start(options: { host?: string, port?: number }): Promise<HttpServer> {
-    this._dispatcher = new TestServerDispatcher(this._configLocation);
-    return await startTraceViewerServer({ ...options, transport: this._dispatcher.transport });
+    this._dispatcher = new TestServerDispatcher(this._configLocation, this._configCLIOverrides);
+    return await coreServer.startTraceViewerServer({ ...options, transport: this._dispatcher.transport });
   }
 
   async stop() {
-    await this._dispatcher?._setInterceptStdio(false);
-    await this._dispatcher?.runGlobalTeardown();
+    await this._dispatcher?.stop();
   }
 }
 
-class TestServerDispatcher implements TestServerInterface {
-  private _configLocation: ConfigLocation;
-  private _globalWatcher: Watcher;
-  private _testWatcher: Watcher;
-  private _testRun: { run: Promise<reporterTypes.FullResult['status']>, stop: ManualPromise<void> } | undefined;
-  readonly transport: Transport;
-  private _queue = Promise.resolve();
-  private _globalSetup: { cleanup: () => Promise<any>, report: ReportEntry[] } | undefined;
-  readonly _dispatchEvent: TestServerInterfaceEventEmitters['dispatchEvent'];
-  private _plugins: TestRunnerPluginRegistration[] | undefined;
-  private _serializer = require.resolve('./uiModeReporter');
-  private _watchTestDirs = false;
-  private _closeOnDisconnect = false;
-  private _devServerHandle: (() => Promise<void>) | undefined;
+export type ListTestsParams = {
+  projects?: string[];
+  locations?: string[];
+  grep?: string;
+  grepInvert?: string;
+};
 
-  constructor(configLocation: ConfigLocation) {
-    this._configLocation = configLocation;
+export type RunTestsParams = {
+  locations?: string[];
+  grep?: string;
+  grepInvert?: string;
+  testIds?: string[];
+  headed?: boolean;
+  workers?: number | string;
+  updateSnapshots?: 'all' | 'changed' | 'missing' | 'none';
+  updateSourceMethod?: 'overwrite' | 'patch' | '3way';
+  reporters?: string[],
+  trace?: 'on' | 'off';
+  video?: 'on' | 'off';
+  projects?: string[];
+  reuseContext?: boolean;
+  connectWsEndpoint?: string;
+};
+
+export class TestServerDispatcher implements TestServerInterface {
+  readonly transport: Transport;
+  private _serializer: string | undefined;
+  private _closeOnDisconnect = false;
+  private _testRunner: TestRunner;
+  private _globalSetupReport: ReportEntry[] | undefined;
+  readonly _dispatchEvent: TestServerInterfaceEventEmitters['dispatchEvent'];
+
+  constructor(configLocation: ConfigLocation, configCLIOverrides: ipc.ConfigCLIOverrides) {
+    this._testRunner = new TestRunner(configLocation, configCLIOverrides);
     this.transport = {
+      onconnect: () => {},
       dispatch: (method, params) => (this as any)[method](params),
       onclose: () => {
         if (this._closeOnDisconnect)
           gracefullyProcessExitDoNotHang(0);
       },
     };
-    this._globalWatcher = new Watcher('deep', () => this._dispatchEvent('listChanged', {}));
-    this._testWatcher = new Watcher('flat', events => {
-      const collector = new Set<string>();
-      events.forEach(f => collectAffectedTestFiles(f.file, collector));
-      this._dispatchEvent('testFilesChanged', { testFiles: [...collector] });
-    });
+
     this._dispatchEvent = (method, params) => this.transport.sendEvent?.(method, params);
+    this._testRunner.on(TestRunnerEvent.TestFilesChanged, testFiles => this._dispatchEvent('testFilesChanged', { testFiles }));
+    this._testRunner.on(TestRunnerEvent.TestPaused, params => this._dispatchEvent('testPaused', { errors: params.errors }));
   }
 
   private async _wireReporter(messageSink: (message: any) => void) {
     return await createReporterForTestServer(this._serializer, messageSink);
   }
 
-  private async _collectingReporter() {
+  private async _collectingReporter(): Promise<{ reporter: ReporterV2, report: ReportEntry[] }> {
     const report: ReportEntry[] = [];
-    const wireReporter = await createReporterForTestServer(this._serializer, e => report.push(e));
-    const reporter = new InternalReporter(wireReporter);
-    return { reporter, report };
+    return {
+      reporter: await createReporterForTestServer(this._serializer, e => report.push(e)),
+      report,
+    };
   }
 
   async initialize(params: Parameters<TestServerInterface['initialize']>[0]): ReturnType<TestServerInterface['initialize']> {
-    if (params.serializer)
-      this._serializer = params.serializer;
-    if (params.closeOnDisconnect)
-      this._closeOnDisconnect = true;
-    if (params.interceptStdio)
-      await this._setInterceptStdio(true);
-    if (params.watchTestDirs)
-      this._watchTestDirs = true;
+    // Note: this method can be called multiple times, for example from a new connection after UI mode reload.
+    this._serializer = params.serializer;
+    this._closeOnDisconnect = !!params.closeOnDisconnect;
+    await this._testRunner.initialize({
+      ...params,
+    });
+    this._setInterceptStdio(!!params.interceptStdio);
   }
 
   async ping() {}
@@ -128,303 +149,130 @@ class TestServerDispatcher implements TestServerInterface {
   }
 
   async resizeTerminal(params: Parameters<TestServerInterface['resizeTerminal']>[0]): ReturnType<TestServerInterface['resizeTerminal']> {
-    process.stdout.columns = params.cols;
-    process.stdout.rows = params.rows;
-    process.stderr.columns = params.cols;
-    process.stderr.columns = params.rows;
+    this._testRunner.resizeTerminal(params);
   }
 
   async checkBrowsers(): Promise<{ hasBrowsers: boolean; }> {
-    return { hasBrowsers: hasSomeBrowsers() };
+    return { hasBrowsers: this._testRunner.hasSomeBrowsers() };
   }
 
   async installBrowsers() {
-    await installBrowsers();
+    await this._testRunner.installBrowsers();
   }
 
   async runGlobalSetup(params: Parameters<TestServerInterface['runGlobalSetup']>[0]): ReturnType<TestServerInterface['runGlobalSetup']> {
-    await this.runGlobalTeardown();
-
     const { reporter, report } = await this._collectingReporter();
-    const { config, error } = await this._loadConfig();
-    if (!config) {
-      // Produce dummy config when it has an error.
-      reporter.onConfigure(baseFullConfig);
-      reporter.onError(error!);
-      await reporter.onExit();
-      return { status: 'failed', report };
-    }
-
-    webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
-    const listReporter = new InternalReporter(new ListReporter());
-    const taskRunner = createTaskRunnerForWatchSetup(config, new Multiplexer([reporter, listReporter]));
-    reporter.onConfigure(config.config);
-    const testRun = new TestRun(config, reporter);
-    const { status, cleanup: globalCleanup } = await taskRunner.runDeferCleanup(testRun, 0);
-    await reporter.onEnd({ status });
-    await reporter.onExit();
-    if (status !== 'passed') {
-      await globalCleanup();
-      return { report, status };
-    }
-    this._globalSetup = { cleanup: globalCleanup, report };
-    return { report, status };
+    this._globalSetupReport = report;
+    const { status, env } = await this._testRunner.runGlobalSetup([reporter, new ListReporter()]);
+    return { report, status, env };
   }
 
   async runGlobalTeardown() {
-    const globalSetup = this._globalSetup;
-    const status = await globalSetup?.cleanup();
-    this._globalSetup = undefined;
-    return { status, report: globalSetup?.report || [] };
-  }
-
-  async startDevServer(params: Parameters<TestServerInterface['startDevServer']>[0]): ReturnType<TestServerInterface['startDevServer']> {
-    if (this._devServerHandle)
-      return { status: 'failed', report: [] };
-    const { reporter, report } = await this._collectingReporter();
-    const { config, error } = await this._loadConfig();
-    if (!config) {
-      reporter.onError(error!);
-      return { status: 'failed', report };
-    }
-    const devServerCommand = (config.config as any)['@playwright/test']?.['cli']?.['dev-server'];
-    if (!devServerCommand) {
-      reporter.onError({ message: 'No dev-server command found in the configuration' });
-      return { status: 'failed', report };
-    }
-    try {
-      this._devServerHandle = await devServerCommand(config);
-      return { status: 'passed', report };
-    } catch (e) {
-      reporter.onError(serializeError(e));
-      return { status: 'failed', report };
-    }
-  }
-
-  async stopDevServer(params: Parameters<TestServerInterface['stopDevServer']>[0]): ReturnType<TestServerInterface['stopDevServer']> {
-    if (!this._devServerHandle)
-      return { status: 'failed', report: [] };
-    try {
-      await this._devServerHandle();
-      this._devServerHandle = undefined;
-      return { status: 'passed', report: [] };
-    } catch (e) {
-      const { reporter, report } = await this._collectingReporter();
-      reporter.onError(serializeError(e));
-      return { status: 'failed', report };
-    }
+    const { status } = await this._testRunner.runGlobalTeardown();
+    const report = this._globalSetupReport || [];
+    this._globalSetupReport = undefined;
+    return { status, report };
   }
 
   async clearCache(params: Parameters<TestServerInterface['clearCache']>[0]): ReturnType<TestServerInterface['clearCache']> {
-    const { config } = await this._loadConfig();
-    if (config)
-      await clearCacheAndLogToConsole(config);
+    await this._testRunner.clearCache();
   }
 
   async listFiles(params: Parameters<TestServerInterface['listFiles']>[0]): ReturnType<TestServerInterface['listFiles']> {
     const { reporter, report } = await this._collectingReporter();
-    const { config, error } = await this._loadConfig();
-    if (!config) {
-      reporter.onError(error!);
-      return { status: 'failed', report };
-    }
-
-    config.cliProjectFilter = params.projects?.length ? params.projects : undefined;
-    const taskRunner = createTaskRunnerForListFiles(config, reporter);
-    reporter.onConfigure(config.config);
-    const testRun = new TestRun(config, reporter);
-    const status = await taskRunner.run(testRun, 0);
-    await reporter.onEnd({ status });
-    await reporter.onExit();
+    const { status } = await this._testRunner.listFiles(reporter, params.projects);
     return { report, status };
   }
 
   async listTests(params: Parameters<TestServerInterface['listTests']>[0]): ReturnType<TestServerInterface['listTests']> {
-    let result: Awaited<ReturnType<TestServerInterface['listTests']>>;
-    this._queue = this._queue.then(async () => {
-      result = await this._innerListTests(params);
-    }).catch(printInternalError);
-    await this._queue;
-    return result!;
-  }
-
-  private async _innerListTests(params: Parameters<TestServerInterface['listTests']>[0]): ReturnType<TestServerInterface['listTests']> {
-    const overrides: ConfigCLIOverrides = {
-      repeatEach: 1,
-      retries: 0,
-    };
     const { reporter, report } = await this._collectingReporter();
-    const { config, error } = await this._loadConfig(overrides);
-    if (!config) {
-      reporter.onError(error!);
-      return { report: [], status: 'failed' };
-    }
-
-    config.cliArgs = params.locations || [];
-    config.cliProjectFilter = params.projects?.length ? params.projects : undefined;
-    config.cliListOnly = true;
-
-    const taskRunner = createTaskRunnerForList(config, reporter, 'out-of-process', { failOnLoadErrors: false });
-    const testRun = new TestRun(config, reporter);
-    reporter.onConfigure(config.config);
-    const status = await taskRunner.run(testRun, 0);
-    await reporter.onEnd({ status });
-    await reporter.onExit();
-
-    const projectDirs = new Set<string>();
-    const projectOutputs = new Set<string>();
-    for (const p of config.projects) {
-      projectDirs.add(p.project.testDir);
-      projectOutputs.add(p.project.outputDir);
-    }
-
-    const result = await resolveCtDirs(config);
-    if (result) {
-      projectDirs.add(result.templateDir);
-      projectOutputs.add(result.outDir);
-    }
-
-    if (this._watchTestDirs)
-      this._globalWatcher.update([...projectDirs], [...projectOutputs], false);
+    const { status } = await this._testRunner.listTests(reporter, params);
     return { report, status };
   }
 
   async runTests(params: Parameters<TestServerInterface['runTests']>[0]): ReturnType<TestServerInterface['runTests']> {
-    let result: Awaited<ReturnType<TestServerInterface['runTests']>> = { status: 'passed' };
-    this._queue = this._queue.then(async () => {
-      result = await this._innerRunTests(params).catch(e => { printInternalError(e); return { status: 'failed' }; });
-    });
-    await this._queue;
-    return result;
-  }
-
-  private async _innerRunTests(params: Parameters<TestServerInterface['runTests']>[0]): ReturnType<TestServerInterface['runTests']> {
-    await this.stopTests();
-    const overrides: ConfigCLIOverrides = {
-      repeatEach: 1,
-      retries: 0,
-      preserveOutputDir: true,
-      timeout: params.timeout,
-      reporter: params.reporters ? params.reporters.map(r => [r]) : undefined,
-      use: {
-        trace: params.trace === 'on' ? { mode: 'on', sources: false, _live: true } : (params.trace === 'off' ? 'off' : undefined),
-        video: params.video === 'on' ? 'on' : (params.video === 'off' ? 'off' : undefined),
-        headless: params.headed ? false : undefined,
-        _optionContextReuseMode: params.reuseContext ? 'when-possible' : undefined,
-        _optionConnectOptions: params.connectWsEndpoint ? { wsEndpoint: params.connectWsEndpoint } : undefined,
-      },
-      outputDir: params.outputDir,
-      workers: params.workers,
-    };
-    if (params.trace === 'on')
-      process.env.PW_LIVE_TRACE_STACKS = '1';
-    else
-      process.env.PW_LIVE_TRACE_STACKS = undefined;
-
-    const { config, error } = await this._loadConfig(overrides);
-    if (!config) {
-      const wireReporter = await this._wireReporter(e => this._dispatchEvent('report', e));
-      wireReporter.onError(error!);
-      return { status: 'failed' };
-    }
-
-    const testIdSet = params.testIds ? new Set<string>(params.testIds) : null;
-    config.cliListOnly = false;
-    config.cliPassWithNoTests = true;
-    config.cliArgs = params.locations || [];
-    config.cliGrep = params.grep;
-    config.cliGrepInvert = params.grepInvert;
-    config.cliProjectFilter = params.projects?.length ? params.projects : undefined;
-    config.testIdMatcher = testIdSet ? id => testIdSet.has(id) : undefined;
-
-    const reporters = await createReporters(config, 'test', true);
     const wireReporter = await this._wireReporter(e => this._dispatchEvent('report', e));
-    reporters.push(wireReporter);
-    const reporter = new InternalReporter(new Multiplexer(reporters));
-    const taskRunner = createTaskRunnerForTestServer(config, reporter);
-    const testRun = new TestRun(config, reporter);
-    reporter.onConfigure(config.config);
-    const stop = new ManualPromise();
-    const run = taskRunner.run(testRun, 0, stop).then(async status => {
-      await reporter.onEnd({ status });
-      await reporter.onExit();
-      this._testRun = undefined;
-      return status;
+    const { status } = await this._testRunner.runTests(wireReporter, {
+      ...params,
+      doNotRunDepsOutsideProjectFilter: true,
+      pauseAtEnd: params.pauseAtEnd,
+      pauseOnError: params.pauseOnError,
     });
-    this._testRun = { run, stop };
-    return { status: await run };
+    return { status };
   }
 
   async watch(params: { fileNames: string[]; }) {
-    const files = new Set<string>();
-    for (const fileName of params.fileNames) {
-      files.add(fileName);
-      dependenciesForTestFile(fileName).forEach(file => files.add(file));
-    }
-    this._testWatcher.update([...files], [], true);
+    await this._testRunner.watch(params.fileNames);
   }
 
   async findRelatedTestFiles(params: Parameters<TestServerInterface['findRelatedTestFiles']>[0]): ReturnType<TestServerInterface['findRelatedTestFiles']> {
-    const { config, error } = await this._loadConfig();
-    if (error)
-      return { testFiles: [], errors: [error] };
-    const runner = new Runner(config!);
-    return runner.findRelatedTestFiles('out-of-process', params.files);
+    return this._testRunner.findRelatedTestFiles(params.files);
   }
 
   async stopTests() {
-    this._testRun?.stop?.resolve();
-    await this._testRun?.run;
+    await this._testRunner.stopTests();
   }
 
-  async _setInterceptStdio(intercept: boolean) {
-    if (process.env.PWTEST_DEBUG)
-      return;
-    if (intercept) {
-      process.stdout.write = (chunk: string | Buffer) => {
-        this._dispatchEvent('stdio', chunkToPayload('stdout', chunk));
-        return true;
-      };
-      process.stderr.write = (chunk: string | Buffer) => {
-        this._dispatchEvent('stdio', chunkToPayload('stderr', chunk));
-        return true;
-      };
-    } else {
-      process.stdout.write = originalStdoutWrite;
-      process.stderr.write = originalStderrWrite;
-    }
+  async stop() {
+    this._setInterceptStdio(false);
+    await this._testRunner.stop();
   }
 
   async closeGracefully() {
-    gracefullyProcessExitDoNotHang(0);
+    await this._testRunner.closeGracefully();
   }
 
-  private async _loadConfig(overrides?: ConfigCLIOverrides): Promise<{ config: FullConfigInternal | null, error?: reporterTypes.TestError }> {
-    try {
-      const config = await loadConfig(this._configLocation, overrides);
-      // Preserve plugin instances between setup and build.
-      if (!this._plugins)
-        this._plugins = config.plugins || [];
-      else
-        config.plugins.splice(0, config.plugins.length, ...this._plugins);
-      return { config };
-    } catch (e) {
-      return { config: null, error: serializeError(e) };
+  private _setInterceptStdio(interceptStdio: boolean) {
+    /* eslint-disable no-restricted-properties */
+    if (process.env.PWTEST_DEBUG)
+      return;
+    if (interceptStdio) {
+      if (debug.log === originalDebugLog) {
+        // Only if debug.log hasn't already been tampered with, don't intercept any DEBUG=* logging
+        debug.log = (...args) => {
+          const string = util.format(...args) + '\n';
+          return (originalStderrWrite as any).apply(process.stderr, [string]);
+        };
+      }
+      const stdoutWrite = (chunk: string | Buffer) => {
+        this._dispatchEvent('stdio', chunkToPayload('stdout', chunk));
+        return true;
+      };
+      const stderrWrite = (chunk: string | Buffer) => {
+        this._dispatchEvent('stdio', chunkToPayload('stderr', chunk));
+        return true;
+      };
+      process.stdout.write = stdoutWrite;
+      process.stderr.write = stderrWrite;
+
+      // Override isTTY to prevent reporters from thinking they can block and wait for user SIGINT.
+      // We don't have a test for this, so be careful!
+      // https://github.com/microsoft/playwright/issues/37867
+      // @ts-expect-error types are wrong, isTTY can be undefined
+      process.stdin.isTTY = undefined;
+    } else {
+      debug.log = originalDebugLog;
+      process.stdout.write = originalStdoutWrite;
+      process.stderr.write = originalStderrWrite;
+      process.stdin.isTTY = originalStdinIsTTY;
     }
+    /* eslint-enable no-restricted-properties */
   }
 }
 
-export async function runUIMode(configFile: string | undefined, options: TraceViewerServerOptions & TraceViewerRedirectOptions): Promise<reporterTypes.FullResult['status'] | 'restarted'> {
-  const configLocation = resolveConfigLocation(configFile);
-  return await innerRunTestServer(configLocation, options, async (server: HttpServer, cancelPromise: ManualPromise<void>) => {
-    await installRootRedirect(server, [], { ...options, webApp: 'uiMode.html' });
+export async function runUIMode(configFile: string | undefined, configCLIOverrides: ipc.ConfigCLIOverrides, options: TraceViewerServerOptions & TraceViewerRedirectOptions): Promise<reporterTypes.FullResult['status']> {
+  const configLocation = configLoader.resolveConfigLocation(configFile);
+  return await innerRunTestServer(configLocation, configCLIOverrides, options, async (server: HttpServer, cancelPromise: ManualPromise<void>) => {
+    await coreServer.installRootRedirect(server, undefined, { ...options, webApp: 'uiMode.html' });
     if (options.host !== undefined || options.port !== undefined) {
-      await openTraceInBrowser(server.urlPrefix('human-readable'));
+      await coreServer.openTraceInBrowser(server.urlPrefix('human-readable'));
     } else {
-      const page = await openTraceViewerApp(server.urlPrefix('precise'), 'chromium', {
+      const channel = await installedChromiumChannelForUI(configLocation, configCLIOverrides);
+      const page = await coreServer.openTraceViewerApp(server.urlPrefix('precise'), 'chromium', {
         headless: isUnderTest() && process.env.PWTEST_HEADED_FOR_TEST !== '1',
         persistentContextOptions: {
           handleSIGINT: false,
+          channel,
         },
       });
       page.on('close', () => cancelPromise.resolve());
@@ -432,25 +280,37 @@ export async function runUIMode(configFile: string | undefined, options: TraceVi
   });
 }
 
-export async function runTestServer(configFile: string | undefined, options: { host?: string, port?: number }): Promise<reporterTypes.FullResult['status'] | 'restarted'> {
-  const configLocation = resolveConfigLocation(configFile);
-  return await innerRunTestServer(configLocation, options, async server => {
+// Pick first channel that is used by one of the projects, to ensure it is installed on the machine.
+async function installedChromiumChannelForUI(configLocation: ConfigLocation, configCLIOverrides: ipc.ConfigCLIOverrides) {
+  const config = await configLoader.loadConfig(configLocation, configCLIOverrides).catch(e => null);
+  if (!config)
+    return undefined;
+  if (config.projects.some(p => (!p.project.use.browserName || p.project.use.browserName === 'chromium') && !p.project.use.channel))
+    return undefined;
+  for (const channel of ['chromium', 'chrome', 'msedge']) {
+    if (config.projects.some(p => p.project.use.channel === channel))
+      return channel;
+  }
+  return undefined;
+}
+
+export async function runTestServer(configFile: string | undefined, configCLIOverrides: ipc.ConfigCLIOverrides, options: { host?: string, port?: number }): Promise<reporterTypes.FullResult['status']> {
+  const configLocation = configLoader.resolveConfigLocation(configFile);
+  return await innerRunTestServer(configLocation, configCLIOverrides, options, async server => {
     // eslint-disable-next-line no-console
     console.log('Listening on ' + server.urlPrefix('precise').replace('http:', 'ws:') + '/' + server.wsGuid());
   });
 }
 
-async function innerRunTestServer(configLocation: ConfigLocation, options: { host?: string, port?: number }, openUI: (server: HttpServer, cancelPromise: ManualPromise<void>, configLocation: ConfigLocation) => Promise<void>): Promise<reporterTypes.FullResult['status'] | 'restarted'> {
-  if (restartWithExperimentalTsEsm(undefined, true))
-    return 'restarted';
-  const testServer = new TestServer(configLocation);
+async function innerRunTestServer(configLocation: ConfigLocation, configCLIOverrides: ipc.ConfigCLIOverrides, options: { host?: string, port?: number }, openUI: (server: HttpServer, cancelPromise: ManualPromise<void>) => Promise<void>): Promise<reporterTypes.FullResult['status']> {
+  const testServer = new TestServer(configLocation, configCLIOverrides);
   const cancelPromise = new ManualPromise<void>();
   const sigintWatcher = new SigIntWatcher();
   process.stdin.on('close', () => gracefullyProcessExitDoNotHang(0));
   void sigintWatcher.promise().then(() => cancelPromise.resolve());
   try {
     const server = await testServer.start(options);
-    await openUI(server, cancelPromise, configLocation);
+    await openUI(server, cancelPromise);
     await cancelPromise;
   } finally {
     await testServer.stop();
@@ -466,62 +326,14 @@ type StdioPayload = {
 };
 
 function chunkToPayload(type: 'stdout' | 'stderr', chunk: Buffer | string): StdioPayload {
-  if (chunk instanceof Buffer)
+  if (chunk instanceof Uint8Array)
     return { type, buffer: chunk.toString('base64') };
   return { type, text: chunk };
 }
 
-function hasSomeBrowsers(): boolean {
-  for (const browserName of ['chromium', 'webkit', 'firefox']) {
-    try {
-      registry.findExecutable(browserName)!.executablePathOrDie('javascript');
-      return true;
-    } catch {
-    }
-  }
-  return false;
-}
-
-async function installBrowsers() {
-  const executables = registry.defaultExecutables();
-  await registry.install(executables, false);
-}
-
-function printInternalError(e: Error) {
-  // eslint-disable-next-line no-console
-  console.error('Internal error:', e);
-}
-
-// TODO: remove CT dependency.
-export async function resolveCtDirs(config: FullConfigInternal) {
-  const use = config.config.projects[0].use as any;
-  const relativeTemplateDir = use.ctTemplateDir || 'playwright';
-  const templateDir = await fs.promises.realpath(path.normalize(path.join(config.configDir, relativeTemplateDir))).catch(() => undefined);
-  if (!templateDir)
-    return null;
-  const outDir = use.ctCacheDir ? path.resolve(config.configDir, use.ctCacheDir) : path.resolve(templateDir, '.cache');
-  return {
-    outDir,
-    templateDir
-  };
-}
-
-export async function clearCacheAndLogToConsole(config: FullConfigInternal) {
-  const override = (config.config as any)['@playwright/test']?.['cli']?.['clear-cache'];
-  if (override) {
-    await override(config);
-    return;
-  }
-  await removeFolderAndLogToConsole(cacheDir);
-}
-
-export async function removeFolderAndLogToConsole(folder: string) {
-  try {
-    if (!fs.existsSync(folder))
-      return;
-    // eslint-disable-next-line no-console
-    console.log(`Removing ${await fs.promises.realpath(folder)}`);
-    await fs.promises.rm(folder, { recursive: true, force: true });
-  } catch {
-  }
+async function createReporterForTestServer(file: string | undefined, messageSink: (message: any) => void): Promise<ReporterV2> {
+  const reporterConstructor = file ? await loadReporter(null, file) : UIModeReporter;
+  return wrapReporterAsV2(new reporterConstructor({
+    _send: messageSink,
+  }));
 }

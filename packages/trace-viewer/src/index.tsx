@@ -17,14 +17,16 @@
 import '@web/common.css';
 import { applyTheme } from '@web/theme';
 import '@web/third_party/vscode/codicon.css';
-import React from 'react';
-import * as ReactDOM from 'react-dom';
+import * as ReactDOM from 'react-dom/client';
 import { WorkbenchLoader } from './ui/workbenchLoader';
+import { LiveWorkbenchLoader } from './ui/liveWorkbenchLoader';
 
 (async () => {
+  const queryParams = new URLSearchParams(window.location.search);
+
   applyTheme();
   if (window.location.protocol !== 'file:') {
-    if (window.location.href.includes('isUnderTest=true'))
+    if (queryParams.get('isUnderTest') === 'true')
       await new Promise(f => setTimeout(f, 1000));
     if (!navigator.serviceWorker)
       throw new Error(`Service workers are not supported.\nMake sure to serve the Trace Viewer (${window.location}) via HTTPS or localhost.`);
@@ -39,5 +41,8 @@ import { WorkbenchLoader } from './ui/workbenchLoader';
     setInterval(function() { fetch('ping'); }, 10000);
   }
 
-  ReactDOM.render(<WorkbenchLoader/>, document.querySelector('#root'));
+  const trace = queryParams.get('trace');
+  const traceIsLive = trace?.endsWith('.json');
+  const workbench = traceIsLive ? <LiveWorkbenchLoader traceJson={trace!} /> : <WorkbenchLoader/>;
+  ReactDOM.createRoot(document.querySelector('#root')!).render(workbench);
 })();

@@ -24,7 +24,7 @@ it('should reject all promises when browser is closed', async ({ browserType }) 
   const page = await (await browser.newContext()).newPage();
   let error: Error | undefined;
   const neverResolves = page.evaluate(() => new Promise(r => {})).catch(e => error = e);
-  await page.evaluate(() => new Promise(f => window.builtinSetTimeout(f, 0)));
+  await page.evaluate(() => new Promise(f => window.builtins.setTimeout(f, 0)));
   await browser.close();
   await neverResolves;
   // WebKit under task-set -c 1 is giving browser, rest are giving target.
@@ -53,27 +53,32 @@ it('should throw if port option is passed for persistent context', async ({ brow
   expect(error!.message).toContain('Cannot specify a port without launching as a server.');
 });
 
-it('should throw if page argument is passed', async ({ browserType, browserName }) => {
-  it.skip(browserName === 'firefox');
+it('should throw if page argument is passed', async ({ browserType, browserName, isBidi }) => {
+  it.skip(browserName === 'firefox' && !isBidi);
 
   let waitError: Error | undefined;
   await browserType.launch({ args: ['http://example.com'] }).catch(e => waitError = e);
   expect(waitError!.message).toContain('can not specify page');
 });
 
-it('should reject if launched browser fails immediately', async ({ mode, browserType, asset, isWindows }) => {
+it('should reject if launched browser fails immediately', async ({ mode, browserType, asset, channel }) => {
   it.skip(mode.startsWith('service'));
 
-  let waitError: Error | undefined;
-  await browserType.launch({ executablePath: asset('dummy_bad_browser_executable.js') }).catch(e => waitError = e);
-  expect(waitError!.message).toContain(isWindows ? 'browserType.launch: spawn UNKNOWN' : 'Browser logs:');
+  const error = await browserType.launch({ executablePath: asset('dummy_bad_browser_executable.js') }).catch(e => e);
+  if (channel === 'webkit-wsl')
+    expect(error.message).toContain('Cannot specify executablePath when using the \"webkit-wsl\" channel.');
+  else
+    expect(error.message).toMatch(/browserType\.launch(.|\n)*(spawn UNKNOWN|spawn EFTYPE|Browser logs:)/gim);
 });
 
-it('should reject if executable path is invalid', async ({ browserType, mode }) => {
+it('should reject if executable path is invalid', async ({ browserType, mode, channel }) => {
   it.skip(mode.startsWith('service'), 'on service mode we dont allow passing custom executable path');
   let waitError: Error | undefined;
   await browserType.launch({ executablePath: 'random-invalid-path' }).catch(e => waitError = e);
-  expect(waitError!.message).toContain('Failed to launch');
+  if (channel === 'webkit-wsl')
+    expect(waitError!.message).toContain('Cannot specify executablePath when using the \"webkit-wsl\" channel.');
+  else
+    expect(waitError!.message).toContain('Failed to launch');
 });
 
 it('should handle timeout', async ({ browserType, mode }) => {
@@ -86,22 +91,14 @@ it('should handle timeout', async ({ browserType, mode }) => {
   expect(error!.message).toContain(`<launched> pid=`);
 });
 
-it('should handle exception', async ({ browserType, mode }) => {
+it('should handle exception and report launch log', async ({ browserType, mode }) => {
   it.skip(mode !== 'default');
 
   const e = new Error('Dummy');
-  const options = { __testHookBeforeCreateBrowser: () => { throw e; }, timeout: 9000 };
+  const options = { __testHookBeforeCreateBrowser: () => { throw e; }, timeout: 15000 };
   const error = await browserType.launch(options).catch(e => e);
-  expect(error!.message).toContain('Dummy');
-});
-
-it('should report launch log', async ({ browserType, mode }) => {
-  it.skip(mode !== 'default');
-
-  const e = new Error('Dummy');
-  const options = { __testHookBeforeCreateBrowser: () => { throw e; }, timeout: 9000 };
-  const error = await browserType.launch(options).catch(e => e);
-  expect(error!.message).toContain('<launching>');
+  expect(error.message).toContain('Dummy');
+  expect(error.message).toContain('<launching>');
 });
 
 it('should accept objects as options', async ({ mode,   browserType }) => {
@@ -130,9 +127,8 @@ it('should be callable twice', async ({ browserType }) => {
   await browser.close();
 });
 
-it('should allow await using', async ({ browserType }) => {
-  const nodeVersion = +process.versions.node.split('.')[0];
-  it.skip(nodeVersion < 18);
+it('should allow await using', async ({ browserType, nodeVersion }) => {
+  it.skip(nodeVersion.major < 18);
 
   let b: Browser;
   let c: BrowserContext;

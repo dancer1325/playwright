@@ -1,6 +1,5 @@
 # class: Browser
 * since: v1.8
-* extends: [EventEmitter]
 
 A Browser is created via [`method: BrowserType.launch`]. An example of using a [Browser] to create a [Page]:
 
@@ -19,15 +18,15 @@ const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
 import com.microsoft.playwright.*;
 
 public class Example {
-  public static void main(String[] args) {
-    try (Playwright playwright = Playwright.create()) {
-      BrowserType firefox = playwright.firefox()
-      Browser browser = firefox.launch();
-      Page page = browser.newPage();
-      page.navigate('https://example.com');
-      browser.close();
-    }
-  }
+ public static void main(String[] args) {
+   try (Playwright playwright = Playwright.create()) {
+     BrowserType firefox = playwright.firefox();
+     Browser browser = firefox.launch();
+     Page page = browser.newPage();
+     page.navigate("https://example.com");
+     browser.close();
+   }
+ }
 }
 ```
 
@@ -73,6 +72,12 @@ await page.GotoAsync("https://www.bing.com");
 await browser.CloseAsync();
 ```
 
+## event: Browser.context
+* since: v1.60
+- argument: <[BrowserContext]>
+
+Emitted when a new browser context is created.
+
 ## event: Browser.disconnected
 * since: v1.8
 - argument: <[Browser]>
@@ -97,7 +102,7 @@ In case this browser is connected to, clears all created contexts belonging to t
 browser server.
 
 :::note
-This is similar to force quitting the browser. Therefore, you should call [`method: BrowserContext.close`] on any [BrowserContext]'s you explicitly created earlier with [`method: Browser.newContext`] **before** calling [`method: Browser.close`].
+This is similar to force-quitting the browser. To close pages gracefully and ensure you receive page close events, call [`method: BrowserContext.close`] on any [BrowserContext] instances you explicitly created earlier using [`method: Browser.newContext`] **before** calling [`method: Browser.close`].
 :::
 
 The [Browser] object itself is considered to be disposed and cannot be used anymore.
@@ -203,7 +208,7 @@ Browser browser = playwright.firefox().launch();  // Or 'chromium' or 'webkit'.
 BrowserContext context = browser.newContext();
 // Create a new page in a pristine context.
 Page page = context.newPage();
-page.navigate('https://example.com');
+page.navigate("https://example.com");
 
 // Graceful close up everything
 context.close();
@@ -256,6 +261,9 @@ await browser.CloseAsync();
 ### option: Browser.newContext.proxy = %%-context-option-proxy-%%
 * since: v1.8
 
+### option: Browser.newContext.clientCertificates = %%-context-option-clientCertificates-%%
+* since: 1.46
+
 ### option: Browser.newContext.storageState = %%-js-python-context-option-storage-state-%%
 * since: v1.8
 
@@ -281,6 +289,9 @@ testing frameworks should explicitly create [`method: Browser.newContext`] follo
 ### option: Browser.newPage.proxy = %%-context-option-proxy-%%
 * since: v1.8
 
+### option: Browser.newPage.clientCertificates = %%-context-option-clientCertificates-%%
+* since: 1.46
+
 ### option: Browser.newPage.storageState = %%-js-python-context-option-storage-state-%%
 * since: v1.8
 
@@ -289,6 +300,60 @@ testing frameworks should explicitly create [`method: Browser.newContext`] follo
 
 ### option: Browser.newPage.storageStatePath = %%-csharp-java-context-option-storage-state-path-%%
 * since: v1.9
+
+## async method: Browser.bind
+* since: v1.59
+- returns: <[Object]>
+  * alias: BindResult
+  * alias-csharp: BrowserBindResult
+  - `endpoint` <[string]>
+
+Binds the browser to a named pipe or web socket, making it available for other clients to connect to.
+
+### param: Browser.bind.title
+* since: v1.59
+- `title` <[string]>
+
+Title of the browser server, used for identification.
+
+### option: Browser.bind.workspaceDir
+* since: v1.59
+- `workspaceDir` <[string]>
+
+Working directory associated with this browser server.
+
+### option: Browser.bind.metadata
+* since: v1.59
+* langs: js
+- `metadata` <[Object]<[string], [any]>>
+
+Additional metadata to associate with the browser server.
+
+### option: Browser.bind.host
+* since: v1.59
+- `host` <[string]>
+
+Host to bind the web socket server to. When specified, a web socket server is created instead of a named pipe.
+
+### option: Browser.bind.port
+* since: v1.59
+- `port` <[int]>
+
+Port to bind the web socket server to. When specified, a web socket server is created instead of a named pipe. Use `0` to let the OS pick an available port.
+
+## async method: Browser.removeAllListeners
+* since: v1.47
+* langs: js
+
+Removes all the listeners of the given type (or all registered listeners if no type given).
+Allows to wait for async listeners to complete or to ignore subsequent errors from these listeners.
+
+### param: Browser.removeAllListeners.type
+* since: v1.47
+- `type` ?<[string]>
+
+### option: Browser.removeAllListeners.behavior = %%-remove-all-listeners-options-behavior-%%
+* since: v1.47
 
 ## async method: Browser.startTracing
 * since: v1.11
@@ -312,7 +377,7 @@ await browser.stopTracing();
 ```java
 browser.startTracing(page, new Browser.StartTracingOptions()
   .setPath(Paths.get("trace.json")));
-page.goto('https://www.google.com');
+page.navigate("https://www.google.com");
 browser.stopTracing();
 ```
 
@@ -362,6 +427,11 @@ This API controls [Chromium Tracing](https://www.chromium.org/developers/how-tos
 :::
 
 Returns the buffer with trace data.
+
+## async method: Browser.unbind
+* since: v1.59
+
+Unbinds the browser server previously bound with [`method: Browser.bind`].
 
 ## method: Browser.version
 * since: v1.8
