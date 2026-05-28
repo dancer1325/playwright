@@ -1,58 +1,39 @@
 # 🎭 Playwright
 
-* := framework -- for -- Web Testing & Automation
+* Playwright
+  * := framework -- for -- Web Testing & Automation
+  * allows
+    * E2E testing | [Chromium](https://www.chromium.org/Home), [Firefox](https://www.mozilla.org/en-US/firefox/new/), [WebKit](https://webkit.org/), locally, CI & mobile emulations
+      * -- via -- 1! API
+    * web automation cross-browser
+      * **ever-green**
+      * **capable**
+      * **reliable**
+      * **fast**
 
-* allows
-  * E2E testing | [Chromium](https://www.chromium.org/Home), [Firefox](https://www.mozilla.org/en-US/firefox/new/), [WebKit](https://webkit.org/), locally, CI & mobile emulations
-    * -- via -- 1! API
-  * web automation cross-browser
-    * **ever-green**
-    * **capable**
-    * **reliable**
-    * **fast**
-
-|          | Linux | macOS | Windows |
-|   :---   | :---: | :---: | :---:   |
-| Chromium <!-- GEN:chromium-version -->127.0.6533.5<!-- GEN:stop --> | ✅ | ✅ | ✅ |
-| WebKit <!-- GEN:webkit-version -->17.4<!-- GEN:stop --> | ✅ | ✅ | ✅ |
-| Firefox <!-- GEN:firefox-version -->127.0<!-- GEN:stop --> | ✅ | ✅ | ✅ |
-
-* 👀dedicated documentation / language 👀
-  * [JS/TS](https://playwright.dev/docs/intro)
-  * [Python](https://playwright.dev/python/docs/intro)
-  * [.NET](https://playwright.dev/dotnet/docs/intro)
-  * [Java](https://playwright.dev/java/docs/intro)
-* [system requirements](https://playwright.dev/docs/intro#system-requirements)
-  * ALSO / language
-
----
-
-## How to install?
+| Browser                | Linux | macOS | Windows |
+|------------------------|:-----:|:-----:|:-------:|
+| Chromium 127.0.6533.5v | ✅    | ✅    | ✅      |
+| WebKit 17.4v           | ✅    | ✅    | ✅      |
+| Firefox 127.0v         | ✅    | ✅    | ✅      |
 
 * Playwright Test
   * := 👀OWN test runner -- for -- E2E tests 👀
-  * [Installation configuration](docs/src/Getting%20Started/Installation)
 
-### Via init command
-* creates
-  * configuration file -- 'playwright.config.ts' --
-  * OPTIONALLY
-    * examples -- 'tests/' --
-    * GitHub Action workflow
-    * first test example.spec.ts -- 'tests/' --
-* _Examples:_
-  * [/examples/initFromProjectRoot](examples/initFromProjectRoot)
-  * [/examples/initNewProject](examples/initNewProject)
+## documentation
 
-### Via Manually
-* _Example:_ [/examples/skeletonNPMProject](/examples/skeletonNPMProject)
-
----
+* [here](docs)
+  * ⚠️SOME are language-specific⚠️
+    * _Example:_ intro
+      * | [JS/TS](docs/src/Getting%20Started/Installation/intro-js.md)
+      * | [Python](docs/src/Getting%20Started/Installation/intro-python.md)
+      * | [.NET](docs/src/Getting%20Started/Installation/intro-csharp.md)
+      * | [Java](docs/src/Getting%20Started/Installation/intro-java.md)
 
 ## Capabilities
 
-### Any browser • Any platform • One API
-* 1! API
+### Any browser • Any platform • 1! API
+
 * cross-
   * browser
     * == ALL modern rendering engines
@@ -107,12 +88,12 @@
     * reused it in ALL tests
 
 ### Tooling
-* **[Codegen](https://playwright.dev/docs/codegen)**
+* **[Codegen](docs/src/codegen)**
   * allows
     * record your actions
       * | any language
       * — & then → generate tests
-* **[Playwright inspector](https://playwright.dev/docs/inspector)**
+* **[Playwright inspector](docs/src/inspector.md)**
   * allows
     * inspecting page
     * generating selectors
