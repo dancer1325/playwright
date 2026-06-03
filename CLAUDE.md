@@ -29,13 +29,13 @@
 
 ### Key Directories
 
-| Directory | Purpose |
-|-----------|---------|
-| `tests/` | All test suites (page, library, playwright-test, mcp, components, etc.) |
-| `docs/src/` | API documentation — **source of truth** for public TypeScript types |
-| `docs/src/api/` | Per-class API reference (`class-page.md`, `class-locator.md`, etc.) |
-| `utils/` | Build scripts, code generation, linting, doc tools |
-| `browser_patches/` | Browser engine patches |
+| Directory | Purpose                                                                    |
+|-----------|----------------------------------------------------------------------------|
+| `tests/` | All test suites (page, library, playwright-test, mcp, components, etc.)    |
+| `docs/src/` | 💡API documentation — **source of truth** for public TypeScript types 💡   |
+| `docs/src/api/` | Per-class API reference (`class-page.md`, `class-locator.md`, etc.)        |
+| `utils/` | Build scripts, code generation, linting, doc tools                         |
+| `browser_patches/` | Browser engine patches                                                     |
 
 ## Build
 

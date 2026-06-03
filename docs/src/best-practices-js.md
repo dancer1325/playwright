@@ -3,9 +3,8 @@ id: best-practices
 title: "Best Practices"
 ---
 
-## Introduction
-
-This guide should help you to make sure you are following our best practices and writing tests that are more resilient.
+* goal
+  * best practices / write tests MORE resilient
 
 ## Testing philosophy
 
@@ -191,13 +190,21 @@ await expect(page.getByText('welcome')).toBeVisible();
 
 #### Local debugging
 
-For local debugging we recommend you [debug your tests live in VS Code](./getting-started-vscode.md#debugging-your-tests) by installing the [VS Code extension](./getting-started-vscode.md). You can run tests in debug mode by right-clicking on the line next to the test you want to run which will open a browser window and pause at where the breakpoint is set.
+* recommendation
+  * [| VS Code](./getting-started-vscode.md#debugging-your-tests)
+    * -- by -- installing the [VS Code extension](./getting-started-vscode.md)
 
-<img height="1240" width="2676" alt="debugging tests in vscode" loading="lazy" src="https://user-images.githubusercontent.com/13063165/212274675-5c6e1647-2aab-40fd-9804-8680c1ac2d16.png" />
+* steps
+  * right-click | line / you want to run
+    * -> open a browser window & pause | breakpoint is set
 
-You can live debug your test by clicking or editing the locators in your test in VS Code which will highlight this locator in the browser window as well as show you any other matching locators found on the page.
+![](https://user-images.githubusercontent.com/13063165/212274675-5c6e1647-2aab-40fd-9804-8680c1ac2d16.png)
 
-<img height="1404" width="2788" alt="live debugging locators in vscode" loading="lazy" src="https://user-images.githubusercontent.com/13063165/212273189-da271dc4-0f59-4138-92a8-10e719066cbe.png" />
+TODO:
+You can live debug your test by clicking or editing the locators in your test in VS Code
+which will highlight this locator in the browser window as well as show you any other matching locators found on the page.
+
+![](https://user-images.githubusercontent.com/13063165/212273189-da271dc4-0f59-4138-92a8-10e719066cbe.png)
 
 You can also debug your tests with the Playwright inspector by running your tests with the `--debug` flag.
 

@@ -3,20 +3,23 @@ id: getting-started-vscode
 title: "VS Code"
 ---
 
-import LiteYouTube from '@site/src/components/LiteYouTube';
+* goal
+  * Playwright VS Code extension
+    * how to set up
+    * how to use its core features
 
-## Introduction
-
-The Playwright VS Code extension brings the power of Playwright Test directly into your editor, allowing you to run, debug, and generate tests with a seamless UI-driven experience. This guide will walk you through setting up the extension and using its core features to supercharge your end-to-end testing workflow.
-
-<LiteYouTube
-    id="WvsLGZnHmzw"
-    title="Getting Started with Playwright in VS Code"
-/>
+* Playwright VS Code extension
+  * enable you
+    * 👀using Playwright Test | your editor👀
+      * == allow you , -- via UI, --
+        * run tests
+        * debug tests
+        * generate tests
+  * [video](https://www.youtube.com/watch?v=WvsLGZnHmzw)
+    * TODO:
 
 ## Prerequisites
 
-Before you begin, make sure you have the following installed:
 - [Node.js](https://nodejs.org/) (LTS version recommended)
 - [Visual Studio Code](https://code.visualstudio.com/)
 
@@ -24,8 +27,8 @@ Before you begin, make sure you have the following installed:
 
 ### Installation & Setup
 
-1.  **Install the Extension**: Open the Extensions view in VS Code (`Ctrl+Shift+X` or `Cmd+Shift+X`) and search for "Playwright". [Install the official extension from Microsoft](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright).
-
+* steps
+  * **Install the Extension**: Open the Extensions view in VS Code (`Ctrl+Shift+X` or `Cmd+Shift+X`) and search for "Playwright". [Install the official extension from Microsoft](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright).
 
 ![install playwright extension](./images/getting-started/vscode-extension.png)
 
