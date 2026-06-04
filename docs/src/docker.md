@@ -3,9 +3,13 @@ id: docker
 title: "Docker"
 ---
 
-## Introduction
+* [Dockerfile.noble](/utils/docker/Dockerfile.noble)
+  * == [Playwright browsers](./browsers.md#install-browsers) + [browser system dependencies](./browsers.md#install-system-dependencies)
+  * uses
+    * run Playwright scripts | Docker environment
 
-[Dockerfile.noble] can be used to run Playwright scripts in Docker environment. This image includes the [Playwright browsers](./browsers.md#install-browsers) and [browser system dependencies](./browsers.md#install-system-dependencies). The Playwright package/dependency is not included in the image and should be installed separately.
+TODO:
+  * The Playwright package/dependency is not included in the image and should be installed separately.
 
 ## Usage
 
@@ -192,7 +196,7 @@ When running tests remotely, ensure the Playwright version in your tests matches
 
 ### Connecting using noVNC and GitHub Codespaces
 
-For Docker and GitHub Codespaces environments, you can view and generate tests using the `noVNC` viewer built into the Docker image. In order for the VNC webviewer to be accessible outside of the container, you can enable the `desktop-lite` feature and specify the `webPort` in your `.devcontainer/devcontainer.json` file: 
+For Docker and GitHub Codespaces environments, you can view and generate tests using the `noVNC` viewer built into the Docker image. In order for the VNC webviewer to be accessible outside of the container, you can enable the `desktop-lite` feature and specify the `webPort` in your `.devcontainer/devcontainer.json` file:
 
 ```json
 {
