@@ -5,50 +5,59 @@ title: "Auto-waiting"
 
 ## Introduction
 
-Playwright performs a range of actionability checks on the elements before making actions to ensure these actions
-behave as expected. It auto-waits for all the relevant checks to pass and only then performs the requested action. If the required checks do not pass within the given `timeout`, action fails with the `TimeoutError`.
+* == actionability checks | elements /
+  * run BEFORE perform actions
+    * Reason: 🧠check actions behave -- as -- expected 🧠
+    * if ALL checks pass -> perform actions
+      * OTHERWISE -> NOT perform actions
+  * ⚠️if checks' time spent > given timeout -> action fails with `TimeoutError` ⚠️
 
-For example, for [`method: Locator.click`], Playwright will ensure that:
-- locator resolves to exactly one element
-- element is [Visible]
-- element is [Stable], as in not animating or completed animation
-- element [Receives Events], as in not obscured by other elements
-- element is [Enabled]
+* actionability checks / EACH action
 
-Here is the complete list of actionability checks performed for each action:
+  | Action | [Visible] | [Stable] | [Receives Events] | [Enabled] | [Editable] |
+  | :- | :-: | :-: | :-: | :-: | :-: |
+  | [`method: Locator.check`] | Yes | Yes | Yes | Yes | - |
+  | [`method: Locator.click`] | Yes | Yes | Yes | Yes | - |
+  | [`method: Locator.dblclick`] | Yes | Yes | Yes | Yes | - |
+  | [`method: Locator.setChecked`] | Yes | Yes | Yes | Yes | - |
+  | [`method: Locator.tap`] | Yes | Yes | Yes | Yes | - |
+  | [`method: Locator.uncheck`] | Yes | Yes | Yes | Yes | - |
+  | [`method: Locator.hover`] | Yes | Yes | Yes | - | - |
+  | [`method: Locator.dragTo`] | Yes | Yes | Yes | - | - |
+  | [`method: Locator.screenshot`] | Yes | Yes | - | - | - |
+  | [`method: Locator.fill`] | Yes | - | - | Yes | Yes |
+  | [`method: Locator.clear`] | Yes | - | - | Yes | Yes |
+  | [`method: Locator.selectOption`] | Yes | - | - | Yes | - |
+  | [`method: Locator.selectText`] | Yes | - | - | - | - |
+  | [`method: Locator.scrollIntoViewIfNeeded`] | - | Yes | - | - | - |
+  | [`method: Locator.blur`] | - | - | - | - | - |
+  | [`method: Locator.dispatchEvent`] | - | - | - | - | - |
+  | [`method: Locator.focus`] | - | - | - | - | - |
+  | [`method: Locator.press`] | - | - | - | - | - |
+  | [`method: Locator.pressSequentially`] | - | - | - | - | - |
+  | [`method: Locator.setInputFiles`] | - | - | - | - | - |
 
-| Action | [Visible] | [Stable] | [Receives Events] | [Enabled] | [Editable] |
-| :- | :-: | :-: | :-: | :-: | :-: |
-| [`method: Locator.check`] | Yes | Yes | Yes | Yes | - |
-| [`method: Locator.click`] | Yes | Yes | Yes | Yes | - |
-| [`method: Locator.dblclick`] | Yes | Yes | Yes | Yes | - |
-| [`method: Locator.setChecked`] | Yes | Yes | Yes | Yes | - |
-| [`method: Locator.tap`] | Yes | Yes | Yes | Yes | - |
-| [`method: Locator.uncheck`] | Yes | Yes | Yes | Yes | - |
-| [`method: Locator.hover`] | Yes | Yes | Yes | - | - |
-| [`method: Locator.dragTo`] | Yes | Yes | Yes | - | - |
-| [`method: Locator.screenshot`] | Yes | Yes | - | - | - |
-| [`method: Locator.fill`] | Yes | - | - | Yes | Yes |
-| [`method: Locator.clear`] | Yes | - | - | Yes | Yes |
-| [`method: Locator.selectOption`] | Yes | - | - | Yes | - |
-| [`method: Locator.selectText`] | Yes | - | - | - | - |
-| [`method: Locator.scrollIntoViewIfNeeded`] | - | Yes | - | - | - |
-| [`method: Locator.blur`] | - | - | - | - | - |
-| [`method: Locator.dispatchEvent`] | - | - | - | - | - |
-| [`method: Locator.focus`] | - | - | - | - | - |
-| [`method: Locator.press`] | - | - | - | - | - |
-| [`method: Locator.pressSequentially`] | - | - | - | - | - |
-| [`method: Locator.setInputFiles`] | - | - | - | - | - |
+  * _Example:_
+    * | [`method: Locator.click`], Playwright will ensure
+      - locator -- resolves to -- 1! element
+      - element is [Visible]
+      - element is [Stable]
+        - Reason: 🧠NOT animating or completed animation🧠
+      - element [Receives Events]
+        - Reason: 🧠NOT obscured by other elements 🧠
+      - element is [Enabled]
 
 ## Forcing actions
 
-Some actions like [`method: Locator.click`] support `force` option that disables non-essential actionability checks,
-for example passing truthy `force` to [`method: Locator.click`] method will not check that the target element actually
-receives click events.
+* == actions / support `force` option
+  * -> disables NON-essential actionability checks
+* _Example:_ [`method: Locator.click`] action
+  * if `force=true` -> [`method: Locator.click`] will NOT check -- that the -- target element ACTUALLY receives click events
 
 ## Assertions
 
-Playwright includes auto-retrying assertions that remove flakiness by waiting until the condition is met, similarly to auto-waiting before actions.
+* built-in AUTO-retrying assertions / remove flakiness
+  * -- by -- waiting UNTIL the condition is met
 
 | Assertion | Description |
 | :- | :- |
@@ -76,46 +85,49 @@ Playwright includes auto-retrying assertions that remove flakiness by waiting un
 | [`method: PageAssertions.toHaveURL`] | Page has a URL |
 | [`method: APIResponseAssertions.toBeOK`] | Response has an OK status |
 
-Learn more in the [assertions guide](./test-assertions.md).
+* see [assertions guide](./test-assertions.md)
 
 ## Visible
 
-Element is considered visible when it has non-empty bounding box and does not have `visibility:hidden` computed style.
+* := element /
+  * has NON-empty bounding box
+  * NOT have `visibility:hidden` computed style
 
-Note that according to this definition:
-* Elements of zero size **are not** considered visible.
-* Elements with `display:none` **are not** considered visible.
-* Elements with `opacity:0` **are** considered visible.
+* Elements /
+  * NOT visible
+    * Elements / 's size=0
+    * Elements / `display:none`
+  * visible
+    * Elements / `opacity:0`
 
 ## Stable
 
-Element is considered stable when it has maintained the same bounding box for at least two consecutive animation frames.
+* := element /
+  * 's SAME bounding box / 2-consecutive animation frames
 
 ## Enabled
 
-Element is considered enabled when it is **not disabled**.
-
-Element is **disabled** when:
-- it is a `<button>`, `<select>`, `<input>`, `<textarea>`, `<option>` or `<optgroup>` with a `[disabled]` attribute;
-- it is a `<button>`, `<select>`, `<input>`, `<textarea>`, `<option>` or `<optgroup>` that is a part of a `<fieldset>` with a `[disabled]` attribute;
-- it is a descendant of an element with `[aria-disabled=true]` attribute.
+* := element /
+  * EXCEPT TO `<button>`, `<select>`, `<input>` or `<textarea>` / `disabled` property
 
 ## Editable
 
-Element is considered editable when it is [enabled] and is **not readonly**.
-
-Element is **readonly** when:
-- it is a `<select>`, `<input>` or `<textarea>` with a `[readonly]` attribute;
-- it has an `[aria-readonly=true]` attribute and an aria role that [supports it](https://w3c.github.io/aria/#aria-readonly).
+* := element /
+  * is [enabled] & NOT have `readonly` property
 
 ## Receives Events
 
-Element is considered receiving pointer events when it is the hit target of the pointer event at the action point. For example, when clicking at the point `(10;10)`, Playwright checks whether some other element (usually an overlay) will instead capture the click at `(10;10)`.
-
-
-For example, consider a scenario where Playwright will click `Sign Up` button regardless of when the [`method: Locator.click`] call was made:
-- page is checking that user name is unique and `Sign Up` button is disabled;
-- after checking with the server, the disabled `Sign Up` button is replaced with another one that is now enabled.
+* := element /
+  * pointer event's hit target is | action point
+* _Examples:_
+  * _Example1:_ click | point `(10;10)`,
+    * Playwright checks whether SOME OTHER element (usually an overlay) -- will capture -- the click | `(10;10)`
+  * _Example2:_ Playwright will click `Sign Up` button / regardless of if [`method: Locator.click`]
+    - page -- is checking that --
+      - user name is UNIQUE
+      - `Sign Up` button is DISABLED
+    - | AFTER checking with the server,
+      - disabled `Sign Up` button -- is replaced with -- ANOTHER one / is NOW enabled
 
 [Visible]: #visible "Visible"
 [Stable]: #stable "Stable"

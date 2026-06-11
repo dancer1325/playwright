@@ -5,6 +5,9 @@ title: "Reporters"
 
 ## Introduction
 
+* provides
+  * full report (by browsers / passed tests / steps ..) of your tests
+
 Playwright Test comes with a few built-in reporters for different needs and ability to provide custom reporters. The easiest way to try out built-in reporters is to pass `--reporter` [command line option](./test-cli.md).
 
 
@@ -200,6 +203,12 @@ Dot report supports the following configuration options and environment variable
 | `NO_COLOR` | | Whether to disable colored output ([no-color.org](https://no-color.org/)). Any non-empty value disables colors. | unset
 
 ### HTML reporter
+
+* How has it been created?
+  * once test is completed!!
+* if some test is failed -> opened automatically!!
+* `npx playwright show-report`
+  * open LAST test run
 
 HTML reporter produces a self-contained folder that contains report for the test run that can be served as a web page.
 

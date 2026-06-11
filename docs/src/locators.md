@@ -5,6 +5,20 @@ title: "Locators"
 
 ## Introduction
 
+* == central piece of Playwright's
+  * auto-waiting
+  * retry-ability
+* allows
+  * finding elements / on page at any moment
+* recommended
+  * `page.getByRole()`
+  * `page.getByText()`
+  * `page.getByLabel()`
+  * `page.getByPlaceholder()`
+  * `page.getByAltText()`
+  * `page.getByTitle()`
+  * `page.getByTestId()`
+
 [Locator]s are the central piece of Playwright's auto-waiting and retry-ability. In a nutshell, locators represent
 a way to find element(s) on the page at any moment.
 
