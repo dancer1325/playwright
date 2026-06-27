@@ -3,90 +3,6 @@ id: intro
 title: "Installation"
 ---
 
-## Introduction
-
-Playwright Test is an end-to-end test framework for modern web apps
-It bundles test runner, assertions, isolation, parallelization and rich tooling
-Playwright supports Chromium, WebKit and Firefox on Windows, Linux and macOS, locally or in CI, headless or headed, with native mobile emulation for Chrome (Android) and Mobile Safari.
-
-**You will learn**
-
-- [How to install Playwright](/intro.md#installing-playwright)
-- [What's installed](/intro.md#whats-installed)
-- [How to run the example test](/intro.md#running-the-example-test)
-- [How to open the HTML test report](/intro.md#html-test-reports)
-
-## Installing Playwright
-
-Get started by installing Playwright using one of the following methods.
-
-### Using npm, yarn or pnpm
-
-The command below either initializes a new project or adds Playwright to an existing one.
-
-<Tabs
-  groupId="js-package-manager"
-  defaultValue="npm"
-  values={[
-    {label: 'npm', value: 'npm'},
-    {label: 'yarn', value: 'yarn'},
-    {label: 'pnpm', value: 'pnpm'}
-  ]
-}>
-<TabItem value="npm">
-
-```bash
-npm init playwright@latest
-```
-
-</TabItem>
-
-<TabItem value="yarn">
-
-```bash
-yarn create playwright
-```
-
-</TabItem>
-
-<TabItem value="pnpm">
-
-```bash
-pnpm create playwright
-```
-
-</TabItem>
-
-</Tabs>
-
-When prompted, choose / confirm:
-- TypeScript or JavaScript (default: TypeScript)
-- Tests folder name (default: `tests`, or `e2e` if `tests` already exists)
-- Add a GitHub Actions workflow (recommended for CI)
-- Install Playwright browsers (default: yes)
-
-You can re-run the command later; it does not overwrite existing tests.
-
-### Using the VS Code Extension
-
-You can also create and run tests with the [VS Code Extension](./getting-started-vscode.md).
-
-## What's Installed
-
-Playwright downloads required browser binaries and creates the scaffold below.
-
-```bash
-playwright.config.ts         # Test configuration
-package.json
-package-lock.json            # Or yarn.lock / pnpm-lock.yaml
-tests/
-  example.spec.ts            # Minimal example test
-```
-
-The [playwright.config](./test-configuration.md) centralizes configuration: target browsers, timeouts, retries, projects, reporters and more. In existing projects dependencies are added to your current `package.json`.
-
-`tests/` contains a minimal starter test.
-
 ## Running the Example Test
 
 By default tests run headless in parallel across Chromium, Firefox and WebKit (configurable in [playwright.config](./test-configuration.md)). Output and aggregated results display in the terminal.
@@ -314,22 +230,23 @@ pnpm exec playwright --version
 
 ## How to install Playwright?
 
-* ways
-  * `npm init playwright@latest`
-  * `yarn create playwright`
-  * `pnpm create playwright`
-* == create files + download required browsers
-  * create files
-    * 'playwright.config.ts'
-    * 'package.json'
-    * 'package-lock.json'
-    * 'tests/example.spec.ts'
-      * == BASIC example test
-    * 'tests-examples/demo-todo-app.spec.ts'
-      * == MORE detailed examples | TODO app
-* _Example:_
-  * [here](../../../../examples/initFromProjectRoot)
-  * [another one](../../../../examples/initNewProject)
+* steps
+  * | create -- from -- scratch
+    * ways
+      * `npm init playwright@latest`
+      * `yarn create playwright`
+      * `pnpm create playwright`
+    * | prompt
+      * by default TS
+    * == create files + download required browsers
+      * create files
+        * ['playwright.config.ts'](test-configuration-js.md)
+        * 'package.json'
+        * 'package-lock.json'
+        * 'tests/example.spec.ts'
+          * == BASIC example test
+        * 'tests-examples/demo-todo-app.spec.ts'
+          * == MORE detailed examples | TODO app
 
 ## How to run?
 

@@ -7,10 +7,10 @@ title: "Browsers"
 
 * ⚠️specific browser version / EACH Playwright version⚠️
   * latest Playwright -> supporting latest browser versions
-  * 👀if you need OTHER browser versión -> install these browsers -- vía -- Playwright CLI👀 
+  * 👀if you need OTHER browser versión -> install these browsers -- vía -- [Playwright CLI or Playwright API](#install-browsers)👀
 
 ## Install browsers
-
+### -- via -- CLI
 * install supported default browsers
 
 ```bash js
@@ -29,7 +29,8 @@ playwright install
 pwsh bin/Debug/netX/playwright.ps1 install
 ```
 
-* specify browser versión -- vía -- argument
+* specify browser -- vía -- argument
+  * ❌you can NOT specify the browser version❌
 
 ```bash js
 npx playwright install webkit
@@ -65,18 +66,8 @@ playwright install --help
 pwsh bin/Debug/netX/playwright.ps1 install --help
 ```
 
-### Install browsers via API
+### -- via -- API
 * langs: csharp
-
-It's possible to run Command line tools commands via the .NET API:
-
-```csharp
-var exitCode = Microsoft.Playwright.Program.Main(new[] {"install"});
-if (exitCode != 0)
-{
-    throw new Exception($"Playwright exited with code {exitCode}");
-}
-```
 
 ## Install system dependencies
 

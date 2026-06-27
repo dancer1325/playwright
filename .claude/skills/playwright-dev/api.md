@@ -1,14 +1,12 @@
 # Adding and Modifying APIs
 
-- Before performing the implementation, go over the steps to understand and plan the work ahead. It is important to follow the steps in order, as some of them are prerequisites for others.
+## Step 1: ⭐️Define API | Documentation⭐️
 
-## Step 1: Define API in Documentation
-
-Define (or update) API in `docs/src/api/class-xxx.md`. For the new methods, params and options use the version from package.json (without `-next`).
+* define OR update API | "docs/src/api/class-xxx.md"
 
 ### Documentation Format
 
-**Method definition:**
+#### **Method definition:**
 ```markdown
 ## async method: Page.methodName
 * since: v1.XX
@@ -30,7 +28,8 @@ Description of the option.
 ```
 
 **Key syntax rules:**
-- `* since: v1.XX` — always take the version from package.json (without -next)
+- `* since: v1.XX`
+  - == version | package.json / ⚠️WITHOUT "-next"⚠️
 - `* langs: js, python` — language filter (optional)
 - `* langs: alias-java: navigate` — language-specific method name
 - `* deprecated: v1.XX` — deprecation marker
@@ -42,7 +41,7 @@ Description of the option.
 - `### option:` — optional parameter
 - `= %%-placeholder-name-%%` — reuse shared param definition from `docs/src/api/params.md`
 
-**Property definition:**
+#### **Property definition:**
 ```markdown
 ## property: Page.propName
 * since: v1.XX
@@ -51,7 +50,7 @@ Description of the option.
 Description.
 ```
 
-**Event definition:**
+#### **Event definition:**
 ```markdown
 ## event: Page.eventName
 * since: v1.XX

@@ -2,9 +2,15 @@
 * since: v1.10
 * langs: js
 
-Playwright Test provides many options to configure how your tests are collected and executed, for example `timeout` or `testDir`. These options are described in the [TestConfig] object in the [configuration file](../test-configuration.md). This type describes format of the configuration file, to access resolved configuration parameters at run time use [FullConfig].
+* allows
+  * configuring options / impact | ⚠️ALL projects⚠️
+    * how to collect the tests
+    * how to execute the tests
+    * if you want to configure project-specific options -> [here](class-testproject.md)
 
-Playwright Test supports running multiple test projects at the same time. Project-specific options should be put to [`property: TestConfig.projects`], but top-level [TestConfig] can also define base options shared between all projects.
+* [MORE](../test-configuration-js.md)
+
+* if you want to check the configuration parameters / resolved | run time -> use [FullConfig](class-fullconfig.md)
 
 ```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
@@ -20,7 +26,8 @@ export default defineConfig({
 ## property: TestConfig.build
 * since: v1.35
 - type: ?<[Object]>
-  - `external` ?<[Array]<[string]>> Paths to exclude from the transpilation expressed as a list of glob patterns. Typically heavy JS bundles that your test uses are listed here.
+  - `external` ?<[Array]<[string]>> Paths to exclude from the transpilation expressed as a list of glob patterns
+* Typically heavy JS bundles that your test uses are listed here.
 
 Playwright transpiler configuration.
 
@@ -57,10 +64,12 @@ export default defineConfig({
 **Details**
 
 * Capturing `commit` information is useful when you'd like to see it in your HTML (or a third party) report.
-* Capturing `diff` information is useful to enrich the report with the actual source diff. This information can be used to provide intelligent advice on how to fix the test.
+* Capturing `diff` information is useful to enrich the report with the actual source diff
+  * This information can be used to provide intelligent advice on how to fix the test.
 
 :::note
-Default values for these settings depend on the environment. When tests run as a part of CI where it is safe to obtain git information, the default value is `true`, `false` otherwise.
+Default values for these settings depend on the environment
+* When tests run as a part of CI where it is safe to obtain git information, the default value is `true`, `false` otherwise.
 :::
 
 :::note

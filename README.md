@@ -32,11 +32,10 @@
 
 ## Playwright Test
 
-* == test runner
-  * full-featured
-    * _Examples:_ auto-waiting, web-first assertions, ...
+* == E2E framework
+  * == test runner + assertions + isolation + parallelization + rich tooling
   * allows
-    * end-to-end testing
+    * E2E testing
   * ways to install
     * `npm init playwright@latest`
     * add MANUALLY
