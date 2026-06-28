@@ -3,34 +3,36 @@ id: languages
 title: "Supported languages"
 ---
 
-## Introduction
-
-Playwright is available in multiple languages that share the same underlying implementation. All core features for automating the browser are supported in all languages, while testing ecosystem integration is different. Pick the language based on your experience, familiarity with its testing ecosystem and your project constraints. For the best experience pick the test runner that we recommend for each language.
+* goal
+  * languages / support Playwright
+    * share the SAME underlying implementation
 
 ## JavaScript and TypeScript
 
-Playwright for Node.js comes with its own [test runner](https://playwright.dev/docs/running-tests) that provides great parallelization mechanism, screenshot assertions, html reporter, automatic tracing etc.
+* Playwright -- for -- Node.js
+  * 💡[OWN test runner](running-tests-js.md)💡
 
-* [Documentation](https://playwright.dev/docs/intro)
-* [GitHub repo](https://github.com/microsoft/playwright)
+* [Documentation](intro-js.md)
 
 ## Python
 
-Playwright [Pytest plugin](https://playwright.dev/python/docs/test-runners) is the recommended way to run end-to-end tests. It provides context isolation, running it on multiple browser configurations and more out of the box.
+* if you want to run E2E tests -> recommendation: use [Playwright Pytest plugin](test-runners-python.md)
 
-* [Documentation](https://playwright.dev/python/docs/intro)
+* [Documentation](intro-python.md)
 * [GitHub repo](https://github.com/microsoft/playwright-python)
 
 ## Java
 
-You can choose any testing framework such as JUnit or TestNG based on your project requirements.
+* choose any testing framework
+  * _Examples:_ JUnit, TestNG
 
-* [Documentation](https://playwright.dev/java/docs/intro)
+* [Documentation](intro-java.md)
 * [GitHub repo](https://github.com/microsoft/playwright-java)
 
 ## .NET
 
+TODO:
 Playwright for .NET comes with MSTest, NUnit, xUnit, and xUnit v3 [base classes](https://playwright.dev/dotnet/docs/test-runners) for writing end-to-end tests.
 
-* [Documentation](https://playwright.dev/dotnet/docs/intro)
+* [Documentation](intro-csharp.md)
 * [GitHub repo](https://github.com/microsoft/playwright-dotnet)

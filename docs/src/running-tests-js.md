@@ -2,7 +2,6 @@
 id: running-tests
 title: "Running and debugging tests"
 ---
-## Introduction
 
 * Playwright
   * allows you,
@@ -16,35 +15,39 @@ title: "Running and debugging tests"
         * if you pass `--headed` CLI argument -> headed mode
         * if you pass `--ui` -> [UI mode](./test-ui-mode.md)
 
-## Running tests
-### Command line
 
-* `npx playwright test`
-  * run your tests | ALL browsers configured | `playwright.config` file
-  * by default, headless mode
+TODO:
+that provides great parallelization mechanism, screenshot assertions, html reporter, automatic tracing etc.
+
+## Running tests
+### CL
+
+* ways
+  * `npx playwright test`
+  * `yarn playwright test`
+  * `pnpm exec playwright test`
 
 ![tests running in command line](./images/getting-started/run-tests-cli.png)
 
-### Run tests in UI mode
+### | UI mode
 
-* TODO:
-We highly recommend running your tests with [UI Mode](./test-ui-mode.md) for a better developer experience where you can easily walk through each step of the test and visually see what was happening before, during and after each step. UI mode also comes with many other features such as the locator picker, watch mode and more.
-
-```bash
-npx playwright test --ui
-```
+* [here](test-ui-mode-js.md)
 
 ![UI Mode](./images/getting-started/ui-mode.png)
 
-Check out our [detailed guide on UI Mode](./test-ui-mode.md) to learn more about its features.
+### | headed mode -- `--headed` --
 
-### Run tests in headed mode
-
-To run your tests in headed mode, use the `--headed` flag. This gives you the ability to visually see how Playwright interacts with the website.
+* provides
+  * visually see how Playwright interacts -- with -- the website
 
 ```bash
 npx playwright test --headed
 ```
+
+* by default,
+  * tests run headless mode
+    * == ❌NO browser opened up ❌
+    * == tests' results & test logs | terminal
 
 ### Run tests on different browsers
 
@@ -94,7 +97,8 @@ To run only the tests that failed in the last test run, first run your tests and
 npx playwright test --last-failed
 ```
 
-Playwright stores the list of failed tests from the previous run in `<outputDir>/.last-run.json` (see [`property: TestConfig.outputDir`](./test-configuration.md)). To use a different file path, pass `--last-failed-file=<path>` or set `PLAYWRIGHT_LAST_RUN_OUTPUT_FILE`.
+Playwright stores the list of failed tests from the previous run in `<outputDir>/.last-run.json` (see [`property: TestConfig.outputDir`](./test-configuration.md))
+* To use a different file path, pass `--last-failed-file=<path>` or set `PLAYWRIGHT_LAST_RUN_OUTPUT_FILE`.
 
 ```bash
 npx playwright test --last-failed --last-failed-file=.cache/last-run-shard-1.json
@@ -102,17 +106,22 @@ npx playwright test --last-failed --last-failed-file=.cache/last-run-shard-1.jso
 
 ### Run tests in VS Code
 
-Tests can be run right from VS Code using the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright). Once installed you can simply click the green triangle next to the test you want to run or run all tests from the testing sidebar. Check out our [Getting Started with VS Code](./getting-started-vscode.md) guide for more details.
+Tests can be run right from VS Code using the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright)
+* Once installed you can simply click the green triangle next to the test you want to run or run all tests from the testing sidebar
+* Check out our [Getting Started with VS Code](./getting-started-vscode.md) guide for more details.
 
 ![install playwright extension](./images/getting-started/vscode-extension.png)
 
 ## Debugging tests
 
-Since Playwright runs in Node.js, you can debug it with your debugger of choice, e.g. using `console.log`, inside your IDE, or directly in VS Code with the [VS Code Extension](./getting-started-vscode.md). Playwright comes with [UI Mode](./test-ui-mode.md), where you can easily walk through each step of the test, see logs, errors, network requests, inspect the DOM snapshot, and more. You can also use the [Playwright Inspector](./debug.md#playwright-inspector), which allows you to step through Playwright API calls, see their debug logs, and explore [locators](./locators.md).
+Since Playwright runs in Node.js, you can debug it with your debugger of choice, e.g. using `console.log`, inside your IDE, or directly in VS Code with the [VS Code Extension](./getting-started-vscode.md)
+* Playwright comes with [UI Mode](./test-ui-mode.md), where you can easily walk through each step of the test, see logs, errors, network requests, inspect the DOM snapshot, and more
+* You can also use the [Playwright Inspector](./debug.md#playwright-inspector), which allows you to step through Playwright API calls, see their debug logs, and explore [locators](./locators.md).
 
 ### Debug tests in UI mode
 
-We highly recommend debugging your tests with [UI Mode](./test-ui-mode.md) for a better developer experience where you can easily walk through each step of the test and visually see what was happening before, during, and after each step. UI mode also comes with many other features such as the locator picker, watch mode, and more.
+We highly recommend debugging your tests with [UI Mode](./test-ui-mode.md) for a better developer experience where you can easily walk through each step of the test and visually see what was happening before, during, and after each step
+* UI mode also comes with many other features such as the locator picker, watch mode, and more.
 
 ```bash
 npx playwright test --ui
@@ -120,7 +129,9 @@ npx playwright test --ui
 
 ![showing errors in ui mode](./images/getting-started/ui-mode-error.png)
 
-While debugging you can use the Pick Locator button to select an element on the page and see the locator that Playwright would use to find that element. You can also edit the locator in the locator playground and see it highlighting live in the browser window. Use the Copy Locator button to copy the locator to your clipboard and then paste it into your test.
+While debugging you can use the Pick Locator button to select an element on the page and see the locator that Playwright would use to find that element
+* You can also edit the locator in the locator playground and see it highlighting live in the browser window
+* Use the Copy Locator button to copy the locator to your clipboard and then paste it into your test.
 
 ![pick locator in ui mode](./images/getting-started/ui-mode-pick-locator.png)
 
@@ -136,7 +147,10 @@ npx playwright test --debug
 
 ![Debugging Tests with the Playwright inspector](./images/getting-started/run-tests-debug.png)
 
-This command opens a browser window as well as the Playwright Inspector. You can use the step over button at the top of the inspector to step through your test. Or, press the play button to run your test from start to finish. Once the test finishes, the browser window closes.
+This command opens a browser window as well as the Playwright Inspector
+* You can use the step over button at the top of the inspector to step through your test
+* Or, press the play button to run your test from start to finish
+* Once the test finishes, the browser window closes.
 
 To debug one test file, run the Playwright test command with the test file name that you want to debug followed by the `--debug` flag.
 
@@ -150,7 +164,9 @@ To debug a specific test from the line number where the `test(..` is defined, ad
 npx playwright test example.spec.ts:10 --debug
 ```
 
-While debugging you can use the Pick Locator button to select an element on the page and see the locator that Playwright would use to find that element. You can also edit the locator and see it highlighting live in the browser window. Use the Copy Locator button to copy the locator to your clipboard and then paste it into your test.
+While debugging you can use the Pick Locator button to select an element on the page and see the locator that Playwright would use to find that element
+* You can also edit the locator and see it highlighting live in the browser window
+* Use the Copy Locator button to copy the locator to your clipboard and then paste it into your test.
 
 ![Locator picker in the Playwright Inspector](./images/getting-started/run-tests-pick-locator.png)
 
@@ -160,7 +176,8 @@ Check out our [debugging guide](./debug.md) to learn more about debugging with t
 
 ## Test reports
 
-The [HTML Reporter](./test-reporters.md#html-reporter) shows you a full report of your tests allowing you to filter the report by browsers, passed tests, failed tests, skipped tests, and flaky tests. By default, the HTML report opens automatically if some tests failed, otherwise you can open it with the following command.
+The [HTML Reporter](./test-reporters.md#html-reporter) shows you a full report of your tests allowing you to filter the report by browsers, passed tests, failed tests, skipped tests, and flaky tests
+* By default, the HTML report opens automatically if some tests failed, otherwise you can open it with the following command.
 
 ```bash
 npx playwright show-report

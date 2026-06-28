@@ -2,36 +2,37 @@
 id: ci
 title: "Continuous Integration"
 ---
-## Introduction
 
-Playwright tests can be executed in CI environments. We have created sample
-configurations for common CI providers.
+* goal
+  * 💡execute Playwright tests | CI💡
 
-3 steps to get your tests running on CI:
+* steps to execute Playwright tests | CI
+  * **Ensure CI agent can run browsers**
+    * ways
+      * use [our Docker image](./docker.md)
+      * WITHOUT Docker image -> install OS dependencies
+        * [ONLY them](browsers.md#install-os-dependencies)
+        * ALL -- from -- scratch
 
-1. **Ensure CI agent can run browsers**: Use [our Docker image](./docker.md)
-   in Linux agents or install your dependencies using the [CLI](./browsers#install-system-dependencies).
-1. **Install Playwright**:
-   ```bash js
-   # Install NPM packages
-   npm ci
+           ```bash js
+           # Install NPM packages
+           npm ci
 
-   # Install Playwright browsers and dependencies
-   npx playwright install --with-deps
-   ```
-   ```bash python
-   pip install playwright
-   playwright install --with-deps
-   ```
-   ```bash java
-   mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install --with-deps"
-   ```
-   ```bash csharp
-   dotnet build
-   pwsh bin/Debug/netX/playwright.ps1 install --with-deps
-   ```
-
-1. **Run your tests**:
+           # Install Playwright browsers and dependencies
+           npx playwright install --with-deps
+           ```
+           ```bash python
+           pip install playwright
+           playwright install --with-deps
+           ```
+           ```bash java
+           mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install --with-deps"
+           ```
+           ```bash csharp
+           dotnet build
+           pwsh bin/Debug/netX/playwright.ps1 install --with-deps
+           ```
+  * **Run your tests**:
    ```bash js
    npx playwright test
    ```
@@ -48,7 +49,17 @@ configurations for common CI providers.
 ## Workers
 * langs: js
 
-We recommend setting [workers](./api/class-testconfig.md#test-config-workers) to "1" in CI environments to prioritize stability and reproducibility. Running tests sequentially ensures each test gets the full system resources, avoiding potential conflicts. However, if you have a powerful self-hosted CI system, you may enable [parallel](./test-parallel.md) tests. For wider parallelization, consider [sharding](./test-parallel.md#shard-tests-between-multiple-machines) - distributing tests across multiple CI jobs.
+* [documentation](test-api/class-testconfig.md)
+
+* recommendation
+  * | CI,
+    * worker == 1
+      * Reason:🧠prioritize stability & reproducibility🧠
+
+TODO:
+* Running tests sequentially ensures each test gets the full system resources, avoiding potential conflicts
+* However, if you have a powerful self-hosted CI system, you may enable [parallel](./test-parallel.md) tests
+* For wider parallelization, consider [sharding](./test-parallel.md#shard-tests-between-multiple-machines) - distributing tests across multiple CI jobs.
 
 ```js title="playwright.config.ts"
 import { defineConfig, devices } from '@playwright/test';
@@ -61,14 +72,26 @@ export default defineConfig({
 
 ## CI configurations
 
-The [Command line tools](./browsers#install-system-dependencies) can be used to install all operating system dependencies in CI.
+* if you need to install OS dependencies -> [run this command](./browsers.md#install-os-dependencies)
+* -- based on -- CI
+  * [GitHub Actions](#github-actions)
+  * [Docker](#docker)
+  * [Azure Pipelines](#azure-pipelines)
+  * [CircleCI](#circleci)
+  * [Jenkins](#jenkins)
+  * [Bitbucket Pipelines](#bitbucket-pipelines)
+  * [Gitlab CI](#gitlab-ci)
+  * [Google Cloud Build](#google-cloud-build)
+  * [Drone](#drone)
 
 ### GitHub Actions
 
 #### On push/pull_request
 * langs: js
 
-Tests will run on push or pull request on branches main/master. The [workflow](https://docs.github.com/en/actions/using-workflows/about-workflows) will install all dependencies, install Playwright and then run the tests. It will also create the HTML report.
+Tests will run on push or pull request on branches main/master
+* The [workflow](https://docs.github.com/en/actions/using-workflows/about-workflows) will install all dependencies, install Playwright and then run the tests
+* It will also create the HTML report.
 
 ```yml js title=".github/workflows/playwright.yml"
 name: Playwright Tests
@@ -103,7 +126,8 @@ jobs:
 #### On push/pull_request
 * langs: python, java, csharp
 
-Tests will run on push or pull request on branches main/master. The [workflow](https://docs.github.com/en/actions/using-workflows/about-workflows) will install all dependencies, install Playwright and then run the tests.
+Tests will run on push or pull request on branches main/master
+* The [workflow](https://docs.github.com/en/actions/using-workflows/about-workflows) will install all dependencies, install Playwright and then run the tests.
 
 ```yml python title=".github/workflows/playwright.yml"
 name: Playwright Tests
@@ -190,11 +214,14 @@ jobs:
 #### On push/pull_request (sharded)
 * langs: js
 
-GitHub Actions supports [sharding tests between multiple jobs](https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs). Check out our [sharding doc](./test-sharding) to learn more about sharding and to see a [GitHub actions example](./test-sharding.md#github-actions-example) of how to configure a job to run your tests on multiple machines as well as how to merge the HTML reports.
+GitHub Actions supports [sharding tests between multiple jobs](https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs)
+* Check out our [sharding doc](./test-sharding) to learn more about sharding and to see a [GitHub actions example](./test-sharding.md#github-actions-example) of how to configure a job to run your tests on multiple machines as well as how to merge the HTML reports.
 
 #### Via Containers
 
-GitHub Actions support [running jobs in a container](https://docs.github.com/en/actions/using-jobs/running-jobs-in-a-container) by using the [`jobs.<job_id>.container`](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idcontainer) option. This is useful to not pollute the host environment with dependencies and to have a consistent environment for e.g. screenshots/visual regression testing across different operating systems.
+GitHub Actions support [running jobs in a container](https://docs.github.com/en/actions/using-jobs/running-jobs-in-a-container) by using the [`jobs.<job_id>.container`](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idcontainer) option
+* This is useful to not pollute the host environment with dependencies and to have a consistent environment for e.g
+* screenshots/visual regression testing across different operating systems.
 
 ```yml js title=".github/workflows/playwright.yml"
 name: Playwright Tests
@@ -411,9 +438,11 @@ jobs:
 #### Fail-Fast
 * langs: js
 
-Large test suites can take very long to execute. By executing a preliminary test run with the `--only-changed` flag, you can run test files that are likely to fail first.
+Large test suites can take very long to execute
+* By executing a preliminary test run with the `--only-changed` flag, you can run test files that are likely to fail first.
 This will give you a faster feedback loop and slightly lower CI consumption while working on Pull Requests.
-To detect test files affected by your changeset, `--only-changed` analyses your suites' dependency graph. This is a heuristic and might miss tests, so it's important that you always run the full test suite after the preliminary test run.
+To detect test files affected by your changeset, `--only-changed` analyses your suites' dependency graph
+* This is a heuristic and might miss tests, so it's important that you always run the full test suite after the preliminary test run.
 
 ```yml js title=".github/workflows/playwright.yml" {24-26}
 name: Playwright Tests
@@ -454,7 +483,8 @@ jobs:
 
 ### Docker
 
-We have a [pre-built Docker image](./docker.md) which can either be used directly or as a reference to update your existing Docker definitions. Make sure to follow the [Recommended Docker Configuration](./docker.md#recommended-docker-configuration) to ensure the best performance.
+We have a [pre-built Docker image](./docker.md) which can either be used directly or as a reference to update your existing Docker definitions
+* Make sure to follow the [Recommended Docker Configuration](./docker.md#recommended-docker-configuration) to ensure the best performance.
 
 ### Azure Pipelines
 
@@ -754,7 +784,8 @@ steps:
 
 ### CircleCI
 
-Running Playwright on CircleCI is very similar to running on GitHub Actions. In order to specify the pre-built Playwright [Docker image](./docker.md), simply modify the agent definition with `docker:` in your config like so:
+Running Playwright on CircleCI is very similar to running on GitHub Actions
+* In order to specify the pre-built Playwright [Docker image](./docker.md), simply modify the agent definition with `docker:` in your config like so:
 
 ```yml js
 executors:
@@ -784,12 +815,15 @@ executors:
       - image: mcr.microsoft.com/playwright/dotnet:v%%VERSION%%-noble
 ```
 
-Note: When using the docker agent definition, you are specifying the resource class of where playwright runs to the 'medium' tier [here](https://circleci.com/docs/configuration-reference?#docker-execution-environment). The default behavior of Playwright is to set the number of workers to the detected core count (2 in the case of the medium tier). Overriding the number of workers to greater than this number will cause unnecessary timeouts and failures.
+Note: When using the docker agent definition, you are specifying the resource class of where playwright runs to the 'medium' tier [here](https://circleci.com/docs/configuration-reference?#docker-execution-environment)
+* The default behavior of Playwright is to set the number of workers to the detected core count (2 in the case of the medium tier)
+* Overriding the number of workers to greater than this number will cause unnecessary timeouts and failures.
 
 #### Sharding in CircleCI
 * langs: js
 
-Sharding in CircleCI is indexed with 0 which means that you will need to override the default parallelism ENV VARS. The following example demonstrates how to run Playwright with a CircleCI Parallelism of 4 by adding 1 to the `CIRCLE_NODE_INDEX` to pass into the `--shard` cli arg.
+Sharding in CircleCI is indexed with 0 which means that you will need to override the default parallelism ENV VARS
+* The following example demonstrates how to run Playwright with a CircleCI Parallelism of 4 by adding 1 to the `CIRCLE_NODE_INDEX` to pass into the `--shard` cli arg.
 
   ```yml
     playwright-job-name:
@@ -801,7 +835,8 @@ Sharding in CircleCI is indexed with 0 which means that you will need to overrid
 
 ### Jenkins
 
-Jenkins supports Docker agents for pipelines. Use the [Playwright Docker image](./docker.md)
+Jenkins supports Docker agents for pipelines
+* Use the [Playwright Docker image](./docker.md)
 to run tests on Jenkins.
 
 ```groovy js
@@ -862,7 +897,8 @@ pipeline {
 
 ### Bitbucket Pipelines
 
-Bitbucket Pipelines can use public [Docker images as build environments](https://confluence.atlassian.com/bitbucket/use-docker-images-as-build-environments-792298897.html). To run Playwright tests on Bitbucket, use our public Docker image ([see Dockerfile](./docker.md)).
+Bitbucket Pipelines can use public [Docker images as build environments](https://confluence.atlassian.com/bitbucket/use-docker-images-as-build-environments-792298897.html)
+* To run Playwright tests on Bitbucket, use our public Docker image ([see Dockerfile](./docker.md)).
 
 ```yml js
 image: mcr.microsoft.com/playwright:v%%VERSION%%-noble
@@ -931,7 +967,9 @@ tests:
 #### Sharding
 * langs: js
 
-GitLab CI supports [sharding tests between multiple jobs](https://docs.gitlab.com/ee/ci/jobs/job_control.html#parallelize-large-jobs) using the [parallel](https://docs.gitlab.com/ee/ci/yaml/index.html#parallel) keyword. The test job will be split into multiple smaller jobs that run in parallel. Parallel jobs are named sequentially from `job_name 1/N` to `job_name N/N`.
+GitLab CI supports [sharding tests between multiple jobs](https://docs.gitlab.com/ee/ci/jobs/job_control.html#parallelize-large-jobs) using the [parallel](https://docs.gitlab.com/ee/ci/yaml/index.html#parallel) keyword
+* The test job will be split into multiple smaller jobs that run in parallel
+* Parallel jobs are named sequentially from `job_name 1/N` to `job_name N/N`.
 
 ```yml
 stages:
@@ -946,7 +984,9 @@ tests:
     - npx playwright test --shard=$CI_NODE_INDEX/$CI_NODE_TOTAL
 ```
 
-GitLab CI also supports sharding tests between multiple jobs using the [parallel:matrix](https://docs.gitlab.com/ee/ci/yaml/index.html#parallelmatrix) option. The test job will run multiple times in parallel in a single pipeline, but with different variable values for each instance of the job. In the example below, we have 2 `PROJECT` values and 10 `SHARD` values, resulting in a total of 20 jobs to be run.
+GitLab CI also supports sharding tests between multiple jobs using the [parallel:matrix](https://docs.gitlab.com/ee/ci/yaml/index.html#parallelmatrix) option
+* The test job will run multiple times in parallel in a single pipeline, but with different variable values for each instance of the job
+* In the example below, we have 2 `PROJECT` values and 10 `SHARD` values, resulting in a total of 20 jobs to be run.
 
 ```yml
 stages:
@@ -996,13 +1036,15 @@ steps:
 
 ## Caching browsers
 
-Caching browser binaries is not recommended, since the amount of time it takes to restore the cache is comparable to the time it takes to download the binaries. Especially under Linux, [operating system dependencies](./browsers.md#install-system-dependencies) need to be installed, which are not cacheable.
+Caching browser binaries is not recommended, since the amount of time it takes to restore the cache is comparable to the time it takes to download the binaries
+* Especially under Linux, [operating system dependencies](./browsers.md#install-system-dependencies) need to be installed, which are not cacheable.
 
 If you still want to cache the browser binaries between CI runs, cache [these directories](./browsers.md#managing-browser-binaries) in your CI configuration, against a hash of the Playwright version.
 
 ## Debugging browser launches
 
-Playwright supports the `DEBUG` environment variable to output debug logs during execution. Setting it to `pw:browser` is helpful while debugging `Error: Failed to launch browser` errors.
+Playwright supports the `DEBUG` environment variable to output debug logs during execution
+* Setting it to `pw:browser` is helpful while debugging `Error: Failed to launch browser` errors.
 
 ```bash js
 DEBUG=pw:browser npx playwright test
@@ -1021,9 +1063,12 @@ DEBUG=pw:browser dotnet test
 
 ## Running headed
 
-By default, Playwright launches browsers in headless mode. See in our [Running tests](./running-tests.md#run-tests-in-headed-mode) guide how to run tests in headed mode.
+By default, Playwright launches browsers in headless mode
+* See in our [Running tests](./running-tests.md#run-tests-in-headed-mode) guide how to run tests in headed mode.
 
-On Linux agents, headed execution requires [Xvfb](https://en.wikipedia.org/wiki/Xvfb) to be installed. Our [Docker image](./docker.md) and GitHub Action have Xvfb pre-installed. To run browsers in headed mode with Xvfb, add `xvfb-run` before the actual command.
+On Linux agents, headed execution requires [Xvfb](https://en.wikipedia.org/wiki/Xvfb) to be installed
+* Our [Docker image](./docker.md) and GitHub Action have Xvfb pre-installed
+* To run browsers in headed mode with Xvfb, add `xvfb-run` before the actual command.
 
 ```bash js
 xvfb-run npx playwright test

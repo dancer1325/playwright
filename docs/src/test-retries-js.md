@@ -3,28 +3,17 @@ id: test-retries
 title: "Retries"
 ---
 
-## Introduction
-
-Test retries are a way to automatically re-run a test when it fails. This is useful when a test is flaky and fails intermittently. Test retries are configured in the [configuration file](./test-configuration.md).
+* Test retries
+  * == way to AUTOMATICALLY re-run a test | test fails
+  * use case
+    * test
+      * is flaky
+      * fails INTERMITTENTLY
+  * configured | [configuration file](test-configuration-js.md)
 
 ## Failures
 
-Playwright Test runs tests in worker processes. These processes are OS processes, running independently, orchestrated by the test runner. All workers have identical environments and each starts its own browser.
-
-Consider the following snippet:
-
-```js
-import { test } from '@playwright/test';
-
-test.describe('suite', () => {
-  test.beforeAll(async () => { /* ... */ });
-  test('first good', async ({ page }) => { /* ... */ });
-  test('second flaky', async ({ page }) => { /* ... */ });
-  test('third good', async ({ page }) => { /* ... */ });
-  test.afterAll(async () => { /* ... */ });
-});
-```
-
+TODO: based on the "example/sample/failures.spec.js"
 When **all tests pass**, they will run in order in the same worker process.
 * Worker process starts
   * `beforeAll` hook runs
@@ -33,7 +22,8 @@ When **all tests pass**, they will run in order in the same worker process.
   * `third good` passes
   * `afterAll` hook runs
 
-Should **any test fail**, Playwright Test will discard the entire worker process along with the browser and will start a new one. Testing will continue in the new worker process starting with the next test.
+Should **any test fail**, Playwright Test will discard the entire worker process along with the browser and will start a new one
+* Testing will continue in the new worker process starting with the next test.
 * Worker process #1 starts
   * `beforeAll` hook runs
   * `first good` passes
@@ -60,76 +50,54 @@ This scheme works perfectly for independent tests and guarantees that failing te
 
 ## Retries
 
-Playwright supports **test retries**. When enabled, failing tests will be retried multiple times until they pass, or until the maximum number of retries is reached. By default failing tests are not retried.
+* **test retries**
+  * real NUMBER of retries == UNTIL they pass OR MAXIMUM configured number of retries
+  * by default, disabled
+  * ways to enable
+    * `npx playwright ... --retries=<NUMBER_OF_RETRIES>`
+    * | configuration file
 
-```bash
-# Give failing tests 3 retry attempts
-npx playwright test --retries=3
-```
+        ```js title="playwright.config.ts"
+        import { defineConfig } from '@playwright/test';
 
-You can configure retries in the configuration file:
+        export default defineConfig({
+          // Give failing tests 3 retry attempts
+          retries: <NUMBER_OF_RETRIES>,
+        });
+        ```
 
-```js title="playwright.config.ts"
-import { defineConfig } from '@playwright/test';
+* Playwright Test types -- based on -- need of retries
+  * "passed"
+    * == tests / passed | FIRST run
+  * "flaky"
+    * == tests /
+      * failed | first run
+      * passed | retried
+  * "failed"
+    * == tests / failed | first run + ALL retries
 
-export default defineConfig({
-  // Give failing tests 3 retry attempts
-  retries: 3,
-});
-```
+* `TestInfo.retry`
+  * allows
+    * detecting retries | runtime
+  * accessible -- to --
+    * any test
+    * any hook
+    * any fixture
 
-Playwright Test will categorize tests as follows:
-- "passed" - tests that passed on the first run;
-- "flaky" - tests that failed on the first run, but passed when retried;
-- "failed" - tests that failed on the first run and failed all retries.
+* retries
+  * can be specified
+    * | 1 specific group of tests
+    * | 1! file
 
-```bash
-Running 3 tests using 1 worker
-
-  ✓ example.spec.ts:4:2 › first passes (438ms)
-  x example.spec.ts:5:2 › second flaky (691ms)
-  ✓ example.spec.ts:5:2 › second flaky (522ms)
-  ✓ example.spec.ts:6:2 › third passes (932ms)
-
-  1 flaky
-    example.spec.ts:5:2 › second flaky
-  2 passed (4s)
-```
-
-You can detect retries at runtime with [`property: TestInfo.retry`], which is accessible to any test, hook or fixture. Here is an example that clears some server-side state before a retry.
-
-```js
-import { test, expect } from '@playwright/test';
-
-test('my test', async ({ page }, testInfo) => {
-  if (testInfo.retry)
-    await cleanSomeCachesOnTheServer();
-  // ...
-});
-```
-
-You can specify retries for a specific group of tests or a single file with [`method: Test.describe.configure`].
-
-```js
-import { test, expect } from '@playwright/test';
-
-test.describe(() => {
-  // All tests in this describe group will get 2 retry attempts.
-  test.describe.configure({ retries: 2 });
-
-  test('test 1', async ({ page }) => {
-    // ...
-  });
-
-  test('test 2', async ({ page }) => {
-    // ...
-  });
-});
-```
+      ```js
+      Test.describe.configure({retrie: })
+      ```
 
 ## Serial mode
 
-Use [`method: Test.describe.serial`] to group dependent tests to ensure they will always run together and in order. If one of the tests fails, all subsequent tests are skipped. All tests in the group are retried together.
+Use [`method: Test.describe.serial`] to group dependent tests to ensure they will always run together and in order
+* If one of the tests fails, all subsequent tests are skipped
+* All tests in the group are retried together.
 
 Consider the following snippet that uses `test.describe.serial`:
 
@@ -169,7 +137,8 @@ It is usually better to make your tests isolated, so they can be efficiently run
 
 ## Reuse single page between tests
 
-Playwright Test creates an isolated [Page] object for each test. However, if you'd like to reuse a single [Page] object between multiple tests, you can create your own in [`method: Test.beforeAll`] and close it in [`method: Test.afterAll`].
+Playwright Test creates an isolated [Page] object for each test
+* However, if you'd like to reuse a single [Page] object between multiple tests, you can create your own in [`method: Test.beforeAll`] and close it in [`method: Test.afterAll`].
 
 ```js tab=js-js title="example.spec.js"
 // @ts-check

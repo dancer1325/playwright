@@ -548,56 +548,11 @@ test('example test', async ({ mount, router }) => {
 * [@playwright/experimental-ct-vue](../../packages/playwright-ct-vue/README.md)
 * [@playwright/experimental-ct-react](../../packages/playwright-ct-react/README.md)
 
-<Tabs
-  groupId="js-framework"
-  defaultValue="react"
-  values={[
-    {label: 'React', value: 'react'},
-    {label: 'Vue', value: 'vue'},
-  ]
-}>
-<TabItem value="react">
-
-```js
-import { test, expect } from '@playwright/experimental-ct-react';
-import HelloWorld from './HelloWorld';
-
-test.use({ viewport: { width: 500, height: 500 } });
-
-test('should work', async ({ mount }) => {
-  const component = await mount(<HelloWorld msg="greetings" />);
-  await expect(component).toContainText('Greetings');
-});
-```
-
-</TabItem>
-
-<TabItem value="vue">
-
-```js
-import { test, expect } from '@playwright/experimental-ct-vue';
-import HelloWorld from './HelloWorld.vue';
-
-test.use({ viewport: { width: 500, height: 500 } });
-
-test('should work', async ({ mount }) => {
-  const component = await mount(HelloWorld, {
-    props: {
-      msg: 'Greetings',
-    },
-  });
-  await expect(component).toContainText('Greetings');
-});
-```
-
-</TabItem>
-
-</Tabs>
-
-Additionally, it adds some config options you can use in your `playwright-ct.config.{ts,js}`.
+TODO:
 
 Finally, under the hood, each test re-uses the `context` and `page` fixture as a speed optimization for Component Testing.
-It resets them in between each test so it should be functionally equivalent to `@playwright/test`'s guarantee that you get a new, isolated `context` and `page` fixture per-test.
+It resets them in between each test so it should be functionally equivalent to `@playwright/test`'s guarantee that you get a new,
+isolated `context` and `page` fixture per-test.
 
 ### I have a project that already uses Vite. Can I reuse the config?
 

@@ -3,54 +3,15 @@ id: intro
 title: "Installation"
 ---
 
-## Running the Example Test
 
-By default tests run headless in parallel across Chromium, Firefox and WebKit (configurable in [playwright.config](./test-configuration.md)). Output and aggregated results display in the terminal.
-
-<Tabs
-  groupId="js-package-manager"
-  defaultValue="npm"
-  values={[
-    {label: 'npm', value: 'npm'},
-    {label: 'yarn', value: 'yarn'},
-    {label: 'pnpm', value: 'pnpm'}
-  ]
-}>
-<TabItem value="npm">
-
-```bash
-npx playwright test
-```
-
-</TabItem>
-
-<TabItem value="yarn">
-
-```bash
-yarn playwright test
-```
-
-</TabItem>
-
-<TabItem value="pnpm">
-
-```bash
-pnpm exec playwright test
-```
-
-</TabItem>
-
-</Tabs>
-
-![tests running in command line](./images/getting-started/run-tests-cli.png)
-
+TODO:
 Tips:
-- See the browser window: add `--headed`.
+
 - Run a single project/browser: `--project=chromium`.
 - Run one file: `npx playwright test tests/example.spec.ts`.
 - Open testing UI: `--ui`.
 
-See [Running Tests](./running-tests.md) for details on filtering, headed mode, sharding and retries.
+filtering, headed mode, sharding and retries.
 
 ## HTML Test Reports
 
@@ -248,27 +209,9 @@ pnpm exec playwright --version
         * 'tests-examples/demo-todo-app.spec.ts'
           * == MORE detailed examples | TODO app
 
-## How to run?
+## How to run Playwright testS?
 
-* by default,
-  * tests run
-    * | ALL 3 browsers
-    * -- via -- 3 workers
-    * headless mode
-      * == ❌NO browser opened up ❌
-      * -> tests' results & test logs | terminal
-* if you want to customize -> configure [playwright.config file](./test-configuration.md)
-
-* ways
-  * `npx playwright test`
-  * `yarn playwright test`
-  * `pnpm exec playwright test`
-
-![tests running in command line](https://github.com/microsoft/playwright/assets/13063165/981c1b2b-dc7e-4b85-b241-272b44da6628)
-
-* _Example:_
-  * [here](../../../../examples/initFromProjectRoot)
-  * [another one](../../../../examples/initNewProject)
+* [here](running-tests-js.md#running-tests)
 
 ## HTML Test Reports
 

@@ -69,63 +69,66 @@ pwsh bin/Debug/netX/playwright.ps1 install --help
 ### -- via -- API
 * langs: csharp
 
-## Install system dependencies
+## Install OS dependencies
 
-System dependencies can get installed automatically. This is useful for CI environments.
+* OS dependencies
+  * [here](../../packages/playwright-core/src/server/registry/dependencies.ts)
+    * | MacOs, ❌NOTHING specific❌
+  * can get installed AUTOMATICALLY
 
-```bash js
-npx playwright install-deps
-```
+    ```bash js
+    npx playwright install-deps
+    ```
 
-```bash java
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install-deps"
-```
+    ```bash java
+    mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install-deps"
+    ```
 
-```bash python
-playwright install-deps
-```
+    ```bash python
+    playwright install-deps
+    ```
 
-```bash csharp
-pwsh bin/Debug/netX/playwright.ps1 install-deps
-```
+    ```bash csharp
+    pwsh bin/Debug/netX/playwright.ps1 install-deps
+    ```
 
-You can also install the dependencies for a single browser by passing it as an argument:
+    * if you want to install | 1! browser -> pass it -- as an -- argument
 
-```bash js
-npx playwright install-deps chromium
-```
+      ```bash js
+      npx playwright install-deps chromium
+      ```
 
-```bash java
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install-deps chromium"
-```
+      ```bash java
+      mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install-deps chromium"
+      ```
 
-```bash python
-playwright install-deps chromium
-```
+      ```bash python
+      playwright install-deps chromium
+      ```
 
-```bash csharp
-pwsh bin/Debug/netX/playwright.ps1 install-deps chromium
-```
+      ```bash csharp
+      pwsh bin/Debug/netX/playwright.ps1 install-deps chromium
+      ```
+    * if you want to install browser + OS dependencies | 1! command -> use `install --with-deps`
 
-It's also possible to combine `install-deps` with `install` so that the browsers and OS dependencies are installed with a single command.
+      ```bash js
+      npx playwright install  chromium
+      ```
 
-```bash js
-npx playwright install --with-deps chromium
-```
+      ```bash java
+      mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install --with-deps chromium"
+      ```
 
-```bash java
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install --with-deps chromium"
-```
+      ```bash python
+      playwright install --with-deps chromium
+      ```
 
-```bash python
-playwright install --with-deps chromium
-```
+      ```bash csharp
+      pwsh bin/Debug/netX/playwright.ps1 install --with-deps chromium
+      ```
 
-```bash csharp
-pwsh bin/Debug/netX/playwright.ps1 install --with-deps chromium
-```
-
-See [system requirements](./intro.md#system-requirements) for officially supported operating systems.
+  * uses
+    * [CI environments](ci.md)
 
 ## Update Playwright regularly
 * langs: js

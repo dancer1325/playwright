@@ -5,3 +5,4 @@
   * `mount`
     * == fixture /
       * component-testing specific
+  * config options / you can use | your "playwright-ct.config.{ts,js}"

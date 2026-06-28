@@ -800,18 +800,13 @@ test('homepage', async ({ page }) => {
 * since: v1.10
 - type: ?<[int]|[string]>
 
-The maximum number of concurrent worker processes to use for parallelizing tests. Can also be set as percentage of logical CPU cores, e.g. `'50%'.`
-
-Playwright Test uses worker processes to run tests. There is always at least one worker process, but more can be used to speed up test execution.
-
-Defaults to half of the number of logical CPU cores. Learn more about [parallelism and sharding](../test-parallel.md) with Playwright Test.
-
-**Usage**
-
-```js title="playwright.config.ts"
-import { defineConfig } from '@playwright/test';
-
-export default defineConfig({
-  workers: 3,
-});
-```
+* == MAXIMUM number of CONCURRENT worker processes
+  * ⚠️by default, MINIMUM(1/2 * CPU cores, NUMBER of tests)⚠️
+* allows
+  * [parallelizing tests](../test-parallel-js.md)
+* uses
+  * run tests
+* ALLOWED values
+  * INDIVIDUAL value
+  * percentage of logical CPU cores
+    * _Example:_ `'50%'`
