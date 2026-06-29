@@ -3,23 +3,20 @@ id: running-tests
 title: "Running and debugging tests"
 ---
 
-* Playwright
-  * allows you,
-    * run >=1 tests /
-      * if you pass `--project` -> run | >=1 browsers
-      * by default,
-        * run in parallel
-        * run | headless manner
-          * == NO opened | browser == log | terminal
-      * OTHER modes
-        * if you pass `--headed` CLI argument -> headed mode
-        * if you pass `--ui` -> [UI mode](./test-ui-mode.md)
-
-
-TODO:
-that provides great parallelization mechanism, screenshot assertions, html reporter, automatic tracing etc.
-
 ## Running tests
+
+* by default,
+  * [parallelism -- BETWEEN -- files](test-parallel-js.md)
+  * [headless](#-headed-mode------headed---)
+  * [MINIMUM(1/2 * CPU cores, NUMBER of tests)](test-api/class-testconfig.md#property-testconfigworkers)
+  * [0 retries](test-retries-js.md)
+  * [list reporter](test-reporters-js.md)
+  * TODO: timeouts ([timeouts](./test-timeouts.md))
+    * test -> 30_000 ms
+    * expect -> 5_000 ms
+    * action / navigation -> 0 (no timeout)
+  * screenshot / video / trace -> OFF ([use options](./test-use-options.md))
+
 ### CL
 
 * ways
@@ -37,60 +34,37 @@ that provides great parallelization mechanism, screenshot assertions, html repor
 
 ### | headed mode -- `--headed` --
 
-* provides
-  * visually see how Playwright interacts -- with -- the website
-
-```bash
-npx playwright test --headed
-```
+* ways to specify
+  * `npx playwright test --headed`
+  * `.launch({ headless: false });`
 
 * by default,
-  * tests run headless mode
+  * tests run browsers | headless mode
     * == ❌NO browser opened up ❌
     * == tests' results & test logs | terminal
 
-### Run tests on different browsers
+* provides
+  * visually see how Playwright interacts -- with -- the website
 
-To specify which browser you would like to run your tests on, use the `--project` flag followed by the browser name.
+### | DIFFERENT browsers -- `--project <BROWSER_NAME>` --
 
-```bash
-npx playwright test --project webkit
-```
+* if you want to run tests | MULTIPLE browsers -> `--project <BROWSER_NAME_1> --project <BROWSER_NAME_2> ...`
 
-To specify multiple browsers to run your tests on, use the `--project` flag multiple times followed by each browser name.
-
-```bash
-npx playwright test --project webkit --project firefox
-```
-
-### Run specific tests
-
-To run a single test file, pass in the test file name that you want to run.
+### specific tests
 
 ```bash
-npx playwright test landing-page.spec.ts
+npx playwright test <TEST_FILE_NAME>
+npx playwright test <KEYWORD_MATCHING_TEST_FILE_NAME>
+npx playwright test -g "<TEST_TITLE_NAME>"
 ```
-
-To run a set of test files from different directories, pass in the directory names that you want to run the tests in.
 
 ```bash
-npx playwright test tests/todo-page/ tests/landing-page/
+npx playwright test tests/<FOLDER_NAME>
 ```
 
-To run files that have `landing` or `login` in the file name, simply pass in these keywords to the CLI.
+### | last failed tests
 
-```bash
-npx playwright test landing login
-```
-
-To run a test with a specific title, use the `-g` flag followed by the title of the test.
-
-```bash
-npx playwright test -g "add a todo item"
-```
-
-### Run last failed tests
-
+TODO:
 To run only the tests that failed in the last test run, first run your tests and then run them again with the `--last-failed` flag.
 
 ```bash

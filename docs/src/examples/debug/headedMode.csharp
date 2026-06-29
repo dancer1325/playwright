@@ -1,0 +1,6 @@
+// Chromium, Firefox, or WebKit
+await using var browser = await playwright.Chromium.LaunchAsync(new()
+{
+    Headless = false,
+    SlowMo = 100
+});

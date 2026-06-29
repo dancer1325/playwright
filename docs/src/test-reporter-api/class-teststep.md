@@ -2,13 +2,14 @@
 * since: v1.10
 * langs: js
 
-Represents a step in the [TestRun].
+* == step | [TestRun]
 
 ## property: TestStep.category
 * since: v1.10
 - type: <[string]>
 
-Step category to differentiate steps with different origin and verbosity. Built-in categories are:
+Step category to differentiate steps with different origin and verbosity
+Built-in categories are:
 * `expect` for expect calls
 * `fixture` for fixtures setup and teardown
 * `hook` for hooks initialization and teardown

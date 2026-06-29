@@ -5,9 +5,7 @@ title: "Installation"
 
 
 TODO:
-Tips:
 
-- Run a single project/browser: `--project=chromium`.
 - Run one file: `npx playwright test tests/example.spec.ts`.
 - Open testing UI: `--ui`.
 

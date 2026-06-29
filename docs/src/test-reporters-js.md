@@ -5,120 +5,67 @@ title: "Reporters"
 
 ## Introduction
 
-* provides
-  * full report (by browsers / passed tests / steps ..) of your tests
-
-Playwright Test comes with a few built-in reporters for different needs and ability to provide custom reporters. The easiest way to try out built-in reporters is to pass `--reporter` [command line option](./test-cli.md).
-
-
-```bash
-npx playwright test --reporter=line
-```
-
-For more control, you can specify reporters programmatically in the [configuration file](./test-configuration.md).
-
-```js title="playwright.config.ts"
-import { defineConfig } from '@playwright/test';
-
-export default defineConfig({
-  reporter: 'line',
-});
-```
-
-### Multiple reporters
-
-You can use multiple reporters at the same time. For example  you can use `'list'` for nice terminal output and `'json'` to get a comprehensive json file with the test results.
-
-```js title="playwright.config.ts"
-import { defineConfig } from '@playwright/test';
-
-export default defineConfig({
-  reporter: [
-    ['list'],
-    ['json', {  outputFile: 'test-results.json' }]
-  ],
-});
-```
-
-### Reporters on CI
-
-You can use different reporters locally and on CI. For example, using concise `'dot'` reporter avoids too much output. This is the default on CI.
-
-```js title="playwright.config.ts"
-import { defineConfig } from '@playwright/test';
-
-export default defineConfig({
-  // Concise 'dot' for CI, default 'list' when running locally
-  reporter: process.env.CI ? 'dot' : 'list',
-});
-```
+* test reporters
+  * provides
+    * full report (by browsers / passed tests / steps ...) of your tests
+  * types
+    * [built-in](#built-in-reporters)
+    * [custom](#custom-reporters)
+  * by default,
+    * [list reporter](#list-reporter)
+    * | CI, `dot` reporter
+  * ways to specify
+    * CL's `--reporter` flag
+    * | [configuration file](test-configuration-js.md)
+  * 👀you can use >1 | SAME time👀
 
 ## Built-in reporters
 
-All built-in reporters show detailed information about failures, and mostly differ in verbosity for successful runs.
+* ⚠️MAIN DIFFERENCE: verbosity | SUCCESSFUL runs⚠️
 
 ### List reporter
 
-List reporter is default (except on CI where the `dot` reporter is default). It prints a line for each test being run.
+* prints a line / EACH test being run
+  * failures are listed | end
+* ways to specify
+  * -- via -- CL's flag
 
-```bash
-npx playwright test --reporter=list
-```
+    ```bash
+    npx playwright test --reporter=list
+    ```
+  * -- via -- Playwright configuration
 
-```js title="playwright.config.ts"
-import { defineConfig } from '@playwright/test';
+      ```js title="playwright.config.ts"
+      import { defineConfig } from '@playwright/test';
 
-export default defineConfig({
-  reporter: 'list',
-});
-```
-
-Here is an example output in the middle of a test run. Failures will be listed at the end by default.
-```bash
-npx playwright test --reporter=list
-Running 124 tests using 6 workers
-
- 1  ✓ should access error in env (438ms)
- 2  ✓ handle long test names (515ms)
- 3  x 1) render expected (691ms)
- 4  ✓ should timeout (932ms)
- 5    should repeat each:
- 6  ✓ should respect enclosing .gitignore (569ms)
- 7    should teardown env after timeout:
- 8    should respect excluded tests:
- 9  ✓ should handle env beforeEach error (638ms)
-10    should respect enclosing .gitignore:
-```
-
-You can opt into the step rendering via passing the following config option:
+      export default defineConfig({
+        reporter: 'list',
+      });
+      ```
+* if you want MORE detailed information -> | "playwright.config.ts",
+  * set `printSteps: true`
+  * set `printFailuresInline: true`
+    * AS SOON AS they are failures, print them
+      * ❌INSTEAD of waiting | end❌
 
 ```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-  reporter: [['list', { printSteps: true }]],
+  reporter: [['list', { printSteps: true, printFailuresInline: true }]],
 });
 ```
 
-You can print failures inline as soon as they are available instead of waiting until the end of the run:
 
-```js title="playwright.config.ts"
-import { defineConfig } from '@playwright/test';
+* AVAILABLE configuration options
 
-export default defineConfig({
-  reporter: [['list', { printFailuresInline: true }]],
-});
-```
-
-List report supports the following configuration options and environment variables:
-
-| Environment Variable Name | Reporter Config Option| Description | Default
-|---|---|---|---|
-| `PLAYWRIGHT_LIST_PRINT_STEPS` | `printSteps` | Whether to print each step on its own line. | `false`
+| Environment Variable Name               | Reporter Config Option| Description | Default
+|-----------------------------------------|---|---|---|
+| `PLAYWRIGHT_LIST_PRINT_STEPS`           | `printSteps` | Whether to print each step on its own line. | `false`
 | `PLAYWRIGHT_LIST_PRINT_FAILURES_INLINE` | `printFailuresInline` | Whether to print failure details immediately after a failed test instead of at the end. | `false`
-| `PLAYWRIGHT_FORCE_TTY` | | Whether to produce output suitable for a live terminal. Supports `true`, `1`, `false`, `0`, `[WIDTH]`, and `[WIDTH]x[HEIGHT]`. `[WIDTH]` and `[WIDTH]x[HEIGHT]` specifies the TTY dimensions. | `true` when terminal is in TTY mode, `false` otherwise.
-| `FORCE_COLOR` | | Whether to produce colored output. | `true` when terminal is in TTY mode, `false` otherwise.
-| `NO_COLOR` | | Whether to disable colored output ([no-color.org](https://no-color.org/)). Any non-empty value disables colors. | unset
+| `PLAYWRIGHT_FORCE_TTY`                  | | Whether to produce output suitable for a live terminal. Supports `true`, `1`, `false`, `0`, `[WIDTH]`, and `[WIDTH]x[HEIGHT]`. `[WIDTH]` and `[WIDTH]x[HEIGHT]` specifies the TTY dimensions. | `true` when terminal is in TTY mode, `false` otherwise.
+| `FORCE_COLOR`                           | | Whether to produce colored output. | `true` when terminal is in TTY mode, `false` otherwise.
+| `NO_COLOR`                              | | Whether to disable colored output ([no-color.org](https://no-color.org/)). Any non-empty value disables colors. | unset
 
 
 ### Line reporter

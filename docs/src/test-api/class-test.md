@@ -1628,46 +1628,12 @@ Optional description that will be reflected in a test report.
 
 ## async method: Test.step
 * since: v1.10
-- returns: <[any]>
+* returns: <[any]>
+  * == value / returned -- by the -- step callback
 
-Declares a test step that is shown in the report.
+* == test step / shown | report
 
-**Usage**
-
-```js
-import { test, expect } from '@playwright/test';
-
-test('test', async ({ page }) => {
-  await test.step('Log in', async () => {
-    // ...
-  });
-
-  await test.step('Outer step', async () => {
-    // ...
-    // You can nest steps inside each other.
-    await test.step('Inner step', async () => {
-      // ...
-    });
-  });
-});
-```
-
-**Details**
-
-The method returns the value returned by the step callback.
-
-```js
-import { test, expect } from '@playwright/test';
-
-test('test', async ({ page }) => {
-  const user = await test.step('Log in', async () => {
-    // ...
-    return 'john';
-  });
-  expect(user).toBe('john');
-});
-```
-
+TODO:
 **Decorator**
 
 You can use TypeScript method decorators to turn a method into a step.
@@ -1783,15 +1749,12 @@ test('example', async ({ page }) => {
 ### param: Test.step.title
 * since: v1.10
 - `title` <[string]>
-
-Step name.
-
+  - == step name
 
 ### param: Test.step.body
 * since: v1.10
 - `body` <[function]\([TestStepInfo]\):[Promise]<[any]>>
-
-Step body.
+  - == step body
 
 ### option: Test.step.box
 * since: v1.39
