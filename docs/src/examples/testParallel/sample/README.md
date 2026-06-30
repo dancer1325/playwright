@@ -13,4 +13,4 @@
   * == headless mode
     * == ❌NO browser open up❌
 * `npx playwright test --ui`
-  * == headed mode
+  * == headed mode1

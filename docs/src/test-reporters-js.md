@@ -157,6 +157,25 @@ Dot report supports the following configuration options and environment variable
 * `npx playwright show-report`
   * open LAST test run
 
+* HTML Test Reports
+  * allows
+    * filtering by
+      * browsers,
+      * passed tests,
+      * failed tests,
+      * skipped tests
+      * flaky tests
+    * exploring EACH test
+  * by default,
+    * if SOME test failed -> AUTOMATICALLY opened
+* | AFTER completing the test,
+  * generate an [HTML Reporter](./test-reporters.md#html-reporter)
+
+* ways
+  * `npx playwright show-report`
+  * `yarn playwright show-report`
+  * `pnpm exec playwright show-report`
+
 HTML reporter produces a self-contained folder that contains report for the test run that can be served as a web page.
 
 ```bash

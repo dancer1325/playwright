@@ -1,5 +1,5 @@
 {
-  "name": "initfromprojectroot",
+  "name": "nodejsnotsupported",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -9,6 +9,6 @@
   "license": "ISC",
   "devDependencies": {
     "@playwright/test": "^1.61.1",
-    "@types/node": "^20.14.2"
+    "@types/node": "^26.0.1"
   }
 }
