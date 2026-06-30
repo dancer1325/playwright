@@ -6,18 +6,14 @@ title: "Debugging Tests"
 ## VS Code debugger
 * langs: js
 
-TODO:
 * recommendation
   * use the [VS Code Extension](getting-started-vscode-js.md)
-* With the VS Code extension you can debug your tests right in VS Code, see error messages, set breakpoints and step through your tests.
-
-![](https://user-images.githubusercontent.com/13063165/212740233-3f278825-13e7-4a88-a118-dd4478d43a16.png)
 
 ### Error Messages
 
-If your test fails VS Code will show you error messages right in the editor showing what was expected, what was received as well as a complete call log.
+* if your test fails -> VS Code will show the error messages | code line
 
-<img height="1424" width="2538" alt="error messaging in vs code" src="https://user-images.githubusercontent.com/13063165/212738654-b573b7c9-05be-476f-ab4c-201bf4265bc0.png" />
+![](https://user-images.githubusercontent.com/13063165/212738654-b573b7c9-05be-476f-ab4c-201bf4265bc0.png)
 
 ### Live Debugging
 

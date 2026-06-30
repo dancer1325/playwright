@@ -28,22 +28,31 @@ title: "VS Code"
 ### Installation & Setup
 
 * steps
-  * **Install the Extension**: Open the Extensions view in VS Code (`Ctrl+Shift+X` or `Cmd+Shift+X`) and search for "Playwright". [Install the official extension from Microsoft](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright).
+  * [Install the official extension from Microsoft](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright)
 
-![install playwright extension](./images/getting-started/vscode-extension.png)
+    ![install playwright extension](./images/getting-started/vscode-extension.png)
+  * Install Playwright -- from -- scratch
+    * ⚠️open VSC ONLY | path | install it⚠️
+    * open the Command Palette (`Ctrl+Shift+P` or `Cmd+Shift+P`) > **Test: Install Playwright** command
 
+    ![install playwright](./images/getting-started/install-playwright.png)
+  * Select Browsers | run your tests & add a GitHub Actions workflow | run tests
+    * if you want to change later -> | "playwright.config.ts"
 
-1.  **Install Playwright**: Once the extension is installed, open the Command Palette (`Ctrl+Shift+P` or `Cmd+Shift+P`) and run the **Test: Install Playwright** command.
+    ![install browsers](./images/getting-started/install-browsers.png)
 
-![install playwright](./images/getting-started/install-playwright.png)
+### How to open the Testing Sidebar?
 
-3.  **Select Browsers**: Choose the browsers you want for your tests (e.g., Chromium, Firefox, WebKit). You can also add a GitHub Actions workflow to run tests in CI. These settings can be changed later in your `playwright.config.ts` file.
+* requirements
+  * ⚠️open the VSC | project⚠️
+    * == ❌if you open | ANOTHER path -> NOT identify tests❌
 
-![install browsers](./images/getting-started/install-browsers.png)
+* steps
+  * | VSC, click VS Code Activity Bar
 
-### Opening the Testing Sidebar
-
-Click the **Testing icon** in the VS Code Activity Bar to open the Test Explorer. Here, you'll find your tests, as well as the Playwright sidebar for managing projects, tools, and settings.
+* allows
+  * display your tests
+  * managing projects, tools, and settings
 
 ![Testing Sidebar](./images/getting-started/testing-sidebar.png)
 
@@ -51,49 +60,54 @@ Click the **Testing icon** in the VS Code Activity Bar to open the Test Explorer
 
 ### Running Your Tests
 
-<LiteYouTube
-    id="mQmcIBMsc38"
-    title="Running Playwright Tests in VS Code"
-/>
+* [Youtube video](https://www.youtube.com/watch?v=mQmcIBMsc38)
+  * TODO:  
 
--   **Run a Single Test**: Click the green "play" icon next to any test to run it. The play button will change to a green checkmark if the test passes or a red X if the test fails. You'll be able to see how long the test took to run displayed next to the test name. Additionally, the Test Results panel will automatically open at the bottom of VS Code, showing a summary of the test execution including how many tests ran, how many passed, failed, or were skipped, along with the total execution time.
+* how to **Run 1 Test**?
+  * Click the green "play" icon | any test
 
-![run a single test](./images/getting-started/run-single-test.png)
+  ![run a single test](./images/getting-started/run-single-test.png)
 
--   **Run All Tests**: You can run all tests at different levels. Click the play icon next to a specific test file to run all tests within that file, or click the play icon at the very top of the Test Explorer to run all tests across your entire project.
+* how to **Run All Tests**?
+  * run ALL tests | DIFFERENT levels
 
-![run all tests](./images/getting-started/run-all-tests.png)
+  ![run all tests](./images/getting-started/run-all-tests.png)
 
--   **Run on Multiple Browsers**: In the Playwright sidebar, check the boxes for the projects (browsers) you want to test against. Projects in Playwright represent different browser configurations - each project typically corresponds to a specific browser (like Chromium, Firefox, or WebKit) with its own settings such as viewport size, device emulation, or other browser-specific options. When you run a test, it will execute across all selected projects, allowing you to verify your application works consistently across different browsers and configurations.
+* how to **Run | Multiple Browsers**?
+  * check the boxes
 
-![Selecting projects to run tests on](./images/getting-started/select-projects.png)
+  ![Selecting projects to run tests on](./images/getting-started/select-projects.png)
 
--   **Show Browser**: To watch your tests execute in a live browser window, enable the **Show Browser** option in the sidebar. Disable it to run in headless mode (where tests run in the background without opening a visible browser window).
+* if you want to watch your tests / executed | live browser window -> click | **Show Browser**
 
-![show browsers while running tests](./images/getting-started/show-browser.png)
+  ![show browsers while running tests](./images/getting-started/show-browser.png)
 
 ### Debugging Your Tests
 
-<LiteYouTube
-    id="tJF7UhA59Gc"
-    title="Debugging Playwright tests in VS Code"
-/>
+* [video](https://www.youtube.com/watch?v=tJF7UhA59Gc)
+  * TODO: 
 
-The VS Code extension provides powerful debugging tools to help you identify and fix issues in your tests. You can set breakpoints, inspect variables, view detailed error messages, get AI-powered suggestions to resolve test failures, and use the comprehensive trace viewer to analyze test execution step-by-step.
 
--   **Using Breakpoints**: Set a breakpoint by clicking in the gutter next to a line number. Right-click the test and select **Debug Test**. The test will pause at your breakpoint, allowing you to inspect variables and step through the code.
+* You can set breakpoints, inspect variables, view detailed error messages, get AI-powered suggestions to resolve test failures, and use the comprehensive trace viewer to analyze test execution step-by-step.
+
+-   **Using Breakpoints**: Set a breakpoint by clicking in the gutter next to a line number
+* Right-click the test and select **Debug Test**
+* The test will pause at your breakpoint, allowing you to inspect variables and step through the code.
 
     ![setting debug mode](./images/getting-started/debug-mode.png)
 
--   **Live Debugging**: With **Show Browsers** enabled, click on a locator in your code. Playwright will highlight the corresponding element in the browser, making it easy to verify locators.
+-   **Live Debugging**: With **Show Browsers** enabled, click on a locator in your code
+* Playwright will highlight the corresponding element in the browser, making it easy to verify locators.
 
  ![live debugging in vs code](./images/getting-started/live-debugging.png)
 
--   **Viewing Error Messages**: If a test fails, the extension displays detailed error messages, including the expected vs. received values and a full call log, directly in the editor.
+-   **Viewing Error Messages**: If a test fails, the extension displays detailed error messages, including the expected vs
+* received values and a full call log, directly in the editor.
 
 ![error messaging in vs code](./images/getting-started/error-messaging.png)
 
--   **Fix with AI**: When a test fails, click the sparkle icon next to the error to get an AI-powered fix suggestion from Copilot. Copilot analyzes the error and suggests a code change to resolve the issue.
+-   **Fix with AI**: When a test fails, click the sparkle icon next to the error to get an AI-powered fix suggestion from Copilot
+* Copilot analyzes the error and suggests a code change to resolve the issue.
 
 ![fix with ai in vs code](./images/getting-started/fix-with-ai.png)
 
@@ -113,21 +127,26 @@ To learn more, see our [Trace Viewer guide](./trace-viewer.md).
 
 ### Generating Tests with CodeGen
 
-CodeGen is Playwright's powerful test generation tool that automatically creates test code by recording your interactions with a web page. Instead of writing tests from scratch, you can simply navigate through your application while CodeGen captures your actions and converts them into reliable test code with proper locators and assertions.
+CodeGen is Playwright's powerful test generation tool that automatically creates test code by recording your interactions with a web page
+* Instead of writing tests from scratch, you can simply navigate through your application while CodeGen captures your actions and converts them into reliable test code with proper locators and assertions.
 
 <LiteYouTube
     id="5XIZPqKkdBA"
     title="Generating Playwright tests in VS Code"
 />
 
--   **Record a New Test**: Click **Record new** in the sidebar. A browser window will open. As you interact with the page, Playwright will automatically generate the test code. You can also generate assertions from the recording toolbar.
+-   **Record a New Test**: Click **Record new** in the sidebar
+* A browser window will open
+* As you interact with the page, Playwright will automatically generate the test code
+* You can also generate assertions from the recording toolbar.
 
 ![record a new test](./images/getting-started/record-new-test.png)
 
 -   **Record at Cursor**: Place your cursor inside an existing test and click **Record at cursor** to add new actions at that specific point.
 ![record at cursor](./images/getting-started/record-at-cursor.png)
 
--   **Pick a Locator**: Use the **Pick locator** tool to click on any element in the opened browser. Playwright will determine the best locator and copy it to your clipboard, ready to be pasted into your code.
+-   **Pick a Locator**: Use the **Pick locator** tool to click on any element in the opened browser
+* Playwright will determine the best locator and copy it to your clipboard, ready to be pasted into your code.
 
 ![pick locators](./images/getting-started/pick-locator.png)
 
@@ -138,7 +157,9 @@ To learn more, see our [CodeGen guide](./codegen.md).
 
 ### Project Dependencies
 
-Use [project dependencies](./test-projects.md) to define setup tests that run before other tests. For example, you can create a login test that runs first, then reuse that authenticated state across multiple tests without having to log in again for each test. In VS Code, you can see these setup tests in the Test Explorer and run them independently when needed.
+Use [project dependencies](./test-projects.md) to define setup tests that run before other tests
+* For example, you can create a login test that runs first, then reuse that authenticated state across multiple tests without having to log in again for each test
+* In VS Code, you can see these setup tests in the Test Explorer and run them independently when needed.
 
 ![setup tests in vscode](./images/getting-started/setup-tests.png)
 
@@ -146,13 +167,15 @@ To learn more, see our [Project Dependencies guide](./test-projects.md).
 
 ### Global Setup
 
-For tasks that need to run only once before all tests (like seeding a database), use **Global Setup**. You can trigger the global setup and teardown manually from the Playwright sidebar.
+For tasks that need to run only once before all tests (like seeding a database), use **Global Setup**
+* You can trigger the global setup and teardown manually from the Playwright sidebar.
 
 ![running global setup](./images/getting-started/global-setup.png)
 
 ### Multiple Configurations
 
-If you have multiple `playwright.config.ts` files, you can switch between them using the gear icon in the Playwright sidebar. This allows you to easily work with different test suites or environments.
+If you have multiple `playwright.config.ts` files, you can switch between them using the gear icon in the Playwright sidebar
+* This allows you to easily work with different test suites or environments.
 
 ![Selecting a configuration file](./images/getting-started/selecting-configuration.png)
 
@@ -167,9 +190,3 @@ If you have multiple `playwright.config.ts` files, you can switch between them u
 | **Record a New Test**   | Click `Record new` in the Playwright sidebar                |
 | **Pick a Locator**      | Click `Pick locator` in the Playwright sidebar              |
 | **View Test Trace**     | Enable `Show Trace Viewer` in the Playwright sidebar        |
-
-## What's Next
-
--   [Write tests using web-first assertions, page fixtures, and locators](./writing-tests.md)
--   [Run your tests on CI](./ci-intro.md)
--   [Learn more about the Trace Viewer](./trace-viewer.md)
