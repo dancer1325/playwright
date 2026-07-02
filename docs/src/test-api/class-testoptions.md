@@ -2,34 +2,11 @@
 * since: v1.10
 * langs: js
 
-Playwright Test provides many options to configure test environment, [Browser], [BrowserContext] and more.
-
-These options are usually provided in the [configuration file](../test-configuration.md) through [`property: TestConfig.use`] and [`property: TestProject.use`].
-
-```js title="playwright.config.ts"
-import { defineConfig } from '@playwright/test';
-export default defineConfig({
-  use: {
-    headless: false,
-    viewport: { width: 1280, height: 720 },
-    ignoreHTTPSErrors: true,
-    video: 'on-first-retry',
-  },
-});
-```
-
-Alternatively, with [`method: Test.use`] you can override some options for a file.
-
-```js title="example.spec.ts"
-import { test, expect } from '@playwright/test';
-
-// Run tests in this file with portrait-like viewport.
-test.use({ viewport: { width: 600, height: 900 } });
-
-test('my portrait test', async ({ page }) => {
-  // ...
-});
-```
+* ways to use?
+  * | [configuration file](../test-configuration-js.md)
+    * [`.TestConfig.use`](class-testconfig.md)
+    * [`.TestProject.use`](class-testproject.md)
+  * -- via -- [`Test.use()`](class-test.md)
 
 ## property: TestOptions.acceptDownloads = %%-context-option-acceptdownloads-%%
 * since: v1.10
@@ -49,18 +26,8 @@ export default defineConfig({
 ## property: TestOptions.baseURL = %%-context-option-baseURL-%%
 * since: v1.10
 
-**Usage**
-
-```js
-import { defineConfig, devices } from '@playwright/test';
-
-export default defineConfig({
-  use: {
-    /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: 'http://localhost:3000',
-  },
-});
-```
+* allows
+  * set base url / used | actions
 
 ## property: TestOptions.browserName
 * since: v1.10

@@ -3,6 +3,9 @@ id: debug
 title: "Debugging Tests"
 ---
 
+* [video](https://www.youtube.com/watch?v=tJF7UhA59Gc)
+  * TODO: 
+
 ## VS Code debugger
 * langs: js
 
@@ -17,18 +20,17 @@ title: "Debugging Tests"
 
 ### Live Debugging
 
-You can debug your test live in VS Code
-* After running a test with the `Show Browser` option checked, click on any of the locators in VS Code and it will be highlighted in the Browser window
-* Playwright will also show you if there are multiple matches.
+* requirements
+  * [enable "Show Browser" option](getting-started-vscode-js.md)
 
-<img height="2184" width="2788" alt="live debugging in VS Code" src="https://user-images.githubusercontent.com/13063165/212884329-0755b007-0d69-4987-b084-38fd5bfb577d.png" />
+* == edit some test | code,
+  * 👀browser window persists 👀 
 
-You can also edit the locators in VS Code and Playwright will show you the changes live in the browser window.
-
-<img height="2184" width="2788" alt="live debugging in VS Code" src="https://user-images.githubusercontent.com/13063165/212884772-5022d4b1-6fab-456f-88e3-506f2354e238.png" />
+![](https://user-images.githubusercontent.com/13063165/212884772-5022d4b1-6fab-456f-88e3-506f2354e238.png)
 
 ### Picking a Locator
 
+TODO: 
 Pick a [locator](./locators.md) and copy it into your test file by clicking the **Pick locator** button from the testing sidebar
 * Then in the browser click the element you require and it will now show up in the **Pick locator** box in VS Code
 * Press 'enter' on your keyboard to copy the locator into the clipboard and then paste anywhere in your code
@@ -39,37 +41,45 @@ Pick a [locator](./locators.md) and copy it into your test file by clicking the 
 Playwright will look at your page and figure out the best locator, prioritizing [role, text and test id locators](./locators.md)
 * If Playwright finds multiple elements matching the locator, it will improve the locator to make it resilient and uniquely identify the target element, so you don't have to worry about failing tests due to locators.
 
-### Run in Debug Mode
+### Run | Debug Mode
 
-To set a breakpoint click next to the line number where you want the breakpoint to be until a red dot appears
-* Run the tests in debug mode by right clicking on the line next to the test you want to run.
+* allows
+  * set a breakpoint
 
-<img height="1424" width="2538" alt="setting debug test mode" src="https://user-images.githubusercontent.com/13063165/212739847-ecb7dcfe-8929-45f3-b24e-f9c4b592f430.png" />
+* steps
+  * | VSC editor, 
+    * | test, right click > debug test
 
-A browser window will open and the test will run and pause at where the breakpoint is set
-* You can step through the tests, pause the test and rerun the tests from the menu in VS Code.
+    ![](https://user-images.githubusercontent.com/13063165/212739847-ecb7dcfe-8929-45f3-b24e-f9c4b592f430.png)
 
-<img height="1424" width="2538" alt="running test in debug mode" src="https://user-images.githubusercontent.com/13063165/212740233-3f278825-13e7-4a88-a118-dd4478d43a16.png" />
 
-### Debug Tests Using Chrome DevTools
+    ![](https://user-images.githubusercontent.com/13063165/212740233-3f278825-13e7-4a88-a118-dd4478d43a16.png)
 
-Instead of using `Debug Test`, choose `Run Test` in VS Code
-* With `Show Browser` enabled, the browser session is reused, letting you open Chrome DevTools for continuous debugging of your tests and the web application.
+### Debug Tests -- via -- Chrome DevTools
 
-### Debug in different Browsers
+* steps
+  * | VSC debugger, 
+    * enable `Show Browser` 
+  * choose `Run Test`
+  * | opened browser,
+    * you can open Chrome DevTools
 
-By default, debugging is done using the Chromium profile
-* You can debug your tests on different browsers by right clicking on the debug icon in the testing sidebar and clicking on the 'Select Default Profile' option from the dropdown.
+### Debug | DIFFERENT Browsers
 
-<img height="1724" width="2624" alt="debugging on specific profile" src="https://user-images.githubusercontent.com/13063165/212879469-436f8130-c62a-49e1-9d67-c1903b478d5f.png" />
+* by default,
+  * -- via -- Chromium profile
 
-Then choose the test profile you would like to use for debugging your tests
-* Each time you run your test in debug mode it will use the profile you selected
-* You can run tests in debug mode by right clicking the line number where your test is and selecting 'Debug Test' from the menu.
+* steps
+  * | VSC debugger,
+    * | debug icon, right click > 'Select Default Profile'
 
-<img height="1724" width="2624" alt="choosing a profile for debugging" src="https://user-images.githubusercontent.com/13063165/212880198-eac22c3e-68ce-47da-9163-d6b376ae7575.png" />
+      ![](https://user-images.githubusercontent.com/13063165/212879469-436f8130-c62a-49e1-9d67-c1903b478d5f.png)
 
-To learn more about debugging, see [Debugging in Visual Studio Code](https://code.visualstudio.com/docs/editor/debugging).
+    * choose the test profile
+
+      ![](https://user-images.githubusercontent.com/13063165/212880198-eac22c3e-68ce-47da-9163-d6b376ae7575.png)
+
+* [MORE](https://code.visualstudio.com/docs/editor/debugging)
 
 
 ## Playwright Inspector

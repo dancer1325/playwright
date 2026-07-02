@@ -1,0 +1,30 @@
+// Create a page.
+var page = await context.NewPageAsync();
+
+// Navigate explicitly, similar to entering a URL in the browser.
+await page.GotoAsync("http://example.com");
+// Fill an input.
+await page.Locator("#search").FillAsync("query");
+
+// Navigate implicitly by clicking a link.
+await page.Locator("#submit").ClickAsync();
+// Expect a new url.
+Console.WriteLine(page.Url);
+
+// 2. MULTIPLE pages
+// Create two pages
+var pageOne = await context.NewPageAsync();
+var pageTwo = await context.NewPageAsync();
+
+// Get pages of a browser context
+var allPages = context.Pages;
+
+// 3. Handling NEW pages
+// Get page after a specific action (e.g. clicking a link)
+var newPage = await context.RunAndWaitForPageAsync(async () =>
+{
+    await page.GetByText("open new tab").ClickAsync();
+});
+// Interact with the new page normally
+await newPage.GetByRole(AriaRole.Button).ClickAsync();
+Console.WriteLine(await newPage.TitleAsync());

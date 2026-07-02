@@ -685,7 +685,7 @@ Defines how to update snapshots in the source code.
 * since: v1.10
 - type: ?<[TestOptions]>
 
-Global options for all tests, for example [`property: TestOptions.browserName`]. Learn more about [configuration](../test-configuration.md) and see [available options][TestOptions].
+* == [ALL tests' GLOBAL options](class-testoptions.md)
 
 **Usage**
 
@@ -706,11 +706,15 @@ Launch a development web server (or multiple) during the tests.
 
 **Details**
 
-If the port is specified, Playwright Test will wait for it to be available on `127.0.0.1` or `::1`, before running the tests. If the url is specified, Playwright Test will wait for the URL to return a 2xx, 3xx, 400, 401, 402, or 403 status code before running the tests.
+If the port is specified, Playwright Test will wait for it to be available on `127.0.0.1` or `::1`, before running the tests
+* If the url is specified, Playwright Test will wait for the URL to return a 2xx, 3xx, 400, 401, 402, or 403 status code before running the tests.
 
-For continuous integration, you may want to use the `reuseExistingServer: !process.env.CI` option which does not use an existing server on the CI. To see the stdout, you can set the `DEBUG=pw:webserver` environment variable.
+For continuous integration, you may want to use the `reuseExistingServer: !process.env.CI` option which does not use an existing server on the CI
+* To see the stdout, you can set the `DEBUG=pw:webserver` environment variable.
 
-The `port` (but not the `url`) gets passed over to Playwright as a [`property: TestOptions.baseURL`]. For example port `8080` produces `baseURL` equal `http://localhost:8080`. If `webServer` is specified as an array, you must explicitly configure the `baseURL` (even if it only has one entry).
+The `port` (but not the `url`) gets passed over to Playwright as a [`property: TestOptions.baseURL`]
+* For example port `8080` produces `baseURL` equal `http://localhost:8080`
+* If `webServer` is specified as an array, you must explicitly configure the `baseURL` (even if it only has one entry).
 
 :::note
 It is also recommended to specify [`property: TestOptions.baseURL`] in the config, so that tests could use relative urls.

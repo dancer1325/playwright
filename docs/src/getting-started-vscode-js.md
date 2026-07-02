@@ -61,7 +61,7 @@ title: "VS Code"
 ### Running Your Tests
 
 * [Youtube video](https://www.youtube.com/watch?v=mQmcIBMsc38)
-  * TODO:  
+  * TODO:
 
 * how to **Run 1 Test**?
   * Click the green "play" icon | any test
@@ -84,10 +84,9 @@ title: "VS Code"
 
 ### Debugging Your Tests
 
-* [video](https://www.youtube.com/watch?v=tJF7UhA59Gc)
-  * TODO: 
+* [here](debug.md)
 
-
+TODO:
 * You can set breakpoints, inspect variables, view detailed error messages, get AI-powered suggestions to resolve test failures, and use the comprehensive trace viewer to analyze test execution step-by-step.
 
 -   **Using Breakpoints**: Set a breakpoint by clicking in the gutter next to a line number
@@ -172,10 +171,11 @@ For tasks that need to run only once before all tests (like seeding a database),
 
 ![running global setup](./images/getting-started/global-setup.png)
 
-### Multiple Configurations
+### if you have >1 "playwright.config.ts" -> you can switch BETWEEN them
 
-If you have multiple `playwright.config.ts` files, you can switch between them using the gear icon in the Playwright sidebar
-* This allows you to easily work with different test suites or environments.
+* steps
+  * | Testing view's Playwright sidebar,
+    * click | "playwright.config.ts" icon gear > select 1 "playwright.config.ts"
 
 ![Selecting a configuration file](./images/getting-started/selecting-configuration.png)
 

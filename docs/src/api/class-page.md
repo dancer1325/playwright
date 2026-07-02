@@ -1,94 +1,10 @@
 # class: Page
 * since: v1.8
 
+TODO:
 Page provides methods to interact with a single tab in a [Browser], or an
-[extension background page](https://developer.chrome.com/extensions/background_pages) in Chromium. One [Browser]
-instance might have multiple [Page] instances.
-
-This example creates a page, navigates it to a URL, and then saves a screenshot:
-
-```js
-const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
-
-(async () => {
-  const browser = await webkit.launch();
-  const context = await browser.newContext();
-  const page = await context.newPage();
-  await page.goto('https://example.com');
-  await page.screenshot({ path: 'screenshot.png' });
-  await browser.close();
-})();
-```
-
-```java
-import com.microsoft.playwright.*;
-
-public class Example {
-  public static void main(String[] args) {
-    try (Playwright playwright = Playwright.create()) {
-      BrowserType webkit = playwright.webkit();
-      Browser browser = webkit.launch();
-      BrowserContext context = browser.newContext();
-      Page page = context.newPage();
-      page.navigate("https://example.com");
-      page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get("screenshot.png")));
-      browser.close();
-    }
-  }
-}
-```
-
-```python async
-import asyncio
-from playwright.async_api import async_playwright, Playwright
-
-async def run(playwright: Playwright):
-    webkit = playwright.webkit
-    browser = await webkit.launch()
-    context = await browser.new_context()
-    page = await context.new_page()
-    await page.goto("https://example.com")
-    await page.screenshot(path="screenshot.png")
-    await browser.close()
-
-async def main():
-    async with async_playwright() as playwright:
-        await run(playwright)
-asyncio.run(main())
-```
-
-```python sync
-from playwright.sync_api import sync_playwright, Playwright
-
-def run(playwright: Playwright):
-    webkit = playwright.webkit
-    browser = webkit.launch()
-    context = browser.new_context()
-    page = context.new_page()
-    page.goto("https://example.com")
-    page.screenshot(path="screenshot.png")
-    browser.close()
-
-with sync_playwright() as playwright:
-    run(playwright)
-```
-
-```csharp
-using Microsoft.Playwright;
-using System.Threading.Tasks;
-
-class PageExamples
-{
-    public static async Task Run()
-    {
-        using var playwright = await Playwright.CreateAsync();
-        await using var browser = await playwright.Webkit.LaunchAsync();
-        var page = await browser.NewPageAsync();
-        await page.GotoAsync("https://www.theverge.com");
-        await page.ScreenshotAsync(new() { Path = "theverge.png" });
-    }
-}
-```
+[extension background page](https://developer.chrome.com/extensions/background_pages) in Chromium
+* There can be >1 [Page] instances / 1 [Browser]
 
 The Page class emits various events (described below) which can be handled using any of Node's native
 [`EventEmitter`](https://nodejs.org/api/events.html#events_class_eventemitter) methods, such as `on`, `once` or

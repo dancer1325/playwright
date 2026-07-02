@@ -1,13 +1,6 @@
 import { test, expect } from '@playwright/test';
-import exp from 'constants';
 
-test('has title', async ({ page }) => {
-  await page.goto('https://playwright.dev/');
-
-  // Expect a title "to contain" a substring.
-  await expect(page).toHaveTitle(/Playwright/);
-});
-
-test('get started link', async ({ page }) => {
+test('failure test', async ({ page }) => {
   expect(2).toBe(3);
+  expect(2).toBe(2);
 });

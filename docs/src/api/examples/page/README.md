@@ -1,6 +1,4 @@
-* goal
-  * class-Page
-
+# _Example:_ create a page + navigates it -- to a -- URL + save a screenshot
 ## how has it been created?
 ### JS
 * `npm init` & `npm install playwright`
